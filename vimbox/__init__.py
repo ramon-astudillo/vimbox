@@ -96,40 +96,55 @@ def get_content(document_path):
     return local_file, local_content, remote_file, remote_content
 
 
-def edit(document_path, remove_local=False):
+def edit(document_path, remove_local=False, diff_mode=True):
     """
     Edit or create existing file
 
     Edits will happen on a local copy that will be uploded when finished.
 
     remove_local    set to remove local file after moving it to remote
+    diff_mode       will only edit if both remote and local exist and differ,
+                    otherwise it copies one to the other
     """
 
     items = get_content(document_path)
     local_file, local_content, remote_file, remote_content = items
 
     old_local_file = None
-    if local_content and remote_content and (local_content != remote_content):
+    if local_content and remote_content:
 
-        # Store content on temporary files
-        old_local_file = "%s.OLD" % local_file
-        write_file(old_local_file, local_content)
-        write_file(local_file, remote_content)
+        # There is both local and remote content
 
-        # Show content conflict with vimdiff
-        print(" ".join(['vimdimf', '%s %s' % (old_local_file, local_file)]))
-        call(['vimdiff', old_local_file, local_file])
+        if (local_content != remote_content):
+
+            # They differ
+
+            # Store content on temporary files
+            old_local_file = "%s.OLD" % local_file
+            write_file(old_local_file, local_content)
+            write_file(local_file, remote_content)
+
+            # Show content conflict with vimdiff
+            print(" ".join(['vimdimf', '%s %s' % (old_local_file, local_file)]))
+            call(['vimdiff', old_local_file, local_file])
+
+        elif not diff_mode:
+
+            # They are the same, we edit the local copy if solicited
+            print(" ".join(['vim', '%s' % local_file]))
+            call(['vim', '%s' % local_file])
 
     elif remote_content:
 
-        # Fill in local copy with remote content
+        # Only remote content, fill in local copy with remote content
         write_file(local_file, remote_content)
-        print(" ".join(['vim', '%s' % local_file]))
-        call(['vim', '%s' % local_file])
+        if not diff_mode:
+            print(" ".join(['vim', '%s' % local_file]))
+            call(['vim', '%s' % local_file])
 
-    else:
+    elif not diff_mode:
 
-        # New local file
+        # Only local content, edit it if solicited
         print(" ".join(['vim', '%s' % local_file]))
         call(['vim', '%s' % local_file])
 
