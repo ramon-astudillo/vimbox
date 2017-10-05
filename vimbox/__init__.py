@@ -8,7 +8,11 @@ from dropbox.exceptions import ApiError
 from dropbox.files import WriteMode
 
 REMOTE_ROOT = None
-ROOT_FOLDER = os.path.realpath("%s/../" % os.path.dirname(__file__))
+ROOT_FOLDER = "%s/.vimbox/" % os.environ['HOME']
+import ipdb;ipdb.set_trace(context=30)
+if not os.path.isdir(ROOT_FOLDER):
+    print("Created %s" % ROOT_FOLDER)
+    os.mkdir(ROOT_FOLDER)
 ENV_FILE = '%s/.env' % ROOT_FOLDER
 
 if os.path.isfile(ENV_FILE):
