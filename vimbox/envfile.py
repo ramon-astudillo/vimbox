@@ -17,3 +17,9 @@ def load(file_path=ENV_PATH):
                 key, value = line.rstrip().split('=')
                 environment[key.strip()] = value.strip()
     return environment
+
+
+def save(file_path, environment):
+    with open(file_path, 'w') as fid:
+        for variable, value in environment.items():
+            fid.write('%s=%s' % (variable, value))

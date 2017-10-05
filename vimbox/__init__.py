@@ -10,8 +10,17 @@ from dropbox.files import WriteMode
 
 REMOTE_ROOT = None
 ROOT_FOLDER = os.path.realpath("%s/../" % os.path.dirname(__file__))
-CONFIG = envfile.load(file_path='%s/.env' % ROOT_FOLDER)
-DROPBOX_CLIENT = dropbox.Dropbox(CONFIG['DROPBOX_TOKEN'])
+ENV_FILE = '%s/.env' % ROOT_FOLDER
+
+if os.path.isfile(ENV_FILE):
+    CONFIG = envfile.load(file_path=ENV_FILE)
+    dropbox_token = CONFIG['DROPBOX_TOKEN']
+else:
+    print("Missing .env file with Dropbox token")
+    dropbox_token = input('Please provide Dropbox token')
+    envfile.save(ENV_FILE, {'DROPBOX_TOKEN': dropbox_token})
+
+DROPBOX_CLIENT = dropbox.Dropbox(dropbox_token)
 
 DATA_FOLDER = '%s/DATA' % ROOT_FOLDER
 
