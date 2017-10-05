@@ -1,0 +1,6 @@
+*.pyc
+.env
+*.egg
+*.swp
+DATA/
+vimbox.egg-info/
