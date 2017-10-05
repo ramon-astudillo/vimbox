@@ -9,7 +9,6 @@ from dropbox.files import WriteMode
 
 REMOTE_ROOT = None
 ROOT_FOLDER = "%s/.vimbox/" % os.environ['HOME']
-import ipdb;ipdb.set_trace(context=30)
 if not os.path.isdir(ROOT_FOLDER):
     print("Created %s" % ROOT_FOLDER)
     os.mkdir(ROOT_FOLDER)
@@ -53,18 +52,11 @@ def read_file(file_path):
         return fid_local.read()
 
 
-def edit(document_path):
-    """
-    Edit or create existing file
-
-    Edits will happen on a local copy that will be uploded when finished.
-    """
+def get_content(document_path):
 
     # Name of the remote file
-    if REMOTE_ROOT:
-        remote_file = '%s/%s' % (REMOTE_ROOT, document_path)
-    else:
-        remote_file = '/%s' % document_path
+    assert document_path[0] == '/', "Dropbox paths start with /"
+    remote_file = '%s' % document_path
 
     # Name of coresponding local file
     local_file = '%s/%s' % (DATA_FOLDER, document_path)
@@ -100,6 +92,21 @@ def edit(document_path):
         print("%s does not exist" % (remote_file))
         online = True
         remote_content = None
+
+    return local_file, local_content, remote_file, remote_content
+
+
+def edit(document_path, remove_local=False):
+    """
+    Edit or create existing file
+
+    Edits will happen on a local copy that will be uploded when finished.
+
+    remove_local    set to remove local file after moving it to remote
+    """
+
+    items = get_content(document_path)
+    local_file, local_content, remote_file, remote_content = items
 
     old_local_file = None
     if local_content and remote_content and (local_content != remote_content):
@@ -140,10 +147,12 @@ def edit(document_path):
         print("Updated in Dropbox %s" % remote_file)
 
         # Remove local file
-        if os.path.isfile(local_file):
-            os.remove(local_file)
-        if old_local_file and os.path.isfile(old_local_file):
-            os.remove(old_local_file)
+        if remove_local:
+            if os.path.isfile(local_file):
+                os.remove(local_file)
+            if old_local_file and os.path.isfile(old_local_file):
+                os.remove(old_local_file)
+        print("Removed %s" % local_file)
 
     except ApiError as _:
 
