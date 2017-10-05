@@ -96,7 +96,7 @@ def get_content(document_path):
     return local_file, local_content, remote_file, remote_content
 
 
-def edit(document_path, remove_local=False, diff_mode=True):
+def edit(document_path, remove_local=False, diff_mode=False):
     """
     Edit or create existing file
 
@@ -148,18 +148,27 @@ def edit(document_path, remove_local=False, diff_mode=True):
         print(" ".join(['vim', '%s' % local_file]))
         call(['vim', '%s' % local_file])
 
-    update_remote(
-        remote_file, local_file, old_local_file, remove_local=remove_local
-    )
+    # Read content of edited file
+    new_local_content = read_file(local_file)
+
+    # Update remote if there are changes
+    if new_local_content != remote_content:
+        update_remote(
+            new_local_content,
+            remote_file,
+            local_file,
+            old_local_file,
+            remove_local=remove_local
+        )
+    else:
+        print("No update of remote needed")
 
 
-def update_remote(remote_file, local_file, old_local_file, remove_local=False):
+def update_remote(new_local_content, remote_file, local_file, old_local_file,
+                  remove_local=False):
     """
     Push updates to remote
     """
-
-    # Read content of edited file
-    new_local_content = read_file(local_file)
 
     try:
 
