@@ -133,6 +133,16 @@ def edit(document_path, remove_local=False):
         print(" ".join(['vim', '%s' % local_file]))
         call(['vim', '%s' % local_file])
 
+    update_remote(
+        remote_file, local_file, old_local_file, remove_local=remove_local
+    )
+
+
+def update_remote(remote_file, local_file, old_local_file, remove_local=False):
+    """
+    Push updates to remote
+    """
+
     # Read content of edited file
     new_local_content = read_file(local_file)
 
@@ -152,7 +162,7 @@ def edit(document_path, remove_local=False):
                 os.remove(local_file)
             if old_local_file and os.path.isfile(old_local_file):
                 os.remove(old_local_file)
-        print("Removed %s" % local_file)
+            print("Removed %s" % local_file)
 
     except ApiError as _:
 
