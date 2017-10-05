@@ -1,5 +1,4 @@
 import os
-import urllib2
 from subprocess import call
 #
 import envfile
@@ -17,8 +16,9 @@ if os.path.isfile(ENV_FILE):
     dropbox_token = CONFIG['DROPBOX_TOKEN']
 else:
     print("Missing .env file with Dropbox token")
-    dropbox_token = input('Please provide Dropbox token')
+    dropbox_token = raw_input('Please provide Dropbox token: ')
     envfile.save(ENV_FILE, {'DROPBOX_TOKEN': dropbox_token})
+    print('.env file saved to %s' % ENV_FILE)
 
 DROPBOX_CLIENT = dropbox.Dropbox(dropbox_token)
 
@@ -29,14 +29,6 @@ try:
     offline = True
 except:
     offline = False
-
-
-def online():
-    try:
-        urllib2.urlopen('http://216.58.192.142', timeout=1)
-        return True
-    except urllib2.URLError as _:
-        return False
 
 
 def exists(path):
