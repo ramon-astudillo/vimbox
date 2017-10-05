@@ -5,7 +5,8 @@ try:
     from pip.req import parse_requirements
     import pip.download
 
-    # parse_requirements() returns generator of pip.req.InstallRequirement objects
+    # parse_requirements() returns generator of pip.req.InstallRequirement
+    # objects
     install_reqs = parse_requirements(
         "requirements.txt", session=pip.download.PipSession()
     )
@@ -36,6 +37,11 @@ setup(
     long_description=read('README.md'),
     # license='MIT',
     py_modules=['vimbox'],
+    entry_points={
+        'console_scripts': [
+            'vimbox = vimbox.__main__:main'
+        ]
+    },
     packages=find_packages(),
     install_requires=install_requires,
     package_data=package_data,
