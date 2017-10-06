@@ -1,7 +1,7 @@
 import os
 from subprocess import call
 #
-import envfile
+import yaml
 import dropbox
 from requests.exceptions import ConnectionError
 from dropbox.exceptions import ApiError
@@ -12,18 +12,23 @@ ROOT_FOLDER = "%s/.vimbox/" % os.environ['HOME']
 if not os.path.isdir(ROOT_FOLDER):
     print("Created %s" % ROOT_FOLDER)
     os.mkdir(ROOT_FOLDER)
-ENV_FILE = '%s/.env' % ROOT_FOLDER
+config_file = '%s/config.yml' % ROOT_FOLDER
 
-if os.path.isfile(ENV_FILE):
-    CONFIG = envfile.load(file_path=ENV_FILE)
-    dropbox_token = CONFIG['DROPBOX_TOKEN']
+if os.path.isfile(config_file):
+    with open(config_file, 'r') as fid:
+        config = yaml.load(fid)
 else:
-    print("Missing .env file with Dropbox token")
-    dropbox_token = raw_input('Please provide Dropbox token: ')
-    envfile.save(ENV_FILE, {'DROPBOX_TOKEN': dropbox_token})
-    print('.env file saved to %s' % ENV_FILE)
+    config = {}
 
-DROPBOX_CLIENT = dropbox.Dropbox(dropbox_token)
+# Prompt user for token
+if 'DROPBOX_TOKEN' not in config:
+    print("Missing Dropbox token in config")
+    config['DROPBOX_TOKEN'] = raw_input('Please provide Dropbox token: ')
+    with open(config_file, 'w') as fid:
+        yaml.dump(config, fid, default_flow_style=False)
+    print("Config stored in %s" % config['DROPBOX_TOKEN'])
+
+DROPBOX_CLIENT = dropbox.Dropbox(config['DROPBOX_TOKEN'])
 
 DATA_FOLDER = '%s/DATA' % ROOT_FOLDER
 
