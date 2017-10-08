@@ -181,7 +181,7 @@ class VimBox():
             self.dropbox_client = dropbox.Dropbox(self.config['DROPBOX_TOKEN'])
 
     def edit(self, document_path, remove_local=False, diff_mode=False,
-             create_folder=False, register_folder=True):
+             force_creation=False, register_folder=True):
         """
         Edit or create existing file
 
@@ -202,13 +202,16 @@ class VimBox():
         if not os.path.isdir(local_folder):
             os.makedirs(local_folder)
         # Force use of -f to create new files
-        if remote_content is None and online:
+        if (
+            not force_creation and
+            remote_content is None and online
+        ):
             print('\nYou are creating a new file, use -f\n')
             exit(1)
         # Force use of -f to create new folders
         remote_folder = '%s/' % os.path.dirname(remote_file)
         if (
-            not create_folder and
+            not force_creation and
             remote_folder and
             remote_folder not in self.config['remote_folders']
         ):

@@ -27,10 +27,10 @@ def main(args=None):
 
     # Gather options from command line
     file_path = None
-    create_folder = False
+    force_creation = False
     for option in args:
         if option == '-f':
-            create_folder = True
+            force_creation = True
         elif file_path is not None:
             vimbox_help()
         else:
@@ -41,7 +41,7 @@ def main(args=None):
 
     # Call edit utility
     vimbox = VimBox()
-    vimbox.edit(file_path, create_folder=create_folder)
+    vimbox.edit(file_path, force_creation=force_creation)
 
 if __name__ == "__main__":
     main()
