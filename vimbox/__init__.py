@@ -1,11 +1,12 @@
 import os
 from subprocess import call
 #
-import yaml
 import dropbox
 from requests.exceptions import ConnectionError
 from dropbox.exceptions import ApiError
 from dropbox.files import WriteMode
+#
+from vimbox.io import read_config, write_config, read_file, write_file
 
 ROOT_FOLDER = "%s/.vimbox/" % os.environ['HOME']
 config_file = '%s/config.yml' % ROOT_FOLDER
@@ -106,34 +107,8 @@ def vim_merge(local_content, remote_content, tmp_file, diff_mode=False):
 
 
 #
-# LOCAL IO
-#
-
-
-def write_config(file_path, config):
-    with open(file_path, 'w') as fid:
-        yaml.dump(config, fid, default_flow_style=False)
-
-
-def read_config(file_path):
-    with open(file_path, 'r') as fid:
-        config = yaml.load(fid)
-    return config
-
-
-def write_file(file_path, content):
-    with open(file_path, 'w') as fid_local:
-        fid_local.write(content)
-
-
-def read_file(file_path):
-    with open(file_path, 'r') as fid_local:
-        return fid_local.read()
-
-#
 # CLASS
 #
-
 
 class VimBox():
 
