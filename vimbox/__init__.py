@@ -203,7 +203,12 @@ class VimBox():
             os.makedirs(local_folder)
         # Force use of -f to create new folders
         remote_folder = os.path.dirname(remote_file)
-        if remote_folder and not create_folder:
+        if (
+            not create_folder and
+            remote_folder and
+            remote_folder not in self.config['remote_folders']
+        ):
+            import ipdb;ipdb.set_trace(context=30)
             print(
                 '\nYou need to create remote folder %s, use -f\n' %
                 remote_folder
