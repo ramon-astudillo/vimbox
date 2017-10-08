@@ -9,7 +9,7 @@ from dropbox.files import WriteMode
 from vimbox.io import read_config, write_config, read_file, write_file
 
 ROOT_FOLDER = "%s/.vimbox/" % os.environ['HOME']
-config_file = '%s/config.yml' % ROOT_FOLDER
+CONFIG_FILE = '%s/config.yml' % ROOT_FOLDER
 
 DEFAULT_CONFIG = {
     'DROPBOX_TOKEN': None,
@@ -25,13 +25,13 @@ def set_autocomplete():
 
 
 def folders():
-    config = read_config(config_file)
+    config = read_config(CONFIG_FILE)
     return config['remote_folders']
 
 
 def vim_edit_config():
-    print(" ".join(['vim', config_file]))
-    call(['vim', config_file])
+    print(" ".join(['vim', CONFIG_FILE]))
+    call(['vim', CONFIG_FILE])
     exit()
 
 
@@ -120,8 +120,8 @@ class VimBox():
             print("Created %s" % ROOT_FOLDER)
 
         # Create vimbox config
-        if os.path.isfile(config_file):
-            self.config = read_config(config_file)
+        if os.path.isfile(CONFIG_FILE):
+            self.config = read_config(CONFIG_FILE)
             # Check current defaults are present (version missmatch)
             if set(self.config.keys()) != set(DEFAULT_CONFIG.keys()):
                 print("Updating config")
@@ -130,12 +130,12 @@ class VimBox():
                         print("%s = %s" % (key, value))
                         self.config[key] = value
                 # Update config
-                write_config(config_file, self.config)
+                write_config(CONFIG_FILE, self.config)
         else:
             # Default config
             self.config = DEFAULT_CONFIG
-            write_config(config_file, self.config)
-            print("Created %s" % config_file)
+            write_config(CONFIG_FILE, self.config)
+            print("Created %s" % CONFIG_FILE)
 
         # Basic conection check
         if self.config.get('DROPBOX_TOKEN', None) is None:
@@ -150,12 +150,12 @@ class VimBox():
             else:
                 # Store
                 self.config['DROPBOX_TOKEN'] = dropbox_token
-                write_config(config_file, self.config)
+                write_config(CONFIG_FILE, self.config)
         else:
             # Checking here for dropbox status can make it too slow
             self.dropbox_client = dropbox.Dropbox(self.config['DROPBOX_TOKEN'])
 
-    def edit(self, document_path, remove_local=False, diff_mode=False,
+    def edit(self, remote_file, remove_local=False, diff_mode=False,
              force_creation=False, register_folder=True):
         """
         Edit or create existing file
@@ -167,10 +167,19 @@ class VimBox():
                         differ, otherwise it copies one to the other
         """
 
+        # Quick exit: edit file is not a file but a registered folder
+        if remote_file in self.config['remote_folders']:
+            print("")
+            result = self.dropbox_client.files_list_folder(remote_file)
+            for entry in result.entries:
+                print entry.name
+            print("")
+            exit(0)
+
         # Fetch local and remote copies for the file. This may not exist or be
         # in conflict
-        local_file, local_content, remote_file, remote_content, online = \
-            self._fetch_file(document_path)
+        local_file, local_content, remote_content, online = \
+            self._fetch_file(remote_file)
 
         # Make local folder if it does not exist
         local_folder = os.path.dirname(local_file)
@@ -200,7 +209,7 @@ class VimBox():
         ):
             print("Added %s" % remote_folder)
             self.config['remote_folders'].append(remote_folder)
-            write_config(config_file, self.config)
+            write_config(CONFIG_FILE, self.config)
             # Update autocomplete options
             # set_autocomplete()
 
@@ -226,17 +235,16 @@ class VimBox():
         else:
             print("No update of remote needed")
 
-    def _fetch_file(self, document_path):
+    def _fetch_file(self, remote_file):
         """
         Get local and remote content and coresponding file paths
         """
 
         # Name of the remote file
-        assert document_path[0] == '/', "Dropbox paths start with /"
-        remote_file = '%s' % document_path
+        assert remote_file[0] == '/', "Dropbox remote paths start with /"
 
         # Name of coresponding local file
-        local_file = '%s/%s' % (self.config['local_root'], document_path)
+        local_file = '%s/%s' % (self.config['local_root'], remote_file)
         local_folder = os.path.dirname(local_file)
         if not os.path.isdir(local_folder):
             os.makedirs(local_folder)
@@ -253,9 +261,8 @@ class VimBox():
         try:
 
             # Look for remote file, store content
-            metadata, res_progress = \
-                self.dropbox_client.files_download(remote_file)
-            remote_content = res_progress.content
+            metadata, response = self.dropbox_client.files_download(remote_file)
+            remote_content = response.content
 
         except ConnectionError:
 
@@ -270,7 +277,7 @@ class VimBox():
             remote_content = None
             print("%s does not exist" % (remote_file))
 
-        return local_file, local_content, remote_file, remote_content, online
+        return local_file, local_content, remote_content, online
 
     def _push(self, new_local_content, remote_file):
         """

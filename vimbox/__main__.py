@@ -11,13 +11,15 @@ def main(args=None):
     """
     This is renamed as vimbox in setup.py
     """
+
+    # From command line
     if args is None:
         args = sys.argv[1:]
 
+    # Argument-less options
     if '-c' in args:
         vim_edit_config()
         exit()
-
     elif '-l' in args:
         print("")
         for folder in folders():
@@ -25,7 +27,7 @@ def main(args=None):
         print("")
         exit()
 
-    # Gather options from command line
+    # Rest of options and folder
     file_path = None
     force_creation = False
     for option in args:
