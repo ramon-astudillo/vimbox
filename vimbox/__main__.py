@@ -19,7 +19,10 @@ def main(args=None):
         exit()
 
     elif '-l' in args:
-        print folders()
+        print("")
+        for folder in folders():
+            print(folder)
+        print("")
         exit()
 
     # Gather options from command line

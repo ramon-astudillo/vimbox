@@ -25,7 +25,7 @@ def set_autocomplete():
 
 def folders():
     config = read_config(config_file)
-    return " ".join(config['remote_folders'])
+    return config['remote_folders']
 
 
 def vim_edit_config():
@@ -201,18 +201,18 @@ class VimBox():
         local_folder = os.path.dirname(local_file)
         if not os.path.isdir(local_folder):
             os.makedirs(local_folder)
+        # Force use of -f to create new files
+        if remote_content is None and online:
+            print('\nYou are creating a new file, use -f\n')
+            exit(1)
         # Force use of -f to create new folders
-        remote_folder = os.path.dirname(remote_file)
+        remote_folder = '%s/' % os.path.dirname(remote_file)
         if (
             not create_folder and
             remote_folder and
             remote_folder not in self.config['remote_folders']
         ):
-            import ipdb;ipdb.set_trace(context=30)
-            print(
-                '\nYou need to create remote folder %s, use -f\n' %
-                remote_folder
-            )
+            print('\nYou need to create a folder, use -f\n')
             exit(1)
 
         # Add remote folder to list
@@ -289,8 +289,8 @@ class VimBox():
         except ApiError:
 
             # File non-existing
-            print("%s does not exist" % (remote_file))
             remote_content = None
+            print("%s does not exist" % (remote_file))
 
         return local_file, local_content, remote_file, remote_content, online
 
