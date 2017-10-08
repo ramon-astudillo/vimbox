@@ -7,44 +7,108 @@ from requests.exceptions import ConnectionError
 from dropbox.exceptions import ApiError
 from dropbox.files import WriteMode
 
-REMOTE_ROOT = None
 ROOT_FOLDER = "%s/.vimbox/" % os.environ['HOME']
-if not os.path.isdir(ROOT_FOLDER):
-    print("Created %s" % ROOT_FOLDER)
-    os.mkdir(ROOT_FOLDER)
 config_file = '%s/config.yml' % ROOT_FOLDER
 
-if os.path.isfile(config_file):
-    with open(config_file, 'r') as fid:
-        config = yaml.load(fid)
-else:
-    config = {}
-
-# Prompt user for token
-if 'DROPBOX_TOKEN' not in config:
-    print("Missing Dropbox token in config")
-    config['DROPBOX_TOKEN'] = raw_input('Please provide Dropbox token: ')
-    with open(config_file, 'w') as fid:
-        yaml.dump(config, fid, default_flow_style=False)
-    print("Config stored in %s" % config['DROPBOX_TOKEN'])
-
-DROPBOX_CLIENT = dropbox.Dropbox(config['DROPBOX_TOKEN'])
-
-DATA_FOLDER = '%s/DATA' % ROOT_FOLDER
-
-try:
-    user_account = DROPBOX_CLIENT.users_get_current_account()
-    offline = True
-except:
-    offline = False
+DEFAULT_CONFIG = {
+    'DROPBOX_TOKEN': None,
+    'local_root': '%s/DATA' % ROOT_FOLDER,
+    'remote_root': None,
+    'remote_folders': []
+}
 
 
-def exists(path):
+def vim_edit_config():
+    print(" ".join(['vim', '%s' % config_file]))
+    call(['vim', '%s' % config_file])
+    exit()
+
+
+def get_user_account(dropbox_client):
     try:
-        DROPBOX_CLIENT.files_get_metadata(path)
-        return True
-    except:
-        return False
+        return dropbox_client.users_get_current_account()
+
+    except ConnectionError:
+
+        # Dropbox unrechable
+        return {'error': 'connection-error'}
+
+    except ApiError:
+
+        # API error
+        return {'error': 'api-error'}
+
+
+def vim_merge(local_content, remote_content, tmp_file, diff_mode=False):
+    """
+    Merge local and remote texts using vim
+    """
+
+    old_tmp_file = None
+    if local_content and remote_content:
+
+        # There is both local and remote content
+
+        if (local_content != remote_content):
+
+            # They differ
+
+            # Store content on temporary files
+            old_tmp_file = "%s.OLD" % tmp_file
+            write_file(old_tmp_file, local_content)
+            write_file(tmp_file, remote_content)
+
+            # Show content conflict with vimdiff
+            print(" ".join([
+                'vimdimf', '%s %s' % (old_tmp_file, tmp_file)
+            ]))
+            call(['vimdiff', old_tmp_file, tmp_file])
+
+        elif not diff_mode:
+
+            # They are the same, we edit the local copy if not in diff mode
+            print(" ".join(['vim', '%s' % tmp_file]))
+            call(['vim', '%s' % tmp_file])
+
+    elif remote_content:
+
+        # There is only remote content, fill in local copy with remote content.
+        # If not in diff mode, also open for editing
+        write_file(tmp_file, remote_content)
+        if not diff_mode:
+            print(" ".join(['vim', '%s' % tmp_file]))
+            call(['vim', '%s' % tmp_file])
+
+    elif not diff_mode:
+
+        # There is only local content. If not in diff mode, open for editing
+        print(" ".join(['vim', '%s' % tmp_file]))
+        call(['vim', '%s' % tmp_file])
+
+    # Read content of edited file
+    new_local_content = read_file(tmp_file)
+
+    # Clean up extra temporary files
+    if old_tmp_file and os.path.isfile(old_tmp_file):
+        os.remove(old_tmp_file)
+
+    return new_local_content
+
+
+#
+# LOCAL IO
+#
+
+
+def write_config(file_path, config):
+    with open(file_path, 'w') as fid:
+        yaml.dump(config, fid, default_flow_style=False)
+
+
+def read_config(file_path):
+    with open(file_path, 'r') as fid:
+        config = yaml.load(fid)
+    return config
 
 
 def write_file(file_path, content):
@@ -56,145 +120,182 @@ def read_file(file_path):
     with open(file_path, 'r') as fid_local:
         return fid_local.read()
 
-
-def get_content(document_path):
-
-    # Name of the remote file
-    assert document_path[0] == '/', "Dropbox paths start with /"
-    remote_file = '%s' % document_path
-
-    # Name of coresponding local file
-    local_file = '%s/%s' % (DATA_FOLDER, document_path)
-    local_folder = os.path.dirname(local_file)
-    if not os.path.isdir(local_folder):
-        os.makedirs(local_folder)
-
-    # Look for local content
-    if os.path.isfile(local_file):
-        # Read local content
-        with open(local_file, 'r') as fid_local:
-            local_content = fid_local.read()
-    else:
-        local_content = None
-
-    try:
-
-        # Look for remote file, store content
-        metadata, res_progress = DROPBOX_CLIENT.files_download(remote_file)
-        remote_content = res_progress.content
-        online = True
-
-    except ConnectionError as _:
-
-        # Dropbox unrechable
-        remote_content = None
-        online = False
-        print("Can not connect. Working locally on %s" % (local_file))
-
-    except ApiError as _:
-
-        # File non-existing
-        print("%s does not exist" % (remote_file))
-        online = True
-        remote_content = None
-
-    return local_file, local_content, remote_file, remote_content
+#
+# CLASS
+#
 
 
-def edit(document_path, remove_local=False, diff_mode=False):
-    """
-    Edit or create existing file
+class VimBox():
 
-    Edits will happen on a local copy that will be uploded when finished.
+    def __init__(self):
 
-    remove_local    set to remove local file after moving it to remote
-    diff_mode       will only edit if both remote and local exist and differ,
-                    otherwise it copies one to the other
-    """
+        # Create vimbox folder
+        if not os.path.isdir(ROOT_FOLDER):
+            os.mkdir(ROOT_FOLDER)
+            print("Created %s" % ROOT_FOLDER)
 
-    items = get_content(document_path)
-    local_file, local_content, remote_file, remote_content = items
+        # Create vimbox config
+        if os.path.isfile(config_file):
+            self.config = read_config(config_file)
+            # Check current defaults are present (version missmatch)
+            if set(self.config.keys()) != set(DEFAULT_CONFIG.keys()):
+                print("Updating config")
+                for key, value in DEFAULT_CONFIG.items():
+                    if key not in self.config:
+                        print("%s = %s" % (key, value))
+                        self.config[key] = value
+                # Update config
+                write_config(config_file, self.config)
+        else:
+            # Default config
+            self.config = DEFAULT_CONFIG
+            write_config(config_file, self.config)
+            print("Created %s" % config_file)
 
-    old_local_file = None
-    if local_content and remote_content:
+        # Basic conection check
+        if self.config.get('DROPBOX_TOKEN', None) is None:
+            # Prompt user for a token
+            dropbox_token = raw_input('Please provide Dropbox token: ')
+            # Validate token by connecting to dropbox
+            self.dropbox_client = dropbox.Dropbox(dropbox_token)
+            user_acount = get_user_account(self.dropbox_client)
+            if 'error' in user_acount:
+                print("Could not connect to dropbox %s" % user_acount['error'])
+                exit(1)
+            else:
+                # Store
+                self.config['DROPBOX_TOKEN'] = dropbox_token
+                write_config(config_file, self.config)
+        else:
+            # Checking here for dropbox status can make it too slow
+            self.dropbox_client = dropbox.Dropbox(self.config['DROPBOX_TOKEN'])
 
-        # There is both local and remote content
+    def edit(self, document_path, remove_local=False, diff_mode=False,
+             create_folder=False):
+        """
+        Edit or create existing file
 
-        if (local_content != remote_content):
+        Edits will happen on a local copy that will be uploded when finished.
 
-            # They differ
+        remove_local    set to remove local file after moving it to remote
+        diff_mode       will only edit if both remote and local exist and
+                        differ, otherwise it copies one to the other
+        """
 
-            # Store content on temporary files
-            old_local_file = "%s.OLD" % local_file
-            write_file(old_local_file, local_content)
-            write_file(local_file, remote_content)
+        # Fetch local and remote copies for the file. This may not exist or be
+        # in conflict
+        local_file, local_content, remote_file, remote_content, online = \
+            self._fetch_file(document_path)
 
-            # Show content conflict with vimdiff
-            print(" ".join(['vimdimf', '%s %s' % (old_local_file, local_file)]))
-            call(['vimdiff', old_local_file, local_file])
+        # Make local folder if it does not exist
+        local_folder = os.path.dirname(local_file)
+        if not os.path.isdir(local_folder):
+            os.makedirs(local_folder)
+        # Force use of -f to create new folders
+        remote_folder = os.path.dirname(remote_file)
+        if (
+            remote_folder and
+            remote_folder not in self.config['remote_folders'] and
+            not create_folder
+        ):
+            print(
+                '\nYou need to create remote folder %s, use -f\n' %
+                remote_folder
+            )
+            exit(1)
 
-        elif not diff_mode:
+        # Add remote folder to list
+        if remote_folder not in self.config['remote_folders']:
+            print("Added %s" % remote_folder)
+            self.config['remote_folders'].append(remote_folder)
+            write_config(config_file, self.config)
 
-            # They are the same, we edit the local copy if solicited
-            print(" ".join(['vim', '%s' % local_file]))
-            call(['vim', '%s' % local_file])
-
-    elif remote_content:
-
-        # Only remote content, fill in local copy with remote content
-        write_file(local_file, remote_content)
-        if not diff_mode:
-            print(" ".join(['vim', '%s' % local_file]))
-            call(['vim', '%s' % local_file])
-
-    elif not diff_mode:
-
-        # Only local content, edit it if solicited
-        print(" ".join(['vim', '%s' % local_file]))
-        call(['vim', '%s' % local_file])
-
-    # Read content of edited file
-    new_local_content = read_file(local_file)
-
-    # Update remote if there are changes
-    if new_local_content != remote_content:
-        update_remote(
-            new_local_content,
-            remote_file,
-            local_file,
-            old_local_file,
-            remove_local=remove_local
+        # Merge content with vim
+        merged_content = vim_merge(
+            local_content, remote_content, local_file, diff_mode=diff_mode
         )
-    else:
-        print("No update of remote needed")
 
+        # Update remote if there are changes
+        if not online:
+            print("Offline, will upload in next edit")
 
-def update_remote(new_local_content, remote_file, local_file, old_local_file,
-                  remove_local=False):
-    """
-    Push updates to remote
-    """
+        elif merged_content != remote_content:
 
-    try:
+            # Push changes to dropbox
+            sucess = self._push(merged_content, remote_file)
 
-        # Upload file to the server
-        DROPBOX_CLIENT.files_upload(
-            new_local_content,
-            remote_file,
-            mode=WriteMode('overwrite')
-        )
-        print("Updated in Dropbox %s" % remote_file)
-
-        # Remove local file
-        if remove_local:
-            if os.path.isfile(local_file):
+            # Remove local file
+            if sucess and remove_local and os.path.isfile(local_file):
                 os.remove(local_file)
-            if old_local_file and os.path.isfile(old_local_file):
-                os.remove(old_local_file)
-            print("Removed %s" % local_file)
+                print("Removed %s" % local_file)
 
-    except ApiError as _:
+        else:
+            print("No update of remote needed")
 
-        if online:
+    def _fetch_file(self, document_path):
+        """
+        Get local and remote content and coresponding file paths
+        """
+
+        # Name of the remote file
+        assert document_path[0] == '/', "Dropbox paths start with /"
+        remote_file = '%s' % document_path
+
+        # Name of coresponding local file
+        local_file = '%s/%s' % (self.config['local_root'], document_path)
+        local_folder = os.path.dirname(local_file)
+        if not os.path.isdir(local_folder):
+            os.makedirs(local_folder)
+
+        # Look for local content
+        if os.path.isfile(local_file):
+            # Read local content
+            with open(local_file, 'r') as fid_local:
+                local_content = fid_local.read()
+        else:
+            local_content = None
+
+        online = True
+        try:
+
+            # Look for remote file, store content
+            metadata, res_progress = \
+                self.dropbox_client.files_download(remote_file)
+            remote_content = res_progress.content
+
+        except ConnectionError:
+
+            # Dropbox unrechable
+            remote_content = None
+            online = False
+            print("Can not connect. Working locally on %s" % (local_file))
+
+        except ApiError:
+
+            # File non-existing
+            print("%s does not exist" % (remote_file))
+            remote_content = None
+
+        return local_file, local_content, remote_file, remote_content, online
+
+    def _push(self, new_local_content, remote_file):
+        """
+        Push updates to remote, do local clean-up if necessary
+        """
+
+        try:
+
+            # Upload file to the server
+            self.dropbox_client.files_upload(
+                new_local_content,
+                remote_file,
+                mode=WriteMode('overwrite')
+            )
+            print("Updated in Dropbox %s" % remote_file)
+            return True
+
+        except ApiError:
+
             # File non-existing or unreachable
-            print("Connection lost keeping local copy in %s" % local_file)
+            print("Connection lost keeping local copy")
+            return False
