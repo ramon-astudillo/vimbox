@@ -18,9 +18,19 @@ DEFAULT_CONFIG = {
 }
 
 
+def set_autocomplete():
+    raise NotImplementedError("Not working at the moment")
+    call(['complete -W \"%s\" \'vimbox\'' % folders()])
+
+
+def folders():
+    config = read_config(config_file)
+    return " ".join(config['remote_folders'])
+
+
 def vim_edit_config():
-    print(" ".join(['vim', '%s' % config_file]))
-    call(['vim', '%s' % config_file])
+    print(" ".join(['vim', config_file]))
+    call(['vim', config_file])
     exit()
 
 
@@ -209,6 +219,8 @@ class VimBox():
             print("Added %s" % remote_folder)
             self.config['remote_folders'].append(remote_folder)
             write_config(config_file, self.config)
+            # Update autocomplete options
+            # set_autocomplete()
 
         # Merge content with vim
         merged_content = vim_merge(

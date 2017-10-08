@@ -14,6 +14,10 @@ Get dropbox directory tree
 
 https://stackoverflow.com/questions/31485418/build-directory-tree-from-dropbox-api#31487098
 
+To get folder autocomplete
+
+    complete -W "$(vimbox -l)" 'vimbox'
+
 # Troubleshooting
 
 In OSx with macports, entry_points get installed in a folder not int the PATH.

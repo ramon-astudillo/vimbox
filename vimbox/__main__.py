@@ -1,5 +1,5 @@
 import sys
-from vimbox import VimBox, vim_edit_config
+from vimbox import VimBox, vim_edit_config, folders
 
 
 def vimbox_help():
@@ -14,25 +14,27 @@ def main(args=None):
     if args is None:
         args = sys.argv[1:]
 
+    if '-c' in args:
+        vim_edit_config()
+        exit()
+
+    elif '-l' in args:
+        print folders()
+        exit()
+
     # Gather options from command line
     file_path = None
     create_folder = False
-    edit_config = False
     for option in args:
         if option == '-f':
             create_folder = True
-        elif option == '-c':
-            edit_config = True
         elif file_path is not None:
             vimbox_help()
         else:
             file_path = option
-    if file_path is None and not edit_config:
-        vimbox_help()
 
-    # Simple edit config mode
-    if edit_config:
-        vim_edit_config()
+    if file_path is None:
+        vimbox_help()
 
     # Call edit utility
     vimbox = VimBox()
