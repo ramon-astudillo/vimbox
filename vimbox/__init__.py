@@ -104,7 +104,11 @@ def vim_merge(local_content, remote_content, tmp_file, diff_mode=False):
         call(['vim', '%s' % tmp_file])
 
     # Read content of edited file
-    new_local_content = read_file(tmp_file)
+    # NOTE: Than in the last of options above, we might not create a file at all
+    if os.path.isfile(tmp_file):
+        new_local_content = read_file(tmp_file)
+    else:
+        new_local_content = None
 
     # Clean up extra temporary files
     if old_tmp_file and os.path.isfile(old_tmp_file):
