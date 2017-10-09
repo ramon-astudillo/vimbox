@@ -37,17 +37,24 @@ def vim_edit_config():
 
 def get_user_account(dropbox_client):
     try:
-        return dropbox_client.users_get_current_account()
+
+        # Get user info to validate account
+        user = dropbox_client.users_get_current_account()
+        error = None
 
     except ConnectionError:
 
         # Dropbox unrechable
-        return {'error': 'connection-error'}
+        user = None
+        error = 'connection-error'
 
     except ApiError:
 
         # API error
-        return {'error': 'api-error'}
+        user = None
+        error = 'api-error'
+
+    return user, error
 
 
 def vim_merge(local_content, remote_content, tmp_file, diff_mode=False):
@@ -140,12 +147,16 @@ class VimBox():
         # Basic conection check
         if self.config.get('DROPBOX_TOKEN', None) is None:
             # Prompt user for a token
+            print(
+                "\nA dropbox access token for vimbox is needed, "
+                "see\n\nhttps://www.dropbox.com/developers/apps/\n"
+            )
             dropbox_token = raw_input('Please provide Dropbox token: ')
             # Validate token by connecting to dropbox
             self.dropbox_client = dropbox.Dropbox(dropbox_token)
-            user_acount = get_user_account(self.dropbox_client)
-            if 'error' in user_acount:
-                print("Could not connect to dropbox %s" % user_acount['error'])
+            user_acount, error = get_user_account(self.dropbox_client)
+            if user_acount is None:
+                print("Could not connect to dropbox %s" % error)
                 exit(1)
             else:
                 # Store
