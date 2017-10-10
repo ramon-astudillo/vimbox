@@ -182,8 +182,8 @@ class VimBox():
                         differ, otherwise it copies one to the other
         """
 
-        # Quick exit: edit file is not a file but a registered folder
-        if remote_file in self.config['remote_folders']:
+        # Quick exit: edit file is not a file but a look like a folder
+        if remote_file[-1] == '/':
             print("")
             result = self.dropbox_client.files_list_folder(remote_file)
             for entry in result.entries:
