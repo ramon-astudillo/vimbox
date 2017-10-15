@@ -310,8 +310,14 @@ class VimBox():
             print("Updated in Dropbox %s" % remote_file)
             return True
 
-        except ApiError:
+        except ConnectionError:
 
             # File non-existing or unreachable
             print("Connection lost keeping local copy")
+            return False
+
+        except ApiError:
+
+            # File non-existing or unreachable
+            print("API error keeping local copy")
             return False
