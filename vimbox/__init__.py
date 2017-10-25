@@ -57,6 +57,28 @@ def get_user_account(dropbox_client):
     return user, error
 
 
+def get_folders(dropbox_client, remote_folder):
+    try:
+
+        # Get user info to validate account
+        result = dropbox_client.files_list_folder(remote_folder)
+        error = None
+
+    except ConnectionError:
+
+        # Dropbox unrechable
+        result = None
+        error = 'connection-error'
+
+    except ApiError:
+
+        # API error
+        result = None
+        error = 'api-error'
+
+    return result, error
+
+
 def vim_merge(local_content, remote_content, tmp_file, diff_mode=False):
     """
     Merge local and remote texts using vim
@@ -184,12 +206,16 @@ class VimBox():
 
         # Quick exit: edit file is not a file but a look like a folder
         if remote_file[-1] == '/':
-            print("")
-            result = self.dropbox_client.files_list_folder(remote_file)
-            for entry in result.entries:
-                print entry.name
-            print("")
-            exit(0)
+            result, _ = get_folders(self.dropbox_client, remote_file)
+            if result:
+                print("")
+                for entry in result.entries:
+                    print entry.name
+                print("")
+                exit(0)
+            else:
+                # TODO: Use local_folder
+                print("Local mode, no remote ls")
 
         # Fetch local and remote copies for the file. This may not exist or be
         # in conflict
@@ -203,7 +229,8 @@ class VimBox():
         # Force use of -f to create new files
         if (
             not force_creation and
-            remote_content is None and online
+            remote_content is None and
+            online
         ):
             print('\nYou are creating a new file, use -f\n')
             exit(1)
