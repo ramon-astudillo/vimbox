@@ -205,6 +205,9 @@ class VimBox():
             # Checking here for dropbox status can make it too slow
             self.dropbox_client = dropbox.Dropbox(self.config['DROPBOX_TOKEN'])
 
+    def get_local_file(self, remote_file):
+        return '%s/%s' % (self.config['local_root'], remote_file)
+
     def edit(self, remote_file, remove_local=False, diff_mode=False,
              force_creation=False, register_folder=True):
         """
@@ -283,7 +286,7 @@ class VimBox():
         assert remote_file[0] == '/', "Dropbox remote paths start with /"
 
         # Name of coresponding local file
-        local_file = '%s/%s' % (self.config['local_root'], remote_file)
+        local_file = self.get_local_file(remote_file)
         local_folder = os.path.dirname(local_file)
         if not os.path.isdir(local_folder):
             os.makedirs(local_folder)
