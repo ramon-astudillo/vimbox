@@ -24,6 +24,19 @@ def set_autocomplete():
     call(['complete -W \"%s\" \'vimbox\'' % folders()])
 
 
+def list_remote_folders(dropbox_client, remote_file):
+
+    result, _ = get_folders(dropbox_client, remote_file)
+    if result:
+        print("")
+        for entry in result.entries:
+            print entry.name
+        print("")
+    else:
+        # TODO: Use local_folder
+        print("Local mode, no remote ls")
+
+
 def folders():
     config = read_config(CONFIG_FILE)
     return config['remote_folders']
@@ -206,34 +219,18 @@ class VimBox():
 
         # Quick exit: edit file is not a file but a look like a folder
         if remote_file[-1] == '/':
-            result, _ = get_folders(self.dropbox_client, remote_file)
-            if result:
-                print("")
-                for entry in result.entries:
-                    print entry.name
-                print("")
-                exit(0)
-            else:
-                # TODO: Use local_folder
-                print("Local mode, no remote ls")
+            list_remote_folders(self.dropbox_client, remote_file)
 
         # Fetch local and remote copies for the file. This may not exist or be
         # in conflict
         local_file, local_content, remote_content, online = \
-            self._fetch_file(remote_file)
+            self._fetch(remote_file)
 
         # Make local folder if it does not exist
         local_folder = os.path.dirname(local_file)
         if not os.path.isdir(local_folder):
             os.makedirs(local_folder)
-        # Force use of -f to create new files
-        if (
-            not force_creation and
-            remote_content is None and
-            online
-        ):
-            print('\nYou are creating a new file, use -f\n')
-            exit(1)
+
         # Force use of -f to create new folders
         remote_folder = '%s/' % os.path.dirname(remote_file)
         if (
@@ -249,9 +246,9 @@ class VimBox():
             remote_folder not in self.config['remote_folders'] and
             register_folder
         ):
-            print("Added %s" % remote_folder)
             self.config['remote_folders'].append(remote_folder)
             write_config(CONFIG_FILE, self.config)
+            print("Added %s" % remote_folder)
             # Update autocomplete options
             # set_autocomplete()
 
@@ -277,7 +274,7 @@ class VimBox():
         else:
             print("No update of remote needed")
 
-    def _fetch_file(self, remote_file):
+    def _fetch(self, remote_file):
         """
         Get local and remote content and coresponding file paths
         """
