@@ -27,14 +27,16 @@ It is necessary to manually link this as
 
 # Versions
 
-To think
-
-* Encription, see `feature/add-encription`. Need to design interfacting
-
 Desired
 
 * Register dropbox app on first run
 
-* `vimbox -o` and `vimbox -O`
+* simulated bash `vimbox rm /unbabel/mylog`, `vimbox cat /unbabel/mylog`
+
+* pipes `cat mylog | vimbox -f /unbabel/mylog`
+
+* simulated vim `vimbox -o` and `vimbox -O`
 
 * Fancy colored outputs print()s
+
+* Encription, see `feature/add-encription`. Need to think interfacting

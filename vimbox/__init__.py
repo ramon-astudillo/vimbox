@@ -223,6 +223,7 @@ class VimBox():
         # Quick exit: edit file is not a file but a look like a folder
         if remote_file[-1] == '/':
             list_remote_folders(self.dropbox_client, remote_file)
+            exit(0)
 
         # Fetch local and remote copies for the file. This may not exist or be
         # in conflict
