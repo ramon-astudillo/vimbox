@@ -37,6 +37,8 @@ Desired
 
 * simulated vim `vimbox -o` and `vimbox -O`
 
-* Fancy colored outputs print()s
-
 * Encription, see `feature/add-encription`. Need to think interfacting
+
+# Done
+
+* Fancy colored outputs print()s

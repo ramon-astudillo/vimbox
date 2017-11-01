@@ -19,6 +19,18 @@ DEFAULT_CONFIG = {
 }
 
 
+def red(text):
+    return "\033[91m%s\033[0m" % text
+
+
+def yellow(text):
+    return "\033[93m%s\033[0m" % text
+
+
+def green(text):
+    return "\033[92m%s\033[0m" % text
+
+
 def set_autocomplete():
     raise NotImplementedError("Not working at the moment")
     call(['complete -W \"%s\" \'vimbox\'' % folders()])
@@ -262,21 +274,30 @@ class VimBox():
         )
 
         # Update remote if there are changes
-        if not online:
-            print("Offline, will upload in next edit")
+        if merged_content != remote_content:
 
-        elif merged_content != remote_content:
+            # After edit, changes in the remote needed
+            if not online:
+                print("%12s %s" % (red("offline"), remote_file))
+            else:
+                # Push changes to dropbox
+                sucess = self._push(merged_content, remote_file)
+                # Remove local file
+                if sucess:
+                    print("%12s %s" % (yellow("pushed"), remote_file))
+                    if remove_local and os.path.isfile(local_file):
+                        # Remove local file if solicited
+                        os.remove(local_file)
+                        print("%12s %s" % (red("cleaned"), local_file))
+                else:
+                    print("%12s %s" % (red("offline?"), remote_file))
 
-            # Push changes to dropbox
-            sucess = self._push(merged_content, remote_file)
-
-            # Remove local file
-            if sucess and remove_local and os.path.isfile(local_file):
-                os.remove(local_file)
-                print("Removed %s" % local_file)
-
+        elif local_content != remote_content:
+            # We had to update local to match remote
+            print("%12s %s" % (yellow("pulled"), remote_file))
         else:
-            print("No update of remote needed")
+            # No changes needed on either side
+            print("%12s %s" % (green("in-sync"), remote_file))
 
     def _fetch(self, remote_file):
         """
@@ -335,7 +356,6 @@ class VimBox():
                 remote_file,
                 mode=WriteMode('overwrite')
             )
-            print("Updated in Dropbox %s" % remote_file)
             return True
 
         except ConnectionError:
