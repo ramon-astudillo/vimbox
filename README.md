@@ -29,6 +29,8 @@ It is necessary to manually link this as
 
 Desired
 
+* Update autocomplete from vimbox (instead of `source`)
+
 * Register dropbox app on first run
 
 * simulated bash `vimbox rm /unbabel/mylog`, `vimbox cat /unbabel/mylog`
@@ -39,6 +41,6 @@ Desired
 
 * Encription, see `feature/add-encription`. Need to think interfacting
 
-# Done
+### Future 0.0.3
 
 * Fancy colored outputs print()s
