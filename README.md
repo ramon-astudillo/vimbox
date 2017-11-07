@@ -6,7 +6,7 @@ Create the vimbox app
     Full Dropbox - Access ...
     Name vimbox
 
-Gnerate Acess token, store in .env
+Generate Acess token, store in .env
 
     DROPBOX_TOKEN=<token>
 
@@ -29,17 +29,20 @@ It is necessary to manually link this as
 
 Desired
 
-* Update autocomplete from vimbox (instead of `source`)
+
+* wrapper around vim (tunnel all options) 
+    :( forces to sync files by separate, big change of flow. Unfrequent use
+
+* Update autocomplete from vimbox after new register (instead of `source`)
 
 * Register dropbox app on first run
 
-* simulated bash `vimbox rm /unbabel/mylog`, `vimbox cat /unbabel/mylog`
-
 * pipes `cat mylog | vimbox -f /unbabel/mylog`
 
-* simulated vim `vimbox -o` and `vimbox -O`
+* simulated bash `vimbox rm /unbabel/mylog`, `vimbox cat /unbabel/mylog`
 
-* Encription, see `feature/add-encription`. Need to think interfacting
+* Encription, see `feature/add-encription`. Need to think details 
+    - `vimbox -e /private/` 
 
 ### Future 0.0.3
 
