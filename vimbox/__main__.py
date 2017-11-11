@@ -24,7 +24,7 @@ def main(args=None):
             vim_edit_config()
         elif args[1] == 'ls':
             print("")
-            for folder in folders():
+            for folder in sorted(folders()):
                 print(folder)
             print("")
     else:
@@ -38,7 +38,7 @@ def main(args=None):
                 # Create new file
                 force_creation = True
             elif option == '-e':
-                # Create new encripted file
+                # Create new encripted file or register existing one
                 force_creation = True
                 password = raw_input('Input file password: ')
             elif option[0] == '/':
@@ -53,7 +53,11 @@ def main(args=None):
 
         # Call edit utility
         vimbox = VimBox()
-        vimbox.edit(file_path, force_creation=force_creation, password=password)
+        vimbox.edit(
+            file_path,
+            force_creation=force_creation,
+            password=password
+        )
 
 if __name__ == "__main__":
     main()

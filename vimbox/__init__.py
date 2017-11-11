@@ -25,7 +25,6 @@ DEFAULT_CONFIG = {
 }
 
 
-
 def red(text):
     return "\033[91m%s\033[0m" % text
 
@@ -224,43 +223,7 @@ class VimBox():
             # Checking here for dropbox status can make it too slow
             self.dropbox_client = dropbox.Dropbox(self.config['DROPBOX_TOKEN'])
 
-    def get_local_file(self, remote_file):
-        return '%s/%s' % (self.config['local_root'], remote_file)
-
-    def edit(self, remote_file, remove_local=False, diff_mode=False,
-             force_creation=False, register_folder=True, password=None):
-        """
-        Edit or create existing file
-
-        Edits will happen on a local copy that will be uploded when finished.
-
-        remove_local    set to remove local file after moving it to remote
-        diff_mode       will only edit if both remote and local exist and
-                        differ, otherwise it copies one to the other
-        """
-
-        # Sanity check: validate password
-        if password:
-            password = validate_password(password)
-
-        # Quick exit: edit file is not a file but a look like a folder
-        if remote_file[-1] == '/':
-            list_remote_folders(self.dropbox_client, remote_file)
-            exit(0)
-
-        # Fetch local and remote copies for the file. This may not exist or be
-        # in conflict
-        local_file, local_content, remote_content, status = \
-            self._fetch(remote_file, password=password)
-
-        if status == 'decription-failed':
-            print('\nDecription failed check password and vimbox version\n')
-            exit()
-
-        # Make local folder if it does not exist
-        local_folder = os.path.dirname(local_file)
-        if not os.path.isdir(local_folder):
-            os.makedirs(local_folder)
+    def register(self, remote_file, force_creation, register_folder):
 
         # Force use of -f to create new folders
         remote_folder = '%s/' % os.path.dirname(remote_file)
@@ -282,6 +245,45 @@ class VimBox():
             print("Added %s" % remote_folder)
             # Update autocomplete options
             # set_autocomplete()
+
+    def get_local_file(self, remote_file):
+        return '%s/%s' % (self.config['local_root'], remote_file)
+
+    def edit(self, remote_file, remove_local=False, diff_mode=False,
+             force_creation=False, register_folder=True, password=None):
+        """
+        Edit or create existing file
+
+        Edits will happen on a local copy that will be uploded when finished.
+
+        remove_local    set to remove local file after moving it to remote
+        diff_mode       will only edit if both remote and local exist and
+                        differ, otherwise it copies one to the other
+        """
+
+        # Quick exit: edit file is a folder
+        if remote_file[-1] == '/':
+            if password:
+                print('\nOnly files can be encripted\n')
+            else:
+                list_remote_folders(self.dropbox_client, remote_file)
+            exit(0)
+
+        # Sanity check: validate password
+        if password:
+            password = validate_password(password)
+
+        # Fetch local content for this file
+        local_file, local_content = self.get_local_content(remote_file)
+        # Fetch remote content for this file
+        remote_content, status = self._fetch(remote_file, password=password)
+        # Quick exit on decription failure
+        if status == 'decription-failed':
+            print('\nDecription failed check password and vimbox version\n')
+            exit()
+
+        # Register file
+        self.register(remote_file, force_creation, register_folder)
 
         # Merge content with vim
         merged_content = vim_merge(
@@ -321,16 +323,12 @@ class VimBox():
             # No changes needed on either side
             print("%12s %s" % (green("in-sync"), remote_file))
 
-    def _fetch(self, remote_file, password=None):
-        """
-        Get local and remote content and coresponding file paths
-        """
-
-        # Name of the remote file
-        assert remote_file[0] == '/', "Dropbox remote paths start with /"
+    def get_local_content(self, remote_file):
 
         # Name of coresponding local file
         local_file = self.get_local_file(remote_file)
+
+        # Create local folder if needed
         local_folder = os.path.dirname(local_file)
         if not os.path.isdir(local_folder):
             os.makedirs(local_folder)
@@ -342,6 +340,16 @@ class VimBox():
                 local_content = fid_local.read()
         else:
             local_content = None
+
+        return local_file, local_content
+
+    def _fetch(self, remote_file, password=None):
+        """
+        Get local and remote content and coresponding file paths
+        """
+
+        # Name of the remote file
+        assert remote_file[0] == '/', "Dropbox remote paths start with /"
 
         # If encripted get encripted remote-name
         if password:
@@ -363,7 +371,7 @@ class VimBox():
             # Dropbox unrechable
             remote_content = None
             status = 'connection-failed'
-            print("Can not connect. Working locally on %s" % (local_file))
+            print("Can not connect. Working locally")
 
         except ApiError:
 
@@ -377,7 +385,7 @@ class VimBox():
             if not sucess:
                 status = 'decription-failed'
 
-        return local_file, local_content, remote_content, status
+        return remote_content, status
 
     def _push(self, new_local_content, remote_file, password=None):
         """
