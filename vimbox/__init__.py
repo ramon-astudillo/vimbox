@@ -7,6 +7,12 @@ from dropbox.exceptions import ApiError
 from dropbox.files import WriteMode
 #
 from vimbox.io import read_config, write_config, read_file, write_file
+from vimbox.crypto import (
+    get_path_hash,
+    validate_password,
+    encript_content,
+    decript_content
+)
 
 ROOT_FOLDER = "%s/.vimbox/" % os.environ['HOME']
 CONFIG_FILE = '%s/config.yml' % ROOT_FOLDER
@@ -17,6 +23,7 @@ DEFAULT_CONFIG = {
     'remote_root': None,
     'remote_folders': []
 }
+
 
 
 def red(text):
@@ -221,7 +228,7 @@ class VimBox():
         return '%s/%s' % (self.config['local_root'], remote_file)
 
     def edit(self, remote_file, remove_local=False, diff_mode=False,
-             force_creation=False, register_folder=True):
+             force_creation=False, register_folder=True, password=None):
         """
         Edit or create existing file
 
@@ -232,6 +239,10 @@ class VimBox():
                         differ, otherwise it copies one to the other
         """
 
+        # Sanity check: validate password
+        if password:
+            password = validate_password(password)
+
         # Quick exit: edit file is not a file but a look like a folder
         if remote_file[-1] == '/':
             list_remote_folders(self.dropbox_client, remote_file)
@@ -239,8 +250,12 @@ class VimBox():
 
         # Fetch local and remote copies for the file. This may not exist or be
         # in conflict
-        local_file, local_content, remote_content, online = \
-            self._fetch(remote_file)
+        local_file, local_content, remote_content, status = \
+            self._fetch(remote_file, password=password)
+
+        if status == 'decription-failed':
+            print('\nDecription failed check password and vimbox version\n')
+            exit()
 
         # Make local folder if it does not exist
         local_folder = os.path.dirname(local_file)
@@ -270,18 +285,25 @@ class VimBox():
 
         # Merge content with vim
         merged_content = vim_merge(
-            local_content, remote_content, local_file, diff_mode=diff_mode
+            local_content,
+            remote_content,
+            local_file,
+            diff_mode=diff_mode
         )
 
         # Update remote if there are changes
         if merged_content != remote_content:
 
             # After edit, changes in the remote needed
-            if not online:
+            if status != 'online':
                 print("%12s %s" % (red("offline"), remote_file))
             else:
                 # Push changes to dropbox
-                sucess = self._push(merged_content, remote_file)
+                sucess = self._push(
+                    merged_content,
+                    remote_file,
+                    password=password
+                )
                 # Remove local file
                 if sucess:
                     print("%12s %s" % (yellow("pushed"), remote_file))
@@ -299,7 +321,7 @@ class VimBox():
             # No changes needed on either side
             print("%12s %s" % (green("in-sync"), remote_file))
 
-    def _fetch(self, remote_file):
+    def _fetch(self, remote_file, password=None):
         """
         Get local and remote content and coresponding file paths
         """
@@ -321,39 +343,62 @@ class VimBox():
         else:
             local_content = None
 
-        online = True
+        # If encripted get encripted remote-name
+        if password:
+            remote_file_hash = get_path_hash(remote_file, password)
+        else:
+            remote_file_hash = remote_file
+
         try:
 
             # Look for remote file, store content
-            metadata, response = self.dropbox_client.files_download(remote_file)
+            metadata, response = self.dropbox_client.files_download(
+                remote_file_hash
+            )
             remote_content = response.content
+            status = 'online'
 
         except ConnectionError:
 
             # Dropbox unrechable
             remote_content = None
-            online = False
+            status = 'connection-failed'
             print("Can not connect. Working locally on %s" % (local_file))
 
         except ApiError:
 
             # File non-existing
             remote_content = None
+            status = 'unexisting-file'
             print("%s does not exist" % (remote_file))
 
-        return local_file, local_content, remote_content, online
+        if remote_content is not None and password is not None:
+            remote_content, sucess = decript_content(remote_content, password)
+            if not sucess:
+                status = 'decription-failed'
 
-    def _push(self, new_local_content, remote_file):
+        return local_file, local_content, remote_content, status
+
+    def _push(self, new_local_content, remote_file, password=None):
         """
         Push updates to remote, do local clean-up if necessary
         """
+
+        # If encripted get encripted remote-name
+        if password is not None:
+            # Hash filename
+            remote_file_hash = get_path_hash(remote_file, password)
+            # Encript content
+            new_local_content = encript_content(new_local_content, password)
+        else:
+            remote_file_hash = remote_file
 
         try:
 
             # Upload file to the server
             self.dropbox_client.files_upload(
                 new_local_content,
-                remote_file,
+                remote_file_hash,
                 mode=WriteMode('overwrite')
             )
             return True
