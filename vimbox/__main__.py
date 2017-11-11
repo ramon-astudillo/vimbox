@@ -16,17 +16,17 @@ def main(args=None):
     if args is None:
         args = sys.argv[1:]
 
-    # Argument-less options
-    if len(args) == 1:
+    if args[0] == 'config':
 
-        # Single arguments
-        if args[1] == 'config':
-            vim_edit_config()
-        elif args[1] == 'ls':
-            print("")
-            for folder in sorted(folders()):
-                print(folder)
-            print("")
+        vim_edit_config()
+
+    elif args[0] == 'ls':
+
+        print("")
+        for folder in sorted(folders()):
+            print(folder)
+        print("")
+
     else:
 
         # Multiple arguments

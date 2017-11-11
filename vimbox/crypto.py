@@ -1,8 +1,11 @@
 import os
 from math import ceil
 #
-from Crypto.Cipher import AES
-from Crypto.Hash import MD5
+try:
+    from Crypto.Cipher import AES
+    from Crypto.Hash import MD5
+except:
+    print("\nMissing module pycrypto, no encription available\n")
 
 # ACHTUNG: Changing this may yield incorrect dencription errors!
 HEADER = '# this was encripted'
