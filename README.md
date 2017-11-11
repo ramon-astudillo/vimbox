@@ -1,3 +1,16 @@
+# Install
+
+Clone
+
+    git clone git@gitlab.com:ramon-astudillo/vimbox.git
+    sudo pip install vimbox/ 
+
+Upgrade after version change
+
+    sudo pip install vimbox/ --upgrade
+
+# Create App on Dropbox
+
 Create the vimbox app
 
     https://www.dropbox.com/developers/apps/create
