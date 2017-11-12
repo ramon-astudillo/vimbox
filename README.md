@@ -86,7 +86,7 @@ To get folder autocomplete
 
 # Troubleshooting
 
-In OSx with macports, entry_points get installed in a folder not int the PATH.
+In OSx with macports, entry_points get installed in a folder not in the PATH.
 It is necessary to manually link this as
 
     sudo ln -s /opt/local/Library/Frameworks/Python.framework/Versions/2.7/bin/vimbox /usr/bin/vimbox
@@ -102,14 +102,14 @@ Desired
 
 * Update autocomplete from vimbox after new register (instead of `source`)
 
-* Register dropbox app on first run
-
-* pipes `cat mylog | vimbox -f /unbabel/mylog`
+* pipes `cat mylog | vimbox -f /logs/mylog` and `vimbox cat /logs/mylog`
 
 * File properties model to allow encripting folders or having files with no
   local copy
 
-* simulated bash `vimbox rm /unbabel/mylog`, `vimbox cat /unbabel/mylog`
+* Register dropbox app on first run
+
+* simulated bash `vimbox rm /logs/mylog`, `vimbox cat /logs/mylog`
 
 ### Future 0.0.3
 
