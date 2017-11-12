@@ -18,10 +18,16 @@ ROOT_FOLDER = "%s/.vimbox/" % os.environ['HOME']
 CONFIG_FILE = '%s/config.yml' % ROOT_FOLDER
 
 DEFAULT_CONFIG = {
+    # This will store the dropbox token (no need to add it manually here!)
     'DROPBOX_TOKEN': None,
+    # This will be appended to local paths
     'local_root': '%s/DATA' % ROOT_FOLDER,
+    # This will be appended to all paths within dropbox
     'remote_root': None,
-    'remote_folders': []
+    # This will store the local cache
+    'cache': [],
+    # This will store dict() s of hash: file_path for encripted files
+    'path_hashes': []
 }
 
 
@@ -44,7 +50,7 @@ def set_autocomplete():
 
 def get_cache():
     config = read_config(CONFIG_FILE)
-    return config['remote_folders']
+    return config['cache']
 
 
 def vim_edit_config():
@@ -222,7 +228,7 @@ class VimBox():
         else:
             # If it fails resort to local cache
             folders = list(set([
-                os.path.dirname(path) for path in self.config['remote_folders']
+                os.path.dirname(path) for path in self.config['cache']
             ]))
             offset = len(remote_file)
             display_folders = set()
@@ -239,7 +245,7 @@ class VimBox():
             print("%s/" % folder)
         print("")
 
-    def register(self, remote_file, force_creation):
+    def register(self, remote_file, force_creation, password=None):
         """
         A file can be registered by its folder or it name directly
         """
@@ -247,22 +253,29 @@ class VimBox():
         # Folder path
         remote_folder = '%s/' % os.path.dirname(remote_file)
         is_registered = False
-        if remote_folder and remote_folder in self.config['remote_folders']:
+        if remote_folder and remote_folder in self.config['cache']:
             is_registered = True
-        elif remote_file in self.config['remote_folders']:
+        elif remote_file in self.config['cache']:
             is_registered = True
 
         # Force use of -f to create new folders
         if not is_registered:
             if not force_creation:
-                print('\nYou need to create a folder, use -f\n')
+                print('\nYou need to create a file, use -f or -e\n')
                 exit(1)
             else:
-                self.config['remote_folders'].append(remote_folder)
+                self.config['cache'].append(remote_folder)
                 write_config(CONFIG_FILE, self.config)
                 print("Added %s" % remote_folder)
                 # Update autocomplete options
                 # set_autocomplete()
+
+            # Register file hash in the local cache
+            if password:
+                remote_file_hash = get_path_hash(remote_file, password)
+                self.config['path_hashes'].append(
+                    {remote_file_hash: remote_file}
+                )
 
     def get_local_file(self, remote_file):
         return '%s/%s' % (self.config['local_root'], remote_file)
@@ -303,7 +316,7 @@ class VimBox():
 
         # Register file
         if register_folder:
-            self.register(remote_file, force_creation)
+            self.register(remote_file, force_creation, password=password)
 
         # Merge content with vim
         merged_content = vim_merge(
