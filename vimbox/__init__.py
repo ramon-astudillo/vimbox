@@ -39,7 +39,7 @@ def green(text):
 
 def set_autocomplete():
     raise NotImplementedError("Not working at the moment")
-    call(['complete -W \"%s\" \'vimbox\'' % folders()])
+    call(['complete -W \"%s\" \'vimbox\'' % get_cache()])
 
 
 def get_cache():
@@ -235,7 +235,7 @@ class VimBox():
 
         # Print
         print("")
-        for folder in display_folders:
+        for folder in sorted(display_folders):
             print("%s/" % folder)
         print("")
 
