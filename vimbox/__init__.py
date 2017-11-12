@@ -42,18 +42,6 @@ def set_autocomplete():
     call(['complete -W \"%s\" \'vimbox\'' % folders()])
 
 
-def list_remote_folders(dropbox_client, remote_file):
-
-    result, _ = get_folders(dropbox_client, remote_file)
-    if result:
-        print("")
-        for entry in result.entries:
-            print entry.name
-        print("")
-    else:
-        # TODO: Use local_folder
-        print("Local mode, no remote ls")
-
 
 def folders():
     config = read_config(CONFIG_FILE)
@@ -203,14 +191,16 @@ class VimBox():
 
         # Basic conection check
         if self.config.get('DROPBOX_TOKEN', None) is None:
+
             # Prompt user for a token
             print(
                 "\nA dropbox access token for vimbox is needed, "
                 "see\n\nhttps://www.dropbox.com/developers/apps/\n"
             )
             dropbox_token = raw_input('Please provide Dropbox token: ')
-            # Validate token by connecting to dropbox
             self.dropbox_client = dropbox.Dropbox(dropbox_token)
+
+            # Validate token by connecting to dropbox
             user_acount, error = get_user_account(self.dropbox_client)
             if user_acount is None:
                 print("Could not connect to dropbox %s" % error)
@@ -220,31 +210,60 @@ class VimBox():
                 self.config['DROPBOX_TOKEN'] = dropbox_token
                 write_config(CONFIG_FILE, self.config)
         else:
+
             # Checking here for dropbox status can make it too slow
             self.dropbox_client = dropbox.Dropbox(self.config['DROPBOX_TOKEN'])
 
-    def register(self, remote_file, force_creation, register_folder):
+    def list_folders(self, remote_file):
+
+        # Try first remote
+        result, _ = get_folders(self.dropbox_client, remote_file)
+        if result:
+            display_folders = sorted([x.name for x in result.entries])
+        else:
+            # If it fails resort to local cache
+            folders = list(set([
+                os.path.dirname(path) for path in self.config['remote_folders']
+            ]))
+            offset = len(remote_file)
+            display_folders = set()
+            for folder in folders:
+                if folder[:offset] == remote_file:
+                    display_folders |= set([folder[offset:].split('/')[0]])
+            display_folders = sorted(display_folders)
+            if display_folders:
+                print("\nOffline, showing cached files/folders")
+
+        # Print
+        print("")
+        for folder in display_folders:
+            print("%s/" % folder)
+        print("")
+
+    def register(self, remote_file, force_creation):
+        """
+        A file can be registered by its folder or it name directly
+        """
+
+        # Folder path
+        remote_folder = '%s/' % os.path.dirname(remote_file)
+        is_registered = False
+        if remote_folder and remote_folder in self.config['remote_folders']:
+            is_registered = True
+        elif remote_file in self.config['remote_folders']:
+            is_registered = True
 
         # Force use of -f to create new folders
-        remote_folder = '%s/' % os.path.dirname(remote_file)
-        if (
-            not force_creation and
-            remote_folder and
-            remote_folder not in self.config['remote_folders']
-        ):
-            print('\nYou need to create a folder, use -f\n')
-            exit(1)
-
-        # Add remote folder to list
-        if (
-            remote_folder not in self.config['remote_folders'] and
-            register_folder
-        ):
-            self.config['remote_folders'].append(remote_folder)
-            write_config(CONFIG_FILE, self.config)
-            print("Added %s" % remote_folder)
-            # Update autocomplete options
-            # set_autocomplete()
+        if not is_registered:
+            if not force_creation:
+                print('\nYou need to create a folder, use -f\n')
+                exit(1)
+            else:
+                self.config['remote_folders'].append(remote_folder)
+                write_config(CONFIG_FILE, self.config)
+                print("Added %s" % remote_folder)
+                # Update autocomplete options
+                # set_autocomplete()
 
     def get_local_file(self, remote_file):
         return '%s/%s' % (self.config['local_root'], remote_file)
@@ -266,7 +285,8 @@ class VimBox():
             if password:
                 print('\nOnly files can be encripted\n')
             else:
-                list_remote_folders(self.dropbox_client, remote_file)
+                # TODO: Handle here offline-mode and encripted files
+                self.list_folders(remote_file)
             exit(0)
 
         # Sanity check: validate password
@@ -283,7 +303,8 @@ class VimBox():
             exit()
 
         # Register file
-        self.register(remote_file, force_creation, register_folder)
+        if register_folder:
+            self.register(remote_file, force_creation)
 
         # Merge content with vim
         merged_content = vim_merge(
@@ -297,7 +318,7 @@ class VimBox():
         if merged_content != remote_content:
 
             # After edit, changes in the remote needed
-            if status != 'online':
+            if status == 'connection-failed':
                 print("%12s %s" % (red("offline"), remote_file))
             else:
                 # Push changes to dropbox

@@ -5,7 +5,7 @@ try:
     from Crypto.Cipher import AES
     from Crypto.Hash import MD5
 except:
-    print("\nMissing module pycrypto, no encription available\n")
+    print("\nMissing module pycrypto, no encription available")
 
 # ACHTUNG: Changing this may yield incorrect dencription errors!
 HEADER = '# this was encripted'

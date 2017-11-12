@@ -1,5 +1,5 @@
 import sys
-from vimbox import VimBox, vim_edit_config, folders
+from vimbox import VimBox, vim_edit_config
 
 
 def vimbox_help():
@@ -16,16 +16,22 @@ def main(args=None):
     if args is None:
         args = sys.argv[1:]
 
-    if args[0] == 'config':
+    if len(args) == 0:
+        vimbox_help()
+
+    elif args[0] == 'config':
 
         vim_edit_config()
 
     elif args[0] == 'ls':
 
-        print("")
-        for folder in sorted(folders()):
-            print(folder)
-        print("")
+        vimbox = VimBox()
+        if len(args) == 1:
+            vimbox.list_folders('/')
+        elif len(args) == 2:
+            vimbox.list_folders(args[1])
+        else:
+            vimbox_help()
 
     else:
 
