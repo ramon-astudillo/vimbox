@@ -272,7 +272,7 @@ class VimBox():
 
             # Register file hash in the local cache
             if password:
-                remote_file_hash = get_path_hash(remote_file, password)
+                remote_file_hash = get_path_hash(remote_file)
                 self.config['path_hashes'].append(
                     {remote_file_hash: remote_file}
                 )
@@ -386,7 +386,7 @@ class VimBox():
 
         # If encripted get encripted remote-name
         if password:
-            remote_file_hash = get_path_hash(remote_file, password)
+            remote_file_hash = get_path_hash(remote_file)
         else:
             remote_file_hash = remote_file
 
@@ -428,7 +428,7 @@ class VimBox():
         # If encripted get encripted remote-name
         if password is not None:
             # Hash filename
-            remote_file_hash = get_path_hash(remote_file, password)
+            remote_file_hash = get_path_hash(remote_file)
             # Encript content
             new_local_content = encript_content(new_local_content, password)
         else:

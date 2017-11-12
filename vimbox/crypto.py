@@ -5,7 +5,7 @@ try:
     from Crypto.Cipher import AES
     from Crypto.Hash import MD5
 except:
-    #print("\nMissing module pycrypto, no encription available")
+    # print("\nMissing module pycrypto, no encription available")
     pass
 
 # ACHTUNG: Changing this may yield incorrect dencription errors!
@@ -65,8 +65,7 @@ def decript_content(text_cipher, password):
     return text, header.rstrip() == HEADER.rstrip()
 
 
-
-def get_path_hash(path_str, pasword):
+def get_path_hash(path_str):
 
     dirname = os.path.dirname(path_str)
     basename = os.path.basename(path_str)
