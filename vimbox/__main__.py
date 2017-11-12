@@ -1,5 +1,5 @@
 import sys
-from vimbox import VimBox, vim_edit_config
+from vimbox import VimBox, vim_edit_config, get_cache
 
 
 def vimbox_help():
@@ -18,6 +18,11 @@ def main(args=None):
 
     if len(args) == 0:
         vimbox_help()
+
+    elif args[0] == 'cache':
+
+        for cached_file in get_cache():
+            print cached_file
 
     elif args[0] == 'config':
 

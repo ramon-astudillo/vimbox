@@ -42,8 +42,7 @@ def set_autocomplete():
     call(['complete -W \"%s\" \'vimbox\'' % folders()])
 
 
-
-def folders():
+def get_cache():
     config = read_config(CONFIG_FILE)
     return config['remote_folders']
 
