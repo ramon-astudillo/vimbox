@@ -8,11 +8,22 @@ from dropbox.files import WriteMode
 #
 from vimbox.io import read_config, write_config, read_file, write_file
 from vimbox.crypto import (
-    get_path_hash,
+    #get_path_hash,
     validate_password,
-    encript_content,
-    decript_content
+    #encript_content,
+    #decript_content
 )
+
+# Temporal hack
+def get_path_hash(x):
+    dirname = os.path.dirname(x)
+    basename = os.path.basename(x)
+    return "%s/%s" % (dirname, "".join(list(set(basename))))
+def encript_content(x, _):
+    return x
+def decript_content(x, _):
+    return x, True
+# Temporal hack
 
 ROOT_FOLDER = "%s/.vimbox/" % os.environ['HOME']
 CONFIG_FILE = '%s/config.yml' % ROOT_FOLDER
@@ -27,7 +38,7 @@ DEFAULT_CONFIG = {
     # This will store the local cache
     'cache': [],
     # This will store dict() s of hash: file_path for encripted files
-    'path_hashes': []
+    'path_hashes': {}
 }
 
 
@@ -50,7 +61,7 @@ def set_autocomplete():
 
 def get_cache():
     config = read_config(CONFIG_FILE)
-    return config['cache']
+    return ['config', 'ls'] + config['cache']
 
 
 def vim_edit_config():
@@ -270,12 +281,12 @@ class VimBox():
                 # Update autocomplete options
                 # set_autocomplete()
 
-            # Register file hash in the local cache
-            if password:
-                remote_file_hash = get_path_hash(remote_file)
-                self.config['path_hashes'].append(
-                    {remote_file_hash: remote_file}
-                )
+        # Register file hash in the local cache
+        if password:
+            remote_file_hash = get_path_hash(remote_file)
+            if remote_file_hash not in self.config['path_hashes']:
+                self.config['path_hashes'][remote_file_hash] = remote_file
+                write_config(CONFIG_FILE, self.config)
 
     def get_local_file(self, remote_file):
         return '%s/%s' % (self.config['local_root'], remote_file)
@@ -292,17 +303,21 @@ class VimBox():
                         differ, otherwise it copies one to the other
         """
 
-        # Quick exit: edit file is a folder
-        if remote_file[-1] == '/':
-            if password:
-                print('\nOnly files can be encripted\n')
-            else:
-                # TODO: Handle here offline-mode and encripted files
-                self.list_folders(remote_file)
-            exit(0)
+        # If this is a registered encripted file, we will need a password
+        if remote_file in self.config['path_hashes'].values():
+            # TODO: Think of improper use of -e the second time
+            if force_creation:
+                print('\nCan not re-encript a registered file.\n')
+                exit()
+            if password is None:
+                password = raw_input('Input file password: ')
 
         # Sanity check: validate password
         if password:
+            # If encription is used we need to register the file in the cache
+            if not register_folder:
+                print('\nFile encription only with register_folder = True\n')
+                exit()
             password = validate_password(password)
 
         # Fetch local content for this file

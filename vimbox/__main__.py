@@ -41,7 +41,7 @@ def main(args=None):
     else:
 
         # Multiple arguments
-        file_path = None
+        remote_file = None
         force_creation = False
         password = None
         for option in args:
@@ -51,24 +51,34 @@ def main(args=None):
             elif option == '-e':
                 # Create new encripted file or register existing one
                 force_creation = True
+                # TODO: Password should not be visible when writing
                 password = raw_input('Input file password: ')
             elif option[0] == '/':
                 # Dropbox path
-                file_path = option
+                remote_file = option
             else:
                 vimbox_help()
 
         # Check we got a file path
-        if file_path is None:
+        if remote_file is None:
             vimbox_help()
 
         # Call edit utility
         vimbox = VimBox()
-        vimbox.edit(
-            file_path,
-            force_creation=force_creation,
-            password=password
-        )
+
+        # Quick exit: edit file is a folder
+        if remote_file[-1] == '/':
+            if password:
+                print('\nOnly files can be encripted\n')
+            else:
+                # TODO: Handle here offline-mode and encripted files
+                vimbox.list_folders(remote_file)
+        else:
+            vimbox.edit(
+                remote_file,
+                force_creation=force_creation,
+                password=password
+            )
 
 if __name__ == "__main__":
     main()
