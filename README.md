@@ -95,7 +95,7 @@ It is necessary to manually link this as
 
 Desired
 
-* Proper handling of temporary files
+* Proper paths for temporary files
 
 * wrapper around vim (tunnel all options)
     :( forces to sync files by separate, big change of flow. Unfrequent use
@@ -110,6 +110,12 @@ Desired
 * Register dropbox app on first run
 
 * simulated bash `vimbox rm /logs/mylog`, `vimbox cat /logs/mylog`
+
+* `vimbox sync` to sync entire cache
+
+* edit() _push() functions probably better than VimBox class 
+    - config should be read once in import 
+    - Info that the user can screw-up (cache, hashes) should not be on config
 
 ### Future 0.0.3
 
