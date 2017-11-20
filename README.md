@@ -93,7 +93,7 @@ It is necessary to manually link this as
 
 # Versions
 
-Desired
+Roadmap
 
 * Proper paths for temporary files
 
@@ -102,20 +102,20 @@ Desired
 
 * Update autocomplete from vimbox after new register (instead of `source`)
 
-* pipes `cat mylog | vimbox -f /logs/mylog` and `vimbox cat /logs/mylog`
+* pipes `cat mylog | vimbox pipe -f /logs/mylog` and `vimbox cat /logs/mylog`
 
 * File properties model to allow encripting folders or having files with no
   local copy
 
 * Register dropbox app on first run
 
-* simulated bash `vimbox rm /logs/mylog`, `vimbox cat /logs/mylog`
-
 * `vimbox sync` to sync entire cache
 
 * edit() _push() functions probably better than VimBox class 
     - config should be read once in import 
     - Info that the user can screw-up (cache, hashes) should not be on config
+
+* simulated bash `vimbox rm /logs/mylog`, `vimbox cp /logs/mylog`
 
 ### Future 0.0.3
 
