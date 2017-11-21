@@ -191,7 +191,8 @@ class VimBox():
         if os.path.isfile(CONFIG_FILE):
             self.config = read_config(CONFIG_FILE)
             # Check current defaults are present (version missmatch)
-            if set(self.config.keys()) != set(DEFAULT_CONFIG.keys()):
+            if set(self.config.keys()) < set(DEFAULT_CONFIG.keys()):
+
                 print("Updating config")
                 for key, value in DEFAULT_CONFIG.items():
                     if key not in self.config:
@@ -199,6 +200,19 @@ class VimBox():
                         self.config[key] = value
                 # Update config
                 write_config(CONFIG_FILE, self.config)
+
+            elif set(self.config.keys()) > set(DEFAULT_CONFIG.keys()):
+
+                # Extra fields (probably from old versions)
+                outdated_fields = (
+                    set(self.config.keys()) - set(DEFAULT_CONFIG.keys())
+                )
+                if outdated_fields:
+                    print(
+                        "\nOutdated fields %s, remove with vimbox config\n" %
+                        ", ".join(outdated_fields)
+                    )
+
         else:
             # Default config
             self.config = DEFAULT_CONFIG
