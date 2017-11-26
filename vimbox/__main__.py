@@ -32,7 +32,7 @@ def main(args=None):
 
         vimbox = VimBox()
         if len(args) == 1:
-            vimbox.list_folders('/')
+            vimbox.list_folders('')
         elif len(args) == 2:
             vimbox.list_folders(args[1])
         else:
