@@ -36,7 +36,7 @@ DEFAULT_CONFIG = {
 # Bash font styles
 red = style(font_color='red')
 yellow = style(font_color='yellow')
-green = style(font_color='light_green')
+green = style(font_color='light green')
 
 
 def set_autocomplete():
@@ -231,10 +231,22 @@ class VimBox():
 
     def list_folders(self, remote_file):
 
+        # Get path hashes
+        path_hashes = self.config['path_hashes']
+
         # Try first remote
         result, _ = get_folders(self.dropbox_client, remote_file)
         if result:
             display_folders = sorted([x.name for x in result.entries])
+            # Display encripted files in red
+            new_display_folders = []
+            for file_folder in display_folders:
+                key = "%s%s" % (remote_file, file_folder)
+                if key in path_hashes:
+                    file_folder = red(os.path.basename(path_hashes[key]))
+                new_display_folders.append(file_folder)
+            display_folders = new_display_folders
+
         else:
             # If it fails resort to local cache
             folders = list(set([
@@ -248,11 +260,19 @@ class VimBox():
             display_folders = sorted(display_folders)
             if display_folders:
                 print("\nOffline, showing cached files/folders")
+            # Display encripted files in red
+            new_display_folders = []
+            for file_folder in display_folders:
+                key = file_folder
+                if key in path_hashes:
+                    file_folder = red(key)
+                new_display_folders.append(os.path.basename(file_folder))
+            display_folders = new_display_folders
 
         # Print
         print("")
         for folder in sorted(display_folders):
-            print("%s/" % folder)
+            print("%s" % folder)
         print("")
 
     def register(self, remote_file, force_creation, password=None):
