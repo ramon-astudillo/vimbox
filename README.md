@@ -16,15 +16,7 @@ while having as few files as possible locally (even none). Current features are
 
 * Importable methods to use in other modules
 
-Upcoming v0.0.3
-
-* Optional encription on the Dropbox side
-    - Password not visible during input
-    - Display encripted names with `vimbox ls`
-
-Upcoming v0.0.3?
-
-* Basic command line emulation on dropbox `ls` `mv` `rm`
+* Seamless file encription in the dropbox side 
 
 # Examples
 
@@ -50,6 +42,15 @@ Browse files using
 will autocomplete using local cache of registered folders. You can also use
 `vimbox /path/` or `vimbox ls /path/` to browse remote folder content. In
 offline mode this will use the local cache
+
+To create files encripted on the dropbox side, use `-e` instead of `-f`
+
+    vimbox -e /path/to/file
+
+you will be prompted for a password. It wont be stored anyway so remember it. 
+The rest of `vimbox` functionalities are retained after creation but you will
+need to input the password for each `_pull` from the remote. Encription uses
+the `pycript` module.
 
 # Install
 
@@ -113,22 +114,23 @@ Roadmap
 
 * `vimbox sync` to sync entire cache
 
-* edit() _push() functions probably better than VimBox class 
+* Programatic edit operations: `VimBox.append()`, `VimBox.overwrite()`
+    - Useful for other modules e.g. `pomot add`
+
+* Major refactor edit() _push() functions probably better than VimBox class 
     - config should be read once in import 
     - Info that the user can screw-up (cache, hashes) should not be on config
-    - Needs Major Refactor
-
-* Programatic edit opeations: `VimBox.append()`, `VimBox.overwrite()` 
-
-* Major Refactor
     - Think if vim-merge should be separated from the rest.
 
 * simulated bash `vimbox rm /logs/mylog`, `vimbox cp /logs/mylog`, 
   `vimbox mkdir`
 
-### Future 0.0.3
+### v0.0.3
 
-* File encription, see `feature/add-encription` ...
-    - `vimbox -e /logs/private.log`
+* Optional encription on the Dropbox side
+    - `vimbox -e /logs/private.log` to encript with password
+    - Once created, file works as any other file
+    - Display unencripted names locally with `vimbox ls`, in red.
+    - Password not visible during input
 
-* Fancy colored outputs print()s  ... Done
+* Fancy colored outputs print()s
