@@ -30,7 +30,7 @@ package_data = {
 
 setup(
     name='vimbox',
-    version='0.0.2',
+    version='0.0.3',
     author='@ramon-astudillo',
     author_email='ramon@astudillo.com',
     description="Manage/Edit notes directly in dropbox cloud with vim",
