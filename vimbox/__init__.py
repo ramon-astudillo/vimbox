@@ -6,24 +6,14 @@ from requests.exceptions import ConnectionError
 from dropbox.exceptions import ApiError
 from dropbox.files import WriteMode
 #
+from vimbox.diogenes import style
 from vimbox.io import read_config, write_config, read_file, write_file
 from vimbox.crypto import (
-    #get_path_hash,
+    get_path_hash,
     validate_password,
-    #encript_content,
-    #decript_content
+    encript_content,
+    decript_content
 )
-
-# Temporal hack
-def get_path_hash(x):
-    dirname = os.path.dirname(x)
-    basename = os.path.basename(x)
-    return "%s/%s" % (dirname, "".join(list(set(basename))))
-def encript_content(x, _):
-    return x
-def decript_content(x, _):
-    return x, True
-# Temporal hack
 
 ROOT_FOLDER = "%s/.vimbox/" % os.environ['HOME']
 CONFIG_FILE = '%s/config.yml' % ROOT_FOLDER
@@ -42,17 +32,10 @@ DEFAULT_CONFIG = {
 }
 
 
-def red(text):
-    return "\033[91m%s\033[0m" % text
-
-
-def yellow(text):
-    return "\033[93m%s\033[0m" % text
-
-
-def green(text):
-    return "\033[92m%s\033[0m" % text
-
+# Bash font styles
+red = style(font_color='red')
+yellow = style(font_color='yellow')
+green = style(font_color='light_green')
 
 def set_autocomplete():
     raise NotImplementedError("Not working at the moment")
