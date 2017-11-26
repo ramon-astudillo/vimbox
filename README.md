@@ -19,6 +19,8 @@ while having as few files as possible locally (even none). Current features are
 Upcoming v0.0.3
 
 * Optional encription on the Dropbox side
+    - Password not visible during input
+    - Display encripted names with `vimbox ls`
 
 Upcoming v0.0.3?
 

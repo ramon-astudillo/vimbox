@@ -1,4 +1,5 @@
 import sys
+import getpass
 from vimbox import VimBox, vim_edit_config, get_cache
 
 
@@ -51,8 +52,7 @@ def main(args=None):
             elif option == '-e':
                 # Create new encripted file or register existing one
                 force_creation = True
-                # TODO: Password should not be visible when writing
-                password = raw_input('Input file password: ')
+                password = getpass.getpass('Input file password: ')
             elif option[0] == '/':
                 # Dropbox path
                 remote_file = option

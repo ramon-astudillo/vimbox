@@ -1,5 +1,6 @@
 import os
 from subprocess import call
+import getpass
 #
 import dropbox
 from requests.exceptions import ConnectionError
@@ -36,6 +37,7 @@ DEFAULT_CONFIG = {
 red = style(font_color='red')
 yellow = style(font_color='yellow')
 green = style(font_color='light_green')
+
 
 def set_autocomplete():
     raise NotImplementedError("Not working at the moment")
@@ -307,7 +309,7 @@ class VimBox():
                 print('\nCan not re-encript a registered file.\n')
                 exit()
             if password is None:
-                password = raw_input('Input file password: ')
+                password = getpass.getpass('Input file password: ')
 
         # Sanity check: validate password
         if password:
