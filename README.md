@@ -114,8 +114,15 @@ Roadmap
 * edit() _push() functions probably better than VimBox class 
     - config should be read once in import 
     - Info that the user can screw-up (cache, hashes) should not be on config
+    - Needs Major Refactor
 
-* simulated bash `vimbox rm /logs/mylog`, `vimbox cp /logs/mylog`
+* Programatic edit opeations: `VimBox.append()`, `VimBox.overwrite()` 
+
+* Major Refactor
+    - Think if vim-merge should be separated from the rest.
+
+* simulated bash `vimbox rm /logs/mylog`, `vimbox cp /logs/mylog`, 
+  `vimbox mkdir`
 
 ### Future 0.0.3
 
