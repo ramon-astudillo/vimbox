@@ -110,9 +110,7 @@ Roadmap
 * File properties model to allow encripting folders or having files with no
   local copy
 
-* Fix `vimbox -e /path/to/file` on existing files should not be allowed
-
-* Register dropbox app on first run
+* simulated bash `vimbox cache-rm`, `vimbox cache-ls` (vorbid others) 
 
 * `vimbox sync` to sync entire cache
 
@@ -123,6 +121,10 @@ Roadmap
     - config should be read once in import 
     - Info that the user can screw-up (cache, hashes) should not be on config
     - Think if vim-merge should be separated from the rest.
+
+* Fix `vimbox -e /path/to/file` on existing files should not be allowed
+
+* Proper full installation instructions
 
 * simulated bash `vimbox rm /logs/mylog`, `vimbox cp /logs/mylog`, 
   `vimbox mkdir`
