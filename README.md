@@ -16,7 +16,7 @@ while having as few files as possible locally (even none). Current features are
 
 * Importable methods to use in other modules
 
-* Seamless file encription in the dropbox side 
+* Seamless file encription in the dropbox side
 
 # Examples
 
@@ -109,6 +109,8 @@ Roadmap
 
 * File properties model to allow encripting folders or having files with no
   local copy
+
+* Fix `vimbox -e /path/to/file` on existing files should not be allowed
 
 * Register dropbox app on first run
 
