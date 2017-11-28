@@ -126,6 +126,8 @@ Roadmap
 
 * Proper full installation instructions
 
+* `Fix` offline created files not uploaded unless re-modified
+
 * simulated bash `vimbox rm /logs/mylog`, `vimbox cp /logs/mylog`, 
   `vimbox mkdir`
 
