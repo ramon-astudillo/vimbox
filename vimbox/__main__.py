@@ -1,6 +1,6 @@
 import sys
 import getpass
-from vimbox import VimBox, vim_edit_config, get_cache
+from vimbox import edit, list_folders, vim_edit_config, get_cache
 
 
 def vimbox_help():
@@ -31,11 +31,10 @@ def main(args=None):
 
     elif args[0] == 'ls':
 
-        vimbox = VimBox()
         if len(args) == 1:
-            vimbox.list_folders('')
+            list_folders('')
         elif len(args) == 2:
-            vimbox.list_folders(args[1])
+            list_folders(args[1])
         else:
             vimbox_help()
 
@@ -63,22 +62,15 @@ def main(args=None):
         if remote_file is None:
             vimbox_help()
 
-        # Call edit utility
-        vimbox = VimBox()
-
         # Quick exit: edit file is a folder
         if remote_file[-1] == '/':
             if password:
                 print('\nOnly files can be encripted\n')
             else:
                 # TODO: Handle here offline-mode and encripted files
-                vimbox.list_folders(remote_file)
+                list_folders(remote_file)
         else:
-            vimbox.edit(
-                remote_file,
-                force_creation=force_creation,
-                password=password
-            )
+            edit(remote_file, force_creation=force_creation, password=password)
 
 if __name__ == "__main__":
     main()
