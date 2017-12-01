@@ -504,7 +504,7 @@ def fetch(remote_file, config=None, dropbox_client=None, password=None):
     return remote_content, status
 
 
-def _push(new_local_content, remote_file, config, dropbox_client,
+def _push(new_local_content, remote_file, config=None, dropbox_client=None,
           password=None):
     """
     Push updates to remote, do local clean-up if necessary
