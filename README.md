@@ -117,7 +117,6 @@ Roadmap
 * Programatic edit operations: `VimBox.append()`, `VimBox.overwrite()`
     - Useful for other modules e.g. `pomot add`
 
-* Major refactor edit() _push() functions probably better than VimBox class 
     - config should be read once in import 
     - Info that the user can screw-up (cache, hashes) should not be on config
     - Think if vim-merge should be separated from the rest.
@@ -130,6 +129,10 @@ Roadmap
 
 * simulated bash `vimbox rm /logs/mylog`, `vimbox cp /logs/mylog`, 
   `vimbox mkdir`
+
+### v0.0.4
+
+* Major refactor edit() _push() functions probably better than VimBox class 
 
 ### v0.0.3
 
