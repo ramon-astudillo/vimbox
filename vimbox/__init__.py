@@ -1,12 +1,14 @@
 import os
 import getpass
 #
-from vimbox.config import CONFIG_FILE, load_config, read_config
 from vimbox.remote import get_client, pull, _push
+# need to be separated?
+from vimbox.config import CONFIG_FILE, load_config, read_config
+from vimbox.local import get_local_file, register_file, local_content
+from vimbox.editor import local_edit
+# / need to be separated?
 from vimbox.crypto import validate_password
 from vimbox.diogenes import style
-from vimbox.editor import edittool
-from vimbox.local import get_local_file, register_file, local_content
 
 
 ROOT_FOLDER = "%s/.vimbox/" % os.environ['HOME']
@@ -99,6 +101,7 @@ def edit(remote_file, config=None, dropbox_client=None, remove_local=False,
 
     # Update remote if there are changes
     if pull_status == '':
+
         # TODO: We stopped here: We need to clear out states after pull+edit
         #
         #   no remote, no local, no edit     null

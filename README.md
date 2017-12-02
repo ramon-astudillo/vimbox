@@ -98,7 +98,7 @@ It is necessary to manually link this as
 
 Roadmap
 
-* Increased privacy: encript/decript inside vim?
+* Increased privacy: encript/decript inside `vim` using `vim -x`
 
 * Proper paths for temporary files
 
@@ -112,14 +112,14 @@ Roadmap
 * File properties model to allow encripting folders or having files with no
   local copy
 
-* simulated bash `vimbox cache-rm`, `vimbox cache-ls` (vorbid others) 
+* simulated bash `vimbox cache-rm`, `vimbox cache-ls` (vorbid others)
 
 * `vimbox sync` to sync entire cache
 
 * Programatic edit operations: `VimBox.append()`, `VimBox.overwrite()`
     - Useful for other modules e.g. `pomot add`
 
-    - config should be read once in import 
+    - config should be read once in import
     - Info that the user can screw-up (cache, hashes) should not be on config
     - Think if vim-merge should be separated from the rest.
 
@@ -129,7 +129,7 @@ Roadmap
 
 * `Fix` offline created files not uploaded unless re-modified
 
-* simulated bash `vimbox rm /logs/mylog`, `vimbox cp /logs/mylog`, 
+* simulated bash `vimbox rm /logs/mylog`, `vimbox cp /logs/mylog`,
   `vimbox mkdir`
 
 ### v0.0.4
