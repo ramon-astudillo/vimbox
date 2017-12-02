@@ -98,6 +98,8 @@ It is necessary to manually link this as
 
 Roadmap
 
+* Increased privacy: encript/decript inside vim?
+
 * Proper paths for temporary files
 
 * wrapper around vim (tunnel all options)
