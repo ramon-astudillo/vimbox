@@ -98,7 +98,6 @@ It is necessary to manually link this as
 
 Roadmap
 
-* Increased privacy: encript/decript inside `vim` using `vim -x`
 
 * Proper paths for temporary files
 
@@ -116,7 +115,7 @@ Roadmap
 
 * `vimbox sync` to sync entire cache
 
-* Programatic edit operations: `VimBox.append()`, `VimBox.overwrite()`
+* Programatic edit operations: `append()`, `overwrite()`
     - Useful for other modules e.g. `pomot add`
 
     - config should be read once in import
@@ -131,6 +130,11 @@ Roadmap
 
 * simulated bash `vimbox rm /logs/mylog`, `vimbox cp /logs/mylog`,
   `vimbox mkdir`
+
+* Increased privacy: encript/decript inside `vim` using `vim -x`
+    - differentiate editor-encription from normal encription
+
+* Major refactor: isolate remote/local/editor code. Add `pull()`
 
 ### v0.0.4
 
