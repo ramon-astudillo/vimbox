@@ -85,7 +85,7 @@ def get_complete_arguments():
     return ['config', 'ls'] + get_cache()
 
 
-def register_file(remote_file, force_creation, config, password=None):
+def register_file(remote_file, config, password=None):
     """
     A file can be registered by its folder or it name directly
     """

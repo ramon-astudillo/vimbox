@@ -269,7 +269,14 @@ def list_folders(remote_file, config=None, dropbox_client=None):
     # Try first remote
     result, _ = get_folders(dropbox_client, remote_file)
     if result:
-        display_folders = sorted([x.name for x in result.entries])
+        # Differentiate file and folders
+        display_folders = []
+        for x in result.entries:
+            if hasattr(x, 'content_hash'):
+                display_folders.append(x.name)
+            else:
+                display_folders.append("%s/" % x.name)
+        display_folders = sorted(display_folders)
         # Display encripted files in red
         new_display_folders = []
         for file_folder in display_folders:

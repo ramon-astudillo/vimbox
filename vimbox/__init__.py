@@ -73,7 +73,7 @@ def edit(remote_file, config=None, dropbox_client=None, remove_local=False,
     else:
         # Edit with edit tool and retieve content
         local_file = get_local_file(remote_file, config)
-        edited_content = local_edit(local_file, local_content)
+        edited_content = local_edit(local_file, merged_content)
 
     # TODO: Programatic edit operations here
 
@@ -87,7 +87,7 @@ def edit(remote_file, config=None, dropbox_client=None, remove_local=False,
 
     # Register file in cache
     if register_folder:
-        register_file(remote_file, force_creation, config, password=password)
+        register_file(remote_file, config, password=password)
 
     # TODO: We would need to check for a second merge need if it took lot of
     # time
