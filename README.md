@@ -114,6 +114,7 @@ Roadmap
 * simulated bash `vimbox cache-rm`, `vimbox cache-ls` (vorbid others)
 
 * `vimbox sync` to sync entire cache
+    - `Fix` offline created files not uploaded unless re-modified
 
 * Programatic edit operations: `append()`, `overwrite()`
     - Useful for other modules e.g. `pomot add`
@@ -122,21 +123,21 @@ Roadmap
     - Info that the user can screw-up (cache, hashes) should not be on config
     - Think if vim-merge should be separated from the rest.
 
-* Fix `vimbox -e /path/to/file` on existing files should not be allowed
-
 * Proper full installation instructions
-
-* `Fix` offline created files not uploaded unless re-modified
-
-* simulated bash `vimbox rm /logs/mylog`, `vimbox cp /logs/mylog`,
-  `vimbox mkdir`
 
 * Increased privacy: encript/decript inside `vim` using `vim -x`
     - differentiate editor-encription from normal encription
 
-* Major refactor: isolate remote/local/editor code. Add `pull()`
+* Simulated bash in remote `vimbox rm /logs/mylog`, `vimbox cp /logs/mylog`,
+  `vimbox mkdir`
+
+### v0.0.5 (ongoing)
+
+* Major refactor: isolate remote/local code. Add `pull()`
 
 ### v0.0.4
+
+* Fix `vimbox -e /path/to/file` on existing files not allowed
 
 * Major refactor edit() _push() functions probably better than VimBox class 
 

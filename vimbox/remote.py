@@ -287,6 +287,7 @@ def list_folders(remote_file, config=None, dropbox_client=None):
         display_folders = new_display_folders
 
     else:
+
         # If it fails resort to local cache
         folders = list(set([os.path.dirname(path) for path in config['cache']]))
         offset = len(remote_file)
