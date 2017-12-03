@@ -5,16 +5,20 @@ import dropbox
 from dropbox.exceptions import ApiError
 from dropbox.files import WriteMode
 #
-from vimbox.config import CONFIG_FILE, load_config, write_config
-from vimbox.io import read_file, write_file
-from vimbox.editor import mergetool
-from vimbox.diogenes import style
-from vimbox.local import get_local_content
-from vimbox.crypto import (
-    get_path_hash,
-    encript_content,
-    decript_content
+from vimbox.local import (
+    load_config,
+    get_local_content,
+    write_file,
+    read_file,
+    write_config,
+    mergetool
 )
+from vimbox.crypto import get_path_hash, encript_content, decript_content
+from vimbox.diogenes import style
+
+
+ROOT_FOLDER = "%s/.vimbox/" % os.environ['HOME']
+CONFIG_FILE = '%s/config.yml' % ROOT_FOLDER
 
 
 # Bash font styles
@@ -143,36 +147,35 @@ def pull(remote_file, force_creation, config=None, dropbox_client=None,
         print('\nYou need to create a file, use -f or -e\n')
         exit(0)
 
-    if local_content != remote_content:
+    if remote_content is None:
 
-        # Store content on temporary files
+        # No file in remote (we could be creating one or syncing after offline)
+        merged_content = None
+
+    elif local_content is not None and local_content != remote_content:
+
+        # Content conflict, call mergetool
         old_local_file = "%s.OLD" % local_file
         write_file(old_local_file, local_content)
         write_file(local_file, remote_content)
         mergetool(old_local_file, local_file)
-
-    # Read content of edited file
-    # NOTE: Than in the last of options above, we might not create a file at all
-    if os.path.isfile(local_file):
         merged_content = read_file(local_file)
-    else:
-        merged_content = None
-
-    # Clean up extra temporary files
-    if old_local_file and os.path.isfile(old_local_file):
+        # Clean up extra temporary file
         os.remove(old_local_file)
+
+    else:
+
+        # No local content, or local matches remote
+        merged_content = remote_content
 
     # Provide status of operation
     if fetch_status != 'online':
-        pull_status = fetch_status
-    elif local_content != merged_content and  merged_content == remote_content:
-        # We only actualized local content (pull enough for sync)
-        pull_status = 'fast-forwarded'
+        # Copy fetch error
+        online = False
+    else:
+        online = True
 
-    elif local_content != merged_content and  merged_content == remote_content:
-        # TODO: We stopped here
-
-    return merged_content, pull_status
+    return local_content, remote_content, merged_content, online
 
 
 def fetch(remote_file, config=None, dropbox_client=None, password=None):
@@ -217,7 +220,7 @@ def fetch(remote_file, config=None, dropbox_client=None, password=None):
 
         # File non-existing
         remote_content = None
-        status = 'unexisting-file'
+        status = 'online'
         # print("%s does not exist" % (remote_file))
 
     if remote_content is not None and password is not None:

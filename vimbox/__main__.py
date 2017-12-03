@@ -1,6 +1,8 @@
 import sys
 import getpass
-from vimbox import edit, list_folders, vim_edit_config, get_cache
+from vimbox.remote import list_folders
+from vimbox.local import edit_config, get_cache, get_complete_arguments
+from vimbox import edit
 
 
 def vimbox_help():
@@ -23,11 +25,16 @@ def main(args=None):
     elif args[0] == 'cache':
 
         for cached_file in get_cache():
-            print cached_file
+            print(cached_file)
+
+    elif args[0] == 'complete':
+
+        for autocomplete_option in get_complete_arguments():
+            print(autocomplete_option)
 
     elif args[0] == 'config':
 
-        vim_edit_config()
+        edit_config()
 
     elif args[0] == 'ls':
 
@@ -52,6 +59,11 @@ def main(args=None):
                 # Create new encripted file or register existing one
                 force_creation = True
                 password = getpass.getpass('Input file password: ')
+                password2 = getpass.getpass('Repeat file password: ')
+                if password != password2:
+                    print("Passwords do not match!")
+                    exit()
+
             elif option[0] == '/':
                 # Dropbox path
                 remote_file = option

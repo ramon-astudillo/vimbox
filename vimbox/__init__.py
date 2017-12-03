@@ -2,14 +2,14 @@ import os
 import getpass
 #
 from vimbox.remote import get_client, pull, _push
-# need to be separated?
-from vimbox.config import CONFIG_FILE, load_config, read_config
-from vimbox.local import get_local_file, register_file, local_content
-from vimbox.editor import local_edit
-# / need to be separated?
+from vimbox.local import (
+    load_config,
+    get_local_file,
+    register_file,
+    local_edit
+)
 from vimbox.crypto import validate_password
 from vimbox.diogenes import style
-
 
 ROOT_FOLDER = "%s/.vimbox/" % os.environ['HOME']
 
@@ -17,11 +17,6 @@ ROOT_FOLDER = "%s/.vimbox/" % os.environ['HOME']
 red = style(font_color='red')
 yellow = style(font_color='yellow')
 green = style(font_color='light green')
-
-
-def get_cache():
-    config = read_config(CONFIG_FILE)
-    return ['config', 'ls'] + config['cache']
 
 
 def edit(remote_file, config=None, dropbox_client=None, remove_local=False,
@@ -64,8 +59,9 @@ def edit(remote_file, config=None, dropbox_client=None, remove_local=False,
         password = validate_password(password)
 
     # fetch remote content, merge if neccesary with mergetool
-    merged_content, pull_status = pull(
+    local_content, remote_content, merged_content, online = pull(
         remote_file,
+        force_creation,
         config=config,
         dropbox_client=dropbox_client,
         password=password
@@ -77,7 +73,7 @@ def edit(remote_file, config=None, dropbox_client=None, remove_local=False,
     else:
         # Edit with edit tool and retieve content
         local_file = get_local_file(remote_file, config)
-        edited_content = local_edit(local_file)
+        edited_content = local_edit(local_file, local_content)
 
     # TODO: Programatic edit operations here
 
@@ -96,28 +92,17 @@ def edit(remote_file, config=None, dropbox_client=None, remove_local=False,
     # TODO: We would need to check for a second merge need if it took lot of
     # time
 
-    # TODO: needs general check of logic here
-    import ipdb;ipdb.set_trace(context=30)
-
     # Update remote if there are changes
-    if pull_status == '':
-
-        # TODO: We stopped here: We need to clear out states after pull+edit
-        #
-        #   no remote, no local, no edit     null
-        #   no remote, no local, edit        file creation, needs push
-        #   no remote, local,    no edit
-        #   no remote, local,    edit
-        #   local != remote, edit == remote
+    if edited_content != remote_content:
 
         # After edit, changes in the remote needed
-        if pull_sattus == 'connection-failed':
+        if not online:
             # TODO: Course of action if remove_local = True
             print("%12s %s" % (red("offline"), remote_file))
         else:
             # Push changes to dropbox
             sucess = _push(
-                merged_content,
+                edited_content,
                 remote_file,
                 config,
                 dropbox_client,
