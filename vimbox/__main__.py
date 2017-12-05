@@ -1,7 +1,12 @@
 import sys
 import getpass
 from vimbox.remote import list_folders
-from vimbox.local import edit_config, get_cache, get_complete_arguments
+from vimbox.local import (
+    edit_config,
+    get_cache,
+    get_complete_arguments,
+    load_config
+)
 from vimbox import edit
 
 
@@ -50,20 +55,15 @@ def main(args=None):
         # Multiple arguments
         remote_file = None
         force_creation = False
-        password = None
+        encript = False
         for option in args:
             if option == '-f':
                 # Create new file
                 force_creation = True
             elif option == '-e':
-                # Create new encripted file or register existing one
+                # Create new encripted file
                 force_creation = True
-                password = getpass.getpass('Input file password: ')
-                password2 = getpass.getpass('Repeat file password: ')
-                if password != password2:
-                    print("Passwords do not match!")
-                    exit()
-
+                encript = True
             elif option[0] == '/':
                 # Dropbox path
                 remote_file = option
@@ -76,13 +76,43 @@ def main(args=None):
 
         # Quick exit: edit file is a folder
         if remote_file[-1] == '/':
-            if password:
+            if encript:
                 print('\nOnly files can be encripted\n')
             else:
                 # TODO: Handle here offline-mode and encripted files
                 list_folders(remote_file)
         else:
-            edit(remote_file, force_creation=force_creation, password=password)
+
+            if len(args) != 2:
+                vimbox_help()
+
+            # Get config
+            config = load_config()
+
+            # Create new encripted file or register existing one
+            if encript:
+
+                # Check if file in cache already
+                if remote_file in config['path_hashes'].values():
+                    print('\nCan not re-encript a registered file.\n')
+                    exit()
+
+                # Prompt for password
+                password = getpass.getpass('Input file password: ')
+                password2 = getpass.getpass('Repeat file password: ')
+                if password != password2:
+                    print("Passwords do not match!")
+                    exit()
+
+            else:
+                password = None
+
+            edit(
+                remote_file,
+                force_creation=force_creation,
+                password=password,
+                config=config
+            )
 
 if __name__ == "__main__":
     main()
