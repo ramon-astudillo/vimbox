@@ -11,7 +11,7 @@ from vimbox import edit
 
 
 def vimbox_help():
-    print("\nvimbox [-f] path/to/file\n")
+    print("\nvimbox [-f -e ls config] /path/to/file\n")
     exit()
 
 
@@ -82,9 +82,6 @@ def main(args=None):
                 # TODO: Handle here offline-mode and encripted files
                 list_folders(remote_file)
         else:
-
-            if len(args) != 2:
-                vimbox_help()
 
             # Get config
             config = load_config()

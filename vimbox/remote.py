@@ -22,7 +22,7 @@ CONFIG_FILE = '%s/config.yml' % ROOT_FOLDER
 
 
 # Bash font styles
-red = style(font_color='red')
+red = style(font_color='light red')
 
 
 def get_user_account(dropbox_client):
@@ -273,8 +273,10 @@ def list_folders(remote_file, config=None, dropbox_client=None):
         display_folders = []
         for x in result.entries:
             if hasattr(x, 'content_hash'):
+                # File
                 display_folders.append(x.name)
             else:
+                # Folder
                 display_folders.append("%s/" % x.name)
         display_folders = sorted(display_folders)
         # Display encripted files in red
@@ -304,7 +306,7 @@ def list_folders(remote_file, config=None, dropbox_client=None):
             key = file_folder
             if key in path_hashes:
                 file_folder = red(key)
-            new_display_folders.append(os.path.basename(file_folder))
+            new_display_folders.append(os.path.basename(file_folder) + '/')
         display_folders = new_display_folders
 
     # Print
