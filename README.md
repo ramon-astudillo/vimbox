@@ -118,10 +118,12 @@ Roadmap
 
 * Programatic edit operations: `append()`, `overwrite()`
     - Useful for other modules e.g. `pomot add`
-
     - config should be read once in import
     - Info that the user can screw-up (cache, hashes) should not be on config
     - Think if vim-merge should be separated from the rest.
+
+* Unit test with backend and editor mockups
+    - This should also help bastracting those for future switches
 
 * Proper full installation instructions
 

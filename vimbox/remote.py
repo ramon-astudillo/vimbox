@@ -11,7 +11,8 @@ from vimbox.local import (
     write_file,
     read_file,
     write_config,
-    mergetool
+    mergetool,
+    list_local
 )
 from vimbox.crypto import get_path_hash, encript_content, decript_content
 from vimbox.diogenes import style
@@ -291,23 +292,9 @@ def list_folders(remote_file, config=None, dropbox_client=None):
     else:
 
         # If it fails resort to local cache
-        folders = list(set([os.path.dirname(path) for path in config['cache']]))
-        offset = len(remote_file)
-        display_folders = set()
-        for folder in folders:
-            if folder[:offset] == remote_file:
-                display_folders |= set([folder[offset:].split('/')[0]])
-        display_folders = sorted(display_folders)
-        if display_folders:
-            print("\nOffline, showing cached files/folders")
-        # Display encripted files in red
-        new_display_folders = []
-        for file_folder in display_folders:
-            key = file_folder
-            if key in path_hashes:
-                file_folder = red(key)
-            new_display_folders.append(os.path.basename(file_folder) + '/')
-        display_folders = new_display_folders
+        display_folders = list_local(remote_file, config)
+        print("\n%s cache for %s " % (red("offline"), remote_file))
+
 
     # Print
     print("")

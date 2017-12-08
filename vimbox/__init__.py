@@ -14,7 +14,7 @@ from vimbox.diogenes import style
 ROOT_FOLDER = "%s/.vimbox/" % os.environ['HOME']
 
 # Bash font styles
-red = style(font_color='red')
+red = style(font_color='light red')
 yellow = style(font_color='yellow')
 green = style(font_color='light green')
 

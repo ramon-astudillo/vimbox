@@ -2,6 +2,7 @@ import os
 import yaml
 from subprocess import call
 from vimbox.crypto import get_path_hash
+from vimbox.diogenes import style
 
 ROOT_FOLDER = "%s/.vimbox/" % os.environ['HOME']
 CONFIG_FILE = '%s/config.yml' % ROOT_FOLDER
@@ -19,6 +20,10 @@ DEFAULT_CONFIG = {
 }
 EDITTOOL = 'vim'
 MERGETOOL = 'vim'
+
+
+# Bash font styles
+red = style(font_color='light red')
 
 
 def write_config(file_path, config):
@@ -174,3 +179,22 @@ def local_edit(local_file, local_content):
         # edited content is None if we start from scratch but do nothing on vim
         edited_local_content = None
     return edited_local_content
+
+def list_local(remote_file, config):
+
+    path_hashes = config['path_hashes']
+    folders = list(set([os.path.dirname(path) for path in config['cache']]))
+    offset = len(remote_file)
+    display_folders = set()
+    for folder in folders:
+        if folder[:offset] == remote_file:
+            display_folders |= set([folder[offset:].split('/')[0]])
+    display_folders = sorted(display_folders)
+    # Display encripted files in red
+    new_display_folders = []
+    for file_folder in display_folders:
+        key = file_folder
+        if key in path_hashes:
+            file_folder = red(key)
+        new_display_folders.append(os.path.basename(file_folder) + '/')
+    return new_display_folders
