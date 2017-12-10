@@ -145,7 +145,7 @@ def edit(remote_file, config=None, dropbox_client=None, remove_local=False,
             # We are offline. This is a plausible state. Just keep local copy
             # TODO: Course of action if remove_local = True
             print("%12s %s" % (red("offline"), remote_file))
-            print("Connection lost keeping local copy")
+            print("keeping local copy")
 
             # We do still register the file in cache
             if register_folder:

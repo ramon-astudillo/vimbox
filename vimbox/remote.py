@@ -124,12 +124,32 @@ def _push(new_local_content, remote_file, config=None, dropbox_client=None,
     return error
 
 
+def is_file(remote_file, dropbox_client):
+
+    # Note that with no connection we wont be able to know if the file
+    try:
+        result = dropbox_client.files_alpha_get_metadata(remote_file)
+        return hasattr(result, 'content_hash') 
+    except ConnectionError:
+        return False
+    except ApiError:
+        return False
+
+
 def pull(remote_file, force_creation, config=None, dropbox_client=None,
          password=None):
 
     # Fetch local content for this file
     local_file, local_content = get_local_content(remote_file, config)
 
+    remote_folder = os.path.dirname(remote_file)
+    if force_creation and is_file(remote_folder, dropbox_client):
+        # It can be that the path we want to create uses names that are already
+        # files. Here we test this at least one level
+        # Quick exit on decription failure
+        print('\n%s exists as a file in remote!\n' % remote_folder)
+        exit(0)
+        
     # Fetch remote content for this file
     remote_content, fetch_status = fetch(
         remote_file,
@@ -215,7 +235,6 @@ def fetch(remote_file, config=None, dropbox_client=None, password=None):
         # Dropbox unrechable
         remote_content = None
         status = 'connection-failed'
-        print("Can not connect. Working locally")
 
     except ApiError:
 
