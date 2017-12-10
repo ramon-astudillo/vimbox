@@ -19,7 +19,7 @@ DEFAULT_CONFIG = {
     'path_hashes': {}
 }
 EDITTOOL = 'vim'
-MERGETOOL = 'vim'
+MERGETOOL = 'vimdiff'
 
 
 # Bash font styles
