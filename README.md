@@ -92,7 +92,7 @@ To get folder autocomplete
 In OSx with macports, entry_points get installed in a folder not in the PATH.
 It is necessary to manually link this as
 
-    sudo ln -s /opt/local/Library/Frameworks/Python.framework/Versions/2.7/bin/vimbox /usr/bin/vimbox
+    sudo ln -s /opt/local/Library/Frameworks/Python.framework/Versions/2.7/bin/vimbox /Users/$(whoami)/bin/vimbox
 
 # Versions
 
