@@ -137,9 +137,9 @@ Roadmap
 * Simulated bash in remote `vimbox rm /logs/mylog`, `vimbox cp /logs/mylog`,
   `vimbox mkdir`
 
-* `vimbox /new/file` wont work. Not allowed to create new folders in root?.
+### v0.0.5 
 
-### v0.0.5 (ongoing)
+* More robust handling of remote bahaviours
 
 * Major refactor: isolate remote/local code. Add `pull()`
 
