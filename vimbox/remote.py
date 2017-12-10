@@ -109,19 +109,19 @@ def _push(new_local_content, remote_file, config=None, dropbox_client=None,
             remote_file_hash,
             mode=WriteMode('overwrite')
         )
-        return True
+        error = None
 
     except ConnectionError:
 
         # File non-existing or unreachable
-        print("Connection lost keeping local copy")
-        return False
+        error = 'connection-error'
 
     except ApiError:
 
         # File non-existing or unreachable
-        print("API error keeping local copy")
-        return False
+        error = 'api-error'
+
+    return error
 
 
 def pull(remote_file, force_creation, config=None, dropbox_client=None,

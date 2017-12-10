@@ -90,7 +90,7 @@ def get_complete_arguments():
     return ['config', 'ls'] + get_cache()
 
 
-def register_file(remote_file, config, password=None):
+def register_file(remote_file, config, is_encripted):
     """
     A file can be registered by its folder or it name directly
     """
@@ -112,7 +112,7 @@ def register_file(remote_file, config, password=None):
         # Update autocomplete options
 
     # Register file hash in the local cache
-    if password:
+    if is_encripted:
         remote_file_hash = get_path_hash(remote_file)
         if remote_file_hash not in config['path_hashes']:
             config['path_hashes'][remote_file_hash] = remote_file
