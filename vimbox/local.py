@@ -16,7 +16,7 @@ DEFAULT_CONFIG = {
     # This will store the local cache
     'cache': [],
     # This will store dict() s of hash: file_path for encripted files
-    'path_hashes': {}
+    'path_hashes': {},
     # By default remove all synced files
     'remove_local': False
 }
