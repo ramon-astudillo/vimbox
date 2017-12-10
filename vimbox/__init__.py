@@ -62,7 +62,11 @@ def edit(remote_file, config=None, dropbox_client=None, remove_local=False,
     # process (cache and hash list)
     # Local folder exists but it is not registered. This can only originate
     # from an invalid state exit
-    if os.path.isdir(local_folder) and remote_folder not in config['cache']:
+    if (
+        register_folder and 
+        os.path.isdir(local_folder) and 
+        remote_folder not in config['cache']
+    ):
         print("%s exists localy but is not registered" % remote_folder)
 
     # If this is a registered encripted file, we will need a password
