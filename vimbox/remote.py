@@ -11,7 +11,8 @@ from vimbox.local import (
     write_file,
     read_file,
     write_config,
-    mergetool
+    mergetool,
+    list_local
 )
 from vimbox.crypto import get_path_hash, encript_content, decript_content
 from vimbox.diogenes import style
@@ -22,7 +23,7 @@ CONFIG_FILE = '%s/config.yml' % ROOT_FOLDER
 
 
 # Bash font styles
-red = style(font_color='red')
+red = style(font_color='light red')
 
 
 def get_user_account(dropbox_client):
@@ -108,18 +109,30 @@ def _push(new_local_content, remote_file, config=None, dropbox_client=None,
             remote_file_hash,
             mode=WriteMode('overwrite')
         )
-        return True
+        error = None
 
     except ConnectionError:
 
         # File non-existing or unreachable
-        print("Connection lost keeping local copy")
-        return False
+        error = 'connection-error'
 
     except ApiError:
 
         # File non-existing or unreachable
-        print("API error keeping local copy")
+        error = 'api-error'
+
+    return error
+
+
+def is_file(remote_file, dropbox_client):
+
+    # Note that with no connection we wont be able to know if the file
+    try:
+        result = dropbox_client.files_alpha_get_metadata(remote_file)
+        return hasattr(result, 'content_hash') 
+    except ConnectionError:
+        return False
+    except ApiError:
         return False
 
 
@@ -129,6 +142,14 @@ def pull(remote_file, force_creation, config=None, dropbox_client=None,
     # Fetch local content for this file
     local_file, local_content = get_local_content(remote_file, config)
 
+    remote_folder = os.path.dirname(remote_file)
+    if force_creation and is_file(remote_folder, dropbox_client):
+        # It can be that the path we want to create uses names that are already
+        # files. Here we test this at least one level
+        # Quick exit on decription failure
+        print('\n%s exists as a file in remote!\n' % remote_folder)
+        exit(0)
+        
     # Fetch remote content for this file
     remote_content, fetch_status = fetch(
         remote_file,
@@ -214,7 +235,6 @@ def fetch(remote_file, config=None, dropbox_client=None, password=None):
         # Dropbox unrechable
         remote_content = None
         status = 'connection-failed'
-        print("Can not connect. Working locally")
 
     except ApiError:
 
@@ -255,6 +275,11 @@ def get_folders(dropbox_client, remote_folder):
 
 def list_folders(remote_file, config=None, dropbox_client=None):
 
+    # NotImplementedYet: Listing of files
+    if remote_file[-1] != '/':
+        print("\nOnly /folders/ can be listed right now\n")
+        exit(1)
+
     # Load config
     if config is None:
         config = load_config()
@@ -267,14 +292,16 @@ def list_folders(remote_file, config=None, dropbox_client=None):
     path_hashes = config['path_hashes']
 
     # Try first remote
-    result, _ = get_folders(dropbox_client, remote_file)
+    result, error = get_folders(dropbox_client, remote_file)
     if result:
         # Differentiate file and folders
         display_folders = []
         for x in result.entries:
             if hasattr(x, 'content_hash'):
+                # File
                 display_folders.append(x.name)
             else:
+                # Folder
                 display_folders.append("%s/" % x.name)
         display_folders = sorted(display_folders)
         # Display encripted files in red
@@ -284,31 +311,22 @@ def list_folders(remote_file, config=None, dropbox_client=None):
             if key in path_hashes:
                 file_folder = red(os.path.basename(path_hashes[key]))
             new_display_folders.append(file_folder)
-        display_folders = new_display_folders
+        display_string = "".join(
+            ["%s\n" % folder for folder in  sorted(new_display_folders)]
+        )  
+
+    elif error == 'api-error':
+
+        display_string = "Folder does not exist in remote!"
 
     else:
 
         # If it fails resort to local cache
-        folders = list(set([os.path.dirname(path) for path in config['cache']]))
-        offset = len(remote_file)
-        display_folders = set()
-        for folder in folders:
-            if folder[:offset] == remote_file:
-                display_folders |= set([folder[offset:].split('/')[0]])
-        display_folders = sorted(display_folders)
-        if display_folders:
-            print("\nOffline, showing cached files/folders")
-        # Display encripted files in red
-        new_display_folders = []
-        for file_folder in display_folders:
-            key = file_folder
-            if key in path_hashes:
-                file_folder = red(key)
-            new_display_folders.append(os.path.basename(file_folder))
-        display_folders = new_display_folders
+        display_folders = list_local(remote_file, config)
+        print("\n%s cache for %s " % (red("offline"), remote_file))
+        display_string = "".join(
+            ["%s\n" % folder for folder in  sorted(display_folders)]
+        )  
 
     # Print
-    print("")
-    for folder in sorted(display_folders):
-        print("%s" % folder)
-    print("")
+    print("\n%s\n" % display_string.rstrip())

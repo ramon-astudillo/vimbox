@@ -92,11 +92,16 @@ To get folder autocomplete
 In OSx with macports, entry_points get installed in a folder not in the PATH.
 It is necessary to manually link this as
 
-    sudo ln -s /opt/local/Library/Frameworks/Python.framework/Versions/2.7/bin/vimbox /usr/bin/vimbox
+    sudo ln -s /opt/local/Library/Frameworks/Python.framework/Versions/2.7/bin/vimbox /Users/$(whoami)/bin/vimbox
 
 # Versions
 
 Roadmap
+
+* Other backends e.g. `vimbox /evernote/notes/`
+    - `CloudBlaze` is an laternative to dropbox
+    - `evernote` seems acessible
+    - `dropbox paper` does not seem to have an API at the momment
 
 * Proper paths for temporary files
 
@@ -110,27 +115,37 @@ Roadmap
 * File properties model to allow encripting folders or having files with no
   local copy
 
-* simulated bash `vimbox cache-rm`, `vimbox cache-ls` (vorbid others) 
+* simulated bash `vimbox cache-rm`, `vimbox cache-ls` (vorbid others)
 
 * `vimbox sync` to sync entire cache
+    - `Fix` offline created files not uploaded unless re-modified
 
-* Programatic edit operations: `VimBox.append()`, `VimBox.overwrite()`
+* Programatic edit operations: `append()`, `overwrite()`
     - Useful for other modules e.g. `pomot add`
-
-    - config should be read once in import 
+    - config should be read once in import
     - Info that the user can screw-up (cache, hashes) should not be on config
     - Think if vim-merge should be separated from the rest.
 
-* Fix `vimbox -e /path/to/file` on existing files should not be allowed
+* Unit test with backend and editor mockups
+    - This should also help bastracting those for future switches
 
 * Proper full installation instructions
 
-* `Fix` offline created files not uploaded unless re-modified
+* Increased privacy: encript/decript inside `vim` using `vim -x`
+    - differentiate editor-encription from normal encription
 
-* simulated bash `vimbox rm /logs/mylog`, `vimbox cp /logs/mylog`, 
+* Simulated bash in remote `vimbox rm /logs/mylog`, `vimbox cp /logs/mylog`,
   `vimbox mkdir`
 
+* `vimbox /new/file` wont work. Not allowed to create new folders in root?.
+
+### v0.0.5 (ongoing)
+
+* Major refactor: isolate remote/local code. Add `pull()`
+
 ### v0.0.4
+
+* Fix `vimbox -e /path/to/file` on existing files not allowed
 
 * Major refactor edit() _push() functions probably better than VimBox class 
 

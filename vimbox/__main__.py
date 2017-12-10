@@ -1,10 +1,17 @@
 import sys
 import getpass
-from vimbox import edit, list_folders, vim_edit_config, get_cache
+from vimbox.remote import list_folders
+from vimbox.local import (
+    edit_config,
+    get_cache,
+    get_complete_arguments,
+    load_config
+)
+from vimbox import edit
 
 
 def vimbox_help():
-    print("\nvimbox [-f] path/to/file\n")
+    print("\nvimbox [-f -e ls config] /path/to/file\n")
     exit()
 
 
@@ -23,11 +30,16 @@ def main(args=None):
     elif args[0] == 'cache':
 
         for cached_file in get_cache():
-            print cached_file
+            print(cached_file)
+
+    elif args[0] == 'complete':
+
+        for autocomplete_option in get_complete_arguments():
+            print(autocomplete_option)
 
     elif args[0] == 'config':
 
-        vim_edit_config()
+        edit_config()
 
     elif args[0] == 'ls':
 
@@ -43,15 +55,15 @@ def main(args=None):
         # Multiple arguments
         remote_file = None
         force_creation = False
-        password = None
+        encript = False
         for option in args:
             if option == '-f':
                 # Create new file
                 force_creation = True
             elif option == '-e':
-                # Create new encripted file or register existing one
+                # Create new encripted file
                 force_creation = True
-                password = getpass.getpass('Input file password: ')
+                encript = True
             elif option[0] == '/':
                 # Dropbox path
                 remote_file = option
@@ -64,13 +76,39 @@ def main(args=None):
 
         # Quick exit: edit file is a folder
         if remote_file[-1] == '/':
-            if password:
+            if encript:
                 print('\nOnly files can be encripted\n')
             else:
-                # TODO: Handle here offline-mode and encripted files
                 list_folders(remote_file)
         else:
-            edit(remote_file, force_creation=force_creation, password=password)
+
+            # Get config
+            config = load_config()
+
+            # Create new encripted file or register existing one
+            if encript:
+
+                # Check if file in cache already
+                if remote_file in config['path_hashes'].values():
+                    print('\nCan not re-encript a registered file.\n')
+                    exit()
+
+                # Prompt for password
+                password = getpass.getpass('Input file password: ')
+                password2 = getpass.getpass('Repeat file password: ')
+                if password != password2:
+                    print("Passwords do not match!")
+                    exit()
+
+            else:
+                password = None
+
+            edit(
+                remote_file,
+                force_creation=force_creation,
+                password=password,
+                config=config
+            )
 
 if __name__ == "__main__":
     main()
