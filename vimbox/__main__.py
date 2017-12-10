@@ -79,7 +79,6 @@ def main(args=None):
             if encript:
                 print('\nOnly files can be encripted\n')
             else:
-                # TODO: Handle here offline-mode and encripted files
                 list_folders(remote_file)
         else:
 

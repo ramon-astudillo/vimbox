@@ -98,6 +98,10 @@ It is necessary to manually link this as
 
 Roadmap
 
+* Other backends e.g. `vimbox /evernote/notes/`
+    - `CloudBlaze` is an laternative to dropbox
+    - `evernote` seems acessible
+    - `dropbox paper` does not seem to have an API at the momment
 
 * Proper paths for temporary files
 

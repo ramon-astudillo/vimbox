@@ -256,6 +256,11 @@ def get_folders(dropbox_client, remote_folder):
 
 def list_folders(remote_file, config=None, dropbox_client=None):
 
+    # NotImplementedYet: Listing of files
+    if remote_file[-1] != '/':
+        print("\nOnly /folders/ can be listed right now\n")
+        exit(1)
+
     # Load config
     if config is None:
         config = load_config()
@@ -268,7 +273,7 @@ def list_folders(remote_file, config=None, dropbox_client=None):
     path_hashes = config['path_hashes']
 
     # Try first remote
-    result, _ = get_folders(dropbox_client, remote_file)
+    result, error = get_folders(dropbox_client, remote_file)
     if result:
         # Differentiate file and folders
         display_folders = []
@@ -287,17 +292,22 @@ def list_folders(remote_file, config=None, dropbox_client=None):
             if key in path_hashes:
                 file_folder = red(os.path.basename(path_hashes[key]))
             new_display_folders.append(file_folder)
-        display_folders = new_display_folders
+        display_string = "".join(
+            ["%s\n" % folder for folder in  sorted(new_display_folders)]
+        )  
+
+    elif error == 'api-error':
+
+        display_string = "Folder does not exist in remote!"
 
     else:
 
         # If it fails resort to local cache
         display_folders = list_local(remote_file, config)
         print("\n%s cache for %s " % (red("offline"), remote_file))
-
+        display_string = "".join(
+            ["%s\n" % folder for folder in  sorted(display_folders)]
+        )  
 
     # Print
-    print("")
-    for folder in sorted(display_folders):
-        print("%s" % folder)
-    print("")
+    print("\n%s\n" % display_string.rstrip())
