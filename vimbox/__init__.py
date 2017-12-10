@@ -19,7 +19,7 @@ yellow = style(font_color='yellow')
 green = style(font_color='light green')
 
 
-def edit(remote_file, config=None, dropbox_client=None, remove_local=False,
+def edit(remote_file, config=None, dropbox_client=None, remove_local=None,
          diff_mode=False, force_creation=False, register_folder=True,
          password=None):
     """
@@ -37,6 +37,8 @@ def edit(remote_file, config=None, dropbox_client=None, remove_local=False,
     # Load config if not provided
     if config is None:
         config = load_config()
+    if remove_local is None:
+        remove_local = config['remove_local']
 
     # Get client if not provided
     if dropbox_client is None:

@@ -117,9 +117,6 @@ Roadmap
 
 * simulated bash `vimbox cache-rm`, `vimbox cache-ls` (vorbid others)
 
-* `vimbox sync` to sync entire cache
-    - `Fix` offline created files not uploaded unless re-modified
-
 * Programatic edit operations: `append()`, `overwrite()`
     - Useful for other modules e.g. `pomot add`
     - config should be read once in import
@@ -130,6 +127,9 @@ Roadmap
     - This should also help bastracting those for future switches
 
 * Proper full installation instructions
+
+* `vimbox sync` to sync entire cache
+    - `Fix` offline created files not uploaded unless re-modified
 
 * Increased privacy: encript/decript inside `vim` using `vim -x`
     - differentiate editor-encription from normal encription

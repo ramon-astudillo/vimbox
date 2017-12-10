@@ -17,6 +17,8 @@ DEFAULT_CONFIG = {
     'cache': [],
     # This will store dict() s of hash: file_path for encripted files
     'path_hashes': {}
+    # By default remove all synced files
+    'remove_local': False
 }
 EDITTOOL = 'vim'
 MERGETOOL = 'vimdiff'

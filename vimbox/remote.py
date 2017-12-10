@@ -276,7 +276,7 @@ def get_folders(dropbox_client, remote_folder):
 def list_folders(remote_file, config=None, dropbox_client=None):
 
     # NotImplementedYet: Listing of files
-    if remote_file[-1] != '/':
+    if remote_file and remote_file[-1] != '/':
         print("\nOnly /folders/ can be listed right now\n")
         exit(1)
 
