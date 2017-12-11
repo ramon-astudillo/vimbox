@@ -129,7 +129,7 @@ def is_file(remote_file, dropbox_client):
     # Note that with no connection we wont be able to know if the file
     try:
         result = dropbox_client.files_alpha_get_metadata(remote_file)
-        return hasattr(result, 'content_hash') 
+        return hasattr(result, 'content_hash')
     except ConnectionError:
         return False
     except ApiError:
@@ -149,7 +149,7 @@ def pull(remote_file, force_creation, config=None, dropbox_client=None,
         # Quick exit on decription failure
         print('\n%s exists as a file in remote!\n' % remote_folder)
         exit(0)
-        
+
     # Fetch remote content for this file
     remote_content, fetch_status = fetch(
         remote_file,
@@ -313,7 +313,7 @@ def list_folders(remote_file, config=None, dropbox_client=None):
             new_display_folders.append(file_folder)
         display_string = "".join(
             ["%s\n" % folder for folder in  sorted(new_display_folders)]
-        )  
+        )
 
     elif error == 'api-error':
 
@@ -326,7 +326,7 @@ def list_folders(remote_file, config=None, dropbox_client=None):
         print("\n%s cache for %s " % (red("offline"), remote_file))
         display_string = "".join(
             ["%s\n" % folder for folder in  sorted(display_folders)]
-        )  
+        )
 
     # Print
     print("\n%s\n" % display_string.rstrip())

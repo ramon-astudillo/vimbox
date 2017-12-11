@@ -169,17 +169,22 @@ def edittool(local_file):
     # TODO: Check for abnormal termination
 
 
-def local_edit(local_file, local_content):
+def local_edit(local_file, local_content, no_edit=False):
     # TODO: Merge this and the above
     if local_content is not None:
         # local_content is None if we start from scratch
         write_file(local_file, local_content)
-    edittool(local_file)
-    if os.path.isfile(local_file):
-        edited_local_content = read_file(local_file)
+
+    if not no_edit:
+        edittool(local_file)
+        if os.path.isfile(local_file):
+            edited_local_content = read_file(local_file)
+        else:
+            # edited content is None if we start from scratch but do nothing on vim
+            edited_local_content = None
     else:
-        # edited content is None if we start from scratch but do nothing on vim
-        edited_local_content = None
+        edited_local_content = local_content
+
     return edited_local_content
 
 def list_local(remote_file, config):
