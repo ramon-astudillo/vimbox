@@ -45,9 +45,12 @@ def encript_content(text, password):
     obj = AES.new(password, AES.MODE_CBC, 'This is an IV456')
 
     # Create header to be a multiple of 16
-    old_length = len(HEADER + text)
+    old_length = len("%s\n%s" % (HEADER, text))
     new_length = int(16*ceil(old_length*1./16))
-    padded_header = HEADER + (' ' * (new_length - old_length - 1))
+    if old_length != new_length:
+        padded_header = HEADER + (' ' * (new_length - old_length))
+    else:
+        padded_header = HEADER 
     # Add header
     headed_text = "%s\n%s" % (padded_header, text)
     return obj.encrypt(headed_text)
