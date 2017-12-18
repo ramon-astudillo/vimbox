@@ -1,7 +1,7 @@
 VimBox
 ======
 
-`VimBox` allows you to manually/programatically sync notes/logs across machines
+`VimBox` allows you to manually/programmatically sync notes/logs across machines
 while having as few files as possible locally (even none). Current features are
 
 * No need for the dropbox client (uses the Python API v2)
@@ -16,7 +16,7 @@ while having as few files as possible locally (even none). Current features are
 
 * Importable methods to use in other modules
 
-* Seamless file encription in the dropbox side
+* Seamless file encryption in the dropbox side
 
 # Examples
 
@@ -33,7 +33,7 @@ Edit an exiting file on dropbox
     vimbox /path/to/file
 
 If the local and remote copies differ `vimdiff` will be called instead of
-`vim`. Default is allways overwrite local with remote (right side)
+`vim`. Default is always overwrite local with remote (right side)
 
 Browse files using
 
@@ -43,13 +43,13 @@ will autocomplete using local cache of registered folders. You can also use
 `vimbox /path/` or `vimbox ls /path/` to browse remote folder content. In
 offline mode this will use the local cache
 
-To create files encripted on the dropbox side, use `-e` instead of `-f`
+To create files encrypted on the dropbox side, use `-e` instead of `-f`
 
     vimbox -e /path/to/file
 
 you will be prompted for a password. It wont be stored anyway so remember it. 
 The rest of `vimbox` functionalities are retained after creation but you will
-need to input the password for each `_pull` from the remote. Encription uses
+need to input the password for each `_pull` from the remote. Encryption uses
 the `pycript` module.
 
 # Install
@@ -75,7 +75,7 @@ Create the vimbox app
     Full Dropbox - Access ...
     Name vimbox
 
-Generate Acess token, store in .env
+Generate Access token, store in .env
 
     DROPBOX_TOKEN=<token>
 
@@ -99,9 +99,9 @@ It is necessary to manually link this as
 Roadmap
 
 * Other backends e.g. `vimbox /evernote/notes/`
-    - `CloudBlaze` is an laternative to dropbox
-    - `evernote` seems acessible
-    - `dropbox paper` does not seem to have an API at the momment
+    - `CloudBlaze` is an alternative to dropbox
+    - `evernote` seems accessible
+    - `dropbox paper` does not seem to have an API at the moment
 
 * Proper paths for temporary files
 
@@ -112,34 +112,41 @@ Roadmap
 
 * pipes `cat mylog | vimbox pipe -f /logs/mylog` and `vimbox cat /logs/mylog`
 
-* File properties model to allow encripting folders or having files with no
+* File properties model to allow encrypting folders or having files with no
   local copy
 
-* simulated bash `vimbox cache-rm`, `vimbox cache-ls` (vorbid others)
+* simulated bash `vimbox cache-rm`, `vimbox cache-ls` (forbid others)
 
-* Programatic edit operations: `append()`, `overwrite()`
+* Programmatic edit operations: `append()`, `overwrite()`
     - Useful for other modules e.g. `pomot add`
     - config should be read once in import
     - Info that the user can screw-up (cache, hashes) should not be on config
     - Think if vim-merge should be separated from the rest.
 
-* Unit test with backend and editor mockups
-    - This should also help bastracting those for future switches
+* Unit test with back-end and editor mock-ups
+    - This should also help abstracting those for future switches
 
-* Proper full installation instructions
+* Add `find` semantics i.e. `vimbox /folder1/folder2/*` regexp will look
+  downwards on the tree and return the matches if there is many, open directly
+  if there is one
+
+* Add fuzzy search mode `vimbox /folder/ regexp` open file in folder matching 
+  `regexp` print options otherwise.
 
 * `vimbox sync` to sync entire cache
     - `Fix` offline created files not uploaded unless re-modified
 
-* Increased privacy: encript/decript inside `vim` using `vim -x`
-    - differentiate editor-encription from normal encription
+* Increased privacy: encrypt/decrypt inside `vim` using `vim -x`
+    - differentiate editor-encryption from normal encryption
+
+* Proper full installation instructions
 
 * Simulated bash in remote `vimbox rm /logs/mylog`, `vimbox cp /logs/mylog`,
   `vimbox mkdir`
 
 ### v0.0.5 
 
-* More robust handling of remote bahaviours
+* More robust handling of remote behaviours
 
 * Major refactor: isolate remote/local code. Add `pull()`
 
