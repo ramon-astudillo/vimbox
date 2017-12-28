@@ -1,7 +1,7 @@
 import os
 import getpass
 #
-from vimbox.remote import get_client, pull, _push
+from vimbox.remote import get_client, pull, _push, is_file
 from vimbox.local import (
     load_config,
     get_local_file,
@@ -17,6 +17,32 @@ ROOT_FOLDER = "%s/.vimbox/" % os.environ['HOME']
 red = style(font_color='light red')
 yellow = style(font_color='yellow')
 green = style(font_color='light green')
+
+
+def copy(remote_source, remote_target, config=None, dropbox_client=None):
+
+    # Load config if not provided
+    if config is None:
+        config = load_config()
+
+    # Get client if not provided
+    if dropbox_client is None:
+        dropbox_client = get_client(config)
+
+    dropbox_client.files_copy_v2(remote_source, remote_target)
+
+
+def remove(remote_file, config=None, dropbox_client=None):
+
+    # Load config if not provided
+    if config is None:
+        config = load_config()
+
+    # Get client if not provided
+    if dropbox_client is None:
+        dropbox_client = get_client(config)
+    assert is_file(remote_file, dropbox_client), "Can not delete folders"
+    dropbox_client.files_delete_v2(remote_file)
 
 
 def edit(remote_file, config=None, dropbox_client=None, remove_local=None,

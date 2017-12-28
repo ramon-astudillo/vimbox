@@ -7,7 +7,7 @@ from vimbox.local import (
     get_complete_arguments,
     load_config
 )
-from vimbox import edit
+from vimbox import edit, copy, remove
 
 
 def vimbox_help():
@@ -47,6 +47,28 @@ def main(args=None):
             list_folders('')
         elif len(args) == 2:
             list_folders(args[1])
+        else:
+            vimbox_help()
+
+    elif args[0] == 'cp':
+
+        if len(args) == 3:
+            copy(args[1], args[2])
+        else:
+            vimbox_help()
+
+    elif args[0] == 'rm':
+
+        if len(args) == 2:
+            remove(args[1])
+        else:
+            vimbox_help()
+
+    elif args[0] == 'mv':
+
+        if len(args) == 3:
+            copy(args[1], args[2])
+            remove(args[1])
         else:
             vimbox_help()
 
