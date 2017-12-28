@@ -135,6 +135,7 @@ Roadmap
 
 * `vimbox sync` to sync entire cache
     - `Fix` offline created files not uploaded unless re-modified
+    - :( not possible without file cache
 
 * Increased privacy: encrypt/decrypt inside `vim` using `vim -x`
     - differentiate editor-encryption from normal encryption
