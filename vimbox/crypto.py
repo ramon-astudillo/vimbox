@@ -1,4 +1,5 @@
 import os
+import re
 from math import ceil
 #
 try:
@@ -50,7 +51,7 @@ def encript_content(text, password):
     if old_length != new_length:
         padded_header = HEADER + (' ' * (new_length - old_length))
     else:
-        padded_header = HEADER 
+        padded_header = HEADER
     # Add header
     headed_text = "%s\n%s" % (padded_header, text)
     return obj.encrypt(headed_text)
@@ -76,3 +77,9 @@ def get_path_hash(path_str):
     h = MD5.new()
     h.update(basename)
     return "%s/.%s" % (dirname, h.hexdigest())
+
+
+def is_encripted_path(path_str):
+    """Check if path is that of an encripted file"""
+    basename = os.path.basename(path_str)
+    return re.match('\.[a-z0-9]', basename) and len(basename) == 33

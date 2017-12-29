@@ -1,13 +1,14 @@
 import sys
 import getpass
-from vimbox.remote import list_folders
+from vimbox.remote import list_folders, copy, remove
 from vimbox.local import (
     edit_config,
     get_cache,
     get_complete_arguments,
     load_config
 )
-from vimbox import edit, copy, remove
+# TODO: This should end up in remote
+from vimbox import edit
 
 
 def vimbox_help():
@@ -74,7 +75,7 @@ def main(args=None):
 
     else:
 
-        # Multiple arguments
+        # Edit / ls alias
         remote_file = None
         force_creation = False
         encript = False

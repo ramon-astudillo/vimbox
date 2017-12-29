@@ -1,3 +1,8 @@
+"""
+Contains remote primitives indepenedent of back-end used and back-end switch
+
+Handles back-end errors in a unified way
+"""
 import os
 #
 from requests.exceptions import ConnectionError
@@ -14,7 +19,12 @@ from vimbox.local import (
     mergetool,
     list_local
 )
-from vimbox.crypto import get_path_hash, encript_content, decript_content
+from vimbox.crypto import (
+    get_path_hash,
+    encript_content,
+    decript_content,
+    is_encripted_path
+)
 from vimbox.diogenes import style
 
 
@@ -24,6 +34,8 @@ CONFIG_FILE = '%s/config.yml' % ROOT_FOLDER
 
 # Bash font styles
 red = style(font_color='light red')
+yellow = style(font_color='yellow')
+green = style(font_color='light green')
 
 
 def get_user_account(dropbox_client):
@@ -50,6 +62,7 @@ def get_user_account(dropbox_client):
 
 def get_client(config):
 
+    # TODO: Add here switch to other clients
     # Basic conection check
     if config.get('DROPBOX_TOKEN', None) is None:
 
@@ -252,6 +265,11 @@ def fetch(remote_file, config=None, dropbox_client=None, password=None):
 
 
 def get_folders(dropbox_client, remote_folder):
+
+    # Rename '/' to ''
+    if remote_folder == '/':
+        remote_folder = ''
+
     try:
 
         # Get user info to validate account
@@ -312,7 +330,7 @@ def list_folders(remote_file, config=None, dropbox_client=None):
                 file_folder = red(os.path.basename(path_hashes[key]))
             new_display_folders.append(file_folder)
         display_string = "".join(
-            ["%s\n" % folder for folder in  sorted(new_display_folders)]
+            ["%s\n" % folder for folder in sorted(new_display_folders)]
         )
 
     elif error == 'api-error':
@@ -325,8 +343,69 @@ def list_folders(remote_file, config=None, dropbox_client=None):
         display_folders = list_local(remote_file, config)
         print("\n%s cache for %s " % (red("offline"), remote_file))
         display_string = "".join(
-            ["%s\n" % folder for folder in  sorted(display_folders)]
+            ["%s\n" % folder for folder in sorted(display_folders)]
         )
 
     # Print
     print("\n%s\n" % display_string.rstrip())
+
+
+def copy(remote_source, remote_target, config=None, dropbox_client=None):
+
+    # Load config if not provided
+    if config is None:
+        config = load_config()
+
+    # Get client if not provided
+    if dropbox_client is None:
+        dropbox_client = get_client(config)
+
+    # Map `cp /path/to/file /path2/` to `cp /path/to/file /path/file`
+    if remote_target[-1] == '/':
+        basename = os.path.basename(remote_source)
+        remote_target = "%s%s" % (remote_target, basename)
+        if remote_source == remote_target:
+            print("source and target are the same")
+            exit(1)
+
+    # Do not allow to copy on encripted files
+    if (
+        remote_source in config['path_hashes'].values() or
+        remote_target in config['path_hashes'].values() or
+        is_encripted_path(remote_target)
+    ):
+        print("copy/move operations not allowed in encripted files")
+        exit(1)
+
+    sucess = dropbox_client.files_copy_v2(remote_source, remote_target)
+    if sucess:
+        print("%12s %s %s" % (yellow("copied"), remote_source, remote_target))
+
+
+def remove(remote_file, config=None, dropbox_client=None):
+
+    # Load config if not provided
+    if config is None:
+        config = load_config()
+
+    # Get client if not provided
+    if dropbox_client is None:
+        dropbox_client = get_client(config)
+
+    # Disallow deleting of encripted files that have unknown name
+    if is_encripted_path(remote_file):
+        print("Can not delete uncached encripted files")
+        exit(1)
+
+    # Disallow deleting of folders.
+    if is_file(remote_file, dropbox_client):
+        print("Can not delete folders")
+        exit(1)
+
+    sucess = dropbox_client.files_delete_v2(remote_file)
+    if sucess:
+        print("%12s %s" % (yellow("removed"), remote_file))
+
+        # If encripted remove from path_hashes
+        if remote_file in config['path_hashes'].values():
+            del config['path_hashes']

@@ -47,7 +47,7 @@ To create files encrypted on the dropbox side, use `-e` instead of `-f`
 
     vimbox -e /path/to/file
 
-you will be prompted for a password. It wont be stored anyway so remember it. 
+you will be prompted for a password. It wont be stored anyway so remember it.
 The rest of `vimbox` functionalities are retained after creation but you will
 need to input the password for each `_pull` from the remote. Encryption uses
 the `pycript` module.
@@ -115,36 +115,57 @@ Roadmap
 * File properties model to allow encrypting folders or having files with no
   local copy
 
-* simulated bash `vimbox cache-rm`, `vimbox cache-ls` (forbid others)
-
 * Programmatic edit operations: `append()`, `overwrite()`
     - Useful for other modules e.g. `pomot add`
     - config should be read once in import
     - Info that the user can screw-up (cache, hashes) should not be on config
     - Think if vim-merge should be separated from the rest.
 
-* Unit test with back-end and editor mock-ups
-    - This should also help abstracting those for future switches
-
 * Add `find` semantics i.e. `vimbox /folder1/folder2/*` regexp will look
   downwards on the tree and return the matches if there is many, open directly
   if there is one
 
-* Add fuzzy search mode `vimbox /folder/ regexp` open file in folder matching 
+* Add fuzzy search mode `vimbox /folder/ regexp` open file in folder matching
   `regexp` print options otherwise.
 
 * `vimbox sync` to sync entire cache
     - `Fix` offline created files not uploaded unless re-modified
 
+* `vimbox --cached ls /path/` 
+
 * Increased privacy: encrypt/decrypt inside `vim` using `vim -x`
     - differentiate editor-encryption from normal encryption
 
-* Proper full installation instructions
+* Handle installation in virtualenv
+    - local `~/.vimbox/` and `.bash_profile`
+    - :( what about conda and others, this opens a can of worms
 
-* Simulated bash in remote `vimbox rm /logs/mylog`, `vimbox cp /logs/mylog`,
-  `vimbox mkdir`
+* Unit test with back-end and editor mock-ups
+    - This should also help abstracting those for future switches
+    - How to switch back-end? example
+        from vimbox.remote import client_switch
+        # This calls `vimbox.remote.dropbox_client` or
+        # `vimbox.remote.mockup_client`
+        client = client_switch('dropbox:user')
 
-### v0.0.5 
+* Back-end side encription with stored key on client side
+
+* Proper full installation
+    - `setup.py` adds `complete` to `.bash_profile`
+
+* Add specific help for commands
+
+* Move all dropbox code to `dropbox client`
+
+### v0.0.6
+
+* Simulated bash in remote
+    vimbox rm /logs/mylog
+    vimbox cp /logs/mylog /path/
+    vimbox cp /logs/mylog /path/mylog2
+    vimbox mv /logs/mylog /path/mylog2
+
+### v0.0.5
 
 * More robust handling of remote behaviours
 
