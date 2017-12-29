@@ -133,9 +133,6 @@ Roadmap
 
 * `vimbox --cached ls /path/` 
 
-* Increased privacy: encrypt/decrypt inside `vim` using `vim -x`
-    - differentiate editor-encryption from normal encryption
-
 * Handle installation in virtualenv
     - local `~/.vimbox/` and `.bash_profile`
     - :( what about conda and others, this opens a can of worms
@@ -148,12 +145,18 @@ Roadmap
         # `vimbox.remote.mockup_client`
         client = client_switch('dropbox:user')
 
+* Increased privacy: encrypt/decrypt inside `vim` using `vim -x`
+    - differentiate editor-encryption from normal encryption
+    - `vimbox -x` 
+
 * Back-end side encription with stored key on client side
+    - how to handle already encripted files (two hash tables?)
+    - `vimbox -k` 
+
+* Add specific help for commands
 
 * Proper full installation
     - `setup.py` adds `complete` to `.bash_profile`
-
-* Add specific help for commands
 
 * Move all dropbox code to `dropbox client`
 
