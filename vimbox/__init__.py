@@ -6,12 +6,10 @@ from vimbox.local import (
     load_config,
     get_local_file,
     register_file,
-    local_edit
+    local_edit,
 )
 from vimbox.crypto import validate_password
 from vimbox.diogenes import style
-
-ROOT_FOLDER = "%s/.vimbox/" % os.environ['HOME']
 
 # Bash font styles
 red = style(font_color='light red')

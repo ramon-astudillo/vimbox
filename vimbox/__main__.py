@@ -1,11 +1,14 @@
 import sys
+import os
 import getpass
 from vimbox.remote import list_folders, copy, remove
 from vimbox.local import (
     edit_config,
     get_cache,
     get_complete_arguments,
-    load_config
+    load_config,
+    IS_INSTALLED,
+    install
 )
 # TODO: This should end up in remote
 from vimbox import edit
@@ -15,11 +18,15 @@ def vimbox_help():
     print("\nvimbox [-f -e ls config] /path/to/file\n")
     exit()
 
-
 def main(args=None):
     """
-    This is renamed as vimbox in setup.py
+    This is refered as vimbox in setup.py
     """
+
+    if not IS_INSTALLED:
+        install()
+        print("vimbox installed sucessfully")
+        exit()
 
     # From command line
     if args is None:

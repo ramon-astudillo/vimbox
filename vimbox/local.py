@@ -1,11 +1,18 @@
 import os
+import sys
 import yaml
 from subprocess import call
 from vimbox.crypto import get_path_hash
 from vimbox.diogenes import style
 
-ROOT_FOLDER = "%s/.vimbox/" % os.environ['HOME']
+# Vimbox gves preference to local .vimbox/ folders and then to one on home
+if os.path.isdir('.vimbox/'):
+    ROOT_FOLDER = '.vimbox/'
+else:
+    ROOT_FOLDER = "%s/.vimbox/" % os.environ['HOME']
 CONFIG_FILE = '%s/config.yml' % ROOT_FOLDER
+# Flag to indicate if it is installed
+IS_INSTALLED = os.path.isfile(CONFIG_FILE)
 DEFAULT_CONFIG = {
     # This will store the dropbox token (no need to add it manually here!)
     'DROPBOX_TOKEN': None,
@@ -26,6 +33,71 @@ MERGETOOL = 'vimdiff'
 
 # Bash font styles
 red = style(font_color='light red')
+
+
+def create_folder(virtualenv):
+
+    if not os.path.isdir(root_folder):
+        # TODO: Harden this against write permission errors
+        os.mkdir(root_folder)
+        print("Created %s" % root_folder)
+
+    return root_folder
+
+
+def modify_bashrc(virtualenv):
+    """Adds complete -W command to bashrc or activate in a virtualenv"""
+
+    if virtualenv and os.path.isfile("%s/bin/activate" % sys.prefix):
+        bashrc = "%s/bin/activate" % sys.prefix
+        print("Found start script \n\n%s\n, will use it as .bashrc" % bashrc)
+    else:
+        bashrc = "%s/.bashrc" % os.environ['HOME']
+
+    # Add complete line for bashrc
+    complete_string = "complete -W \"$(vimbox complete)\" \'vimbox\'\n"
+    if os.path.isfile(bashrc):
+        with open(bashrc, 'r') as fid:
+            lines = fid.readlines()
+        if complete_string not in lines:
+            with open(bashrc, 'a') as fid:
+                fid.write('\n# Argument completion for vimbox\n')
+                fid.write(complete_string)
+                print("Added complete to %s" % bashrc)
+
+    else:
+        with open(bashrc, 'w') as fid:
+            fid.write('\n# Argument completion for vimbox\n')
+            fid.write(complete_string)
+            print("Created %s" % bashrc)
+
+
+def install():
+
+    # Check if we are in virtual environment
+    virtualenv = False
+    if hasattr(sys, 'real_prefix'):
+        virtualenv = True
+        print("\nI think I am in a virtual environment:")
+        print("\n%s\n" % sys.prefix)
+        print("I guess this is a debug/tryout\n")
+        print("To get a local .vimbox/ create it and call this again\n")
+
+    # Create config folder
+    if not os.path.isdir(ROOT_FOLDER):
+        os.mkdir(ROOT_FOLDER)
+        print("Created %s" % ROOT_FOLDER)
+
+    # Configure back-end
+    install_back_end()
+
+    # Create config
+    write_config(CONFIG_FILE, DEFAULT_CONFIG)
+
+    # Modify bashrc
+    modify_bashrc(virtualenv)
+
+    IS_INSTALLED = True
 
 
 def write_config(file_path, config):

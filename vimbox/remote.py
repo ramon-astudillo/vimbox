@@ -17,7 +17,8 @@ from vimbox.local import (
     read_file,
     write_config,
     mergetool,
-    list_local
+    list_local,
+    CONFIG_FILE
 )
 from vimbox.crypto import (
     get_path_hash,
@@ -26,10 +27,6 @@ from vimbox.crypto import (
     is_encripted_path
 )
 from vimbox.diogenes import style
-
-
-ROOT_FOLDER = "%s/.vimbox/" % os.environ['HOME']
-CONFIG_FILE = '%s/config.yml' % ROOT_FOLDER
 
 
 # Bash font styles

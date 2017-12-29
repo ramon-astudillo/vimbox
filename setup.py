@@ -50,21 +50,3 @@ setup(
     install_requires=install_requires,
     package_data=package_data,
 )
-
-# Add complete line for bashrc
-bashrc = "%s/.bashrc" % os.environ['HOME']
-complete_string = "complete -W \"$(vimbox complete)\" \'vimbox\'\n"
-if os.path.isfile(bashrc):
-    with open(bashrc, 'r') as fid:
-        lines = fid.readlines()
-    if complete_string not in lines:
-        with open(bashrc, 'a') as fid:
-            fid.write('\n# Argument completion for vimbox %s\n' % VERSION)
-            fid.write(complete_string)
-            print("Added complete to %s" % bashrc)
-
-else:
-    with open(bashrc, 'w') as fid:
-        fid.write('\n# Argument completion for vimbox %s\n' % VERSION)
-        fid.write(complete_string)
-        print("Created %s" % bashrc)
