@@ -130,6 +130,7 @@ Roadmap
 
 * `vimbox sync` to sync entire cache
     - `Fix` offline created files not uploaded unless re-modified
+    - :( not possible without file cache
 
 * `vimbox --cached ls /path/` 
 
