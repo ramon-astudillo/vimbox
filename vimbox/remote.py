@@ -398,7 +398,7 @@ def remove(remote_file, config=None, dropbox_client=None):
         exit(1)
 
     # Disallow deleting of folders.
-    if is_file(remote_file, dropbox_client):
+    if not is_file(remote_file, dropbox_client):
         print("Can not delete folders")
         exit(1)
 
