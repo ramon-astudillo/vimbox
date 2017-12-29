@@ -1,8 +1,15 @@
 import os
+# import sys
 from setuptools import setup, find_packages
 
 from pip.req import parse_requirements
 import pip.download
+
+VERSION='0.0.6'
+
+# Check if we are on a virtual environment
+# https://stackoverflow.com/questions/1871549/determine-if-python-is-running-inside-virtualenv
+# if hasattr(sys, 'real_prefix'):
 
 # parse_requirements() returns generator of pip.req.InstallRequirement
 # objects
@@ -16,6 +23,8 @@ install_requires = [str(ir.req) for ir in install_reqs]
 # Used for the long_description.  It's nice, because now 1) we have a top level
 # README file and 2) it's easier to type in the README file than to put a raw
 # string in below ...
+
+
 def read(filename):
     return open(os.path.join(os.path.dirname(__file__), filename)).read()
 
@@ -25,10 +34,10 @@ package_data = {
 
 setup(
     name='vimbox',
-    version='0.0.6',
+    version=VERSION,
     author='@ramon-astudillo',
     author_email='ramon@astudillo.com',
-    description="Manage/Edit notes directly in dropbox cloud with vim",
+    description="Manage/edit notes directly in dropbox with vim",
     long_description=read('README.md'),
     # license='MIT',
     py_modules=['vimbox'],
@@ -41,3 +50,21 @@ setup(
     install_requires=install_requires,
     package_data=package_data,
 )
+
+# Add complete line for bashrc
+bashrc = "%s/.bashrc" % os.environ['HOME']
+complete_string = "complete -W \"$(vimbox complete)\" \'vimbox\'\n"
+if os.path.isfile(bashrc):
+    with open(bashrc, 'r') as fid:
+        lines = fid.readlines()
+    if complete_string not in lines:
+        with open(bashrc, 'a') as fid:
+            fid.write('\n# Argument completion for vimbox %s\n' % VERSION)
+            fid.write(complete_string)
+            print("Added complete to %s" % bashrc)
+
+else:
+    with open(bashrc, 'w') as fid:
+        fid.write('\n# Argument completion for vimbox %s\n' % VERSION)
+        fid.write(complete_string)
+        print("Created %s" % bashrc)
