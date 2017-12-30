@@ -5,14 +5,14 @@ from subprocess import call
 from vimbox.crypto import get_path_hash
 from vimbox.diogenes import style
 
-# Vimbox gves preference to local .vimbox/ folders and then to one on home
-if os.path.isdir('.vimbox/'):
-    ROOT_FOLDER = '.vimbox/'
+# Locate the vimbox config. If we are inside a virtual environment look for it
+# inside
+if hasattr(sys, 'real_prefix'):
+    ROOT_FOLDER = "%s/.vimbox/" % sys.prefix
 else:
     ROOT_FOLDER = "%s/.vimbox/" % os.environ['HOME']
 CONFIG_FILE = '%s/config.yml' % ROOT_FOLDER
 # Flag to indicate if it is installed
-IS_INSTALLED = os.path.isfile(CONFIG_FILE)
 DEFAULT_CONFIG = {
     # This will store the dropbox token (no need to add it manually here!)
     'DROPBOX_TOKEN': None,
@@ -35,22 +35,11 @@ MERGETOOL = 'vimdiff'
 red = style(font_color='light red')
 
 
-def create_folder(virtualenv):
-
-    if not os.path.isdir(root_folder):
-        # TODO: Harden this against write permission errors
-        os.mkdir(root_folder)
-        print("Created %s" % root_folder)
-
-    return root_folder
-
-
 def modify_bashrc(virtualenv):
     """Adds complete -W command to bashrc or activate in a virtualenv"""
 
     if virtualenv and os.path.isfile("%s/bin/activate" % sys.prefix):
         bashrc = "%s/bin/activate" % sys.prefix
-        print("Found start script \n\n%s\n, will use it as .bashrc" % bashrc)
     else:
         bashrc = "%s/.bashrc" % os.environ['HOME']
 
@@ -72,34 +61,6 @@ def modify_bashrc(virtualenv):
             print("Created %s" % bashrc)
 
 
-def install():
-
-    # Check if we are in virtual environment
-    virtualenv = False
-    if hasattr(sys, 'real_prefix'):
-        virtualenv = True
-        print("\nI think I am in a virtual environment:")
-        print("\n%s\n" % sys.prefix)
-        print("I guess this is a debug/tryout\n")
-        print("To get a local .vimbox/ create it and call this again\n")
-
-    # Create config folder
-    if not os.path.isdir(ROOT_FOLDER):
-        os.mkdir(ROOT_FOLDER)
-        print("Created %s" % ROOT_FOLDER)
-
-    # Configure back-end
-    install_back_end()
-
-    # Create config
-    write_config(CONFIG_FILE, DEFAULT_CONFIG)
-
-    # Modify bashrc
-    modify_bashrc(virtualenv)
-
-    IS_INSTALLED = True
-
-
 def write_config(file_path, config):
     with open(file_path, 'w') as fid:
         yaml.dump(config, fid, default_flow_style=False)
@@ -115,53 +76,54 @@ def edit_config():
     edittool(CONFIG_FILE)
 
 
+def local_install_check():
+    if not os.path.isfile(CONFIG_FILE):
+        print("Missing config in %s" % CONFIG_FILE)
+        print("Run vimbox setup")
+        exit(1)
+
+
 def load_config():
 
-    # Create vimbox folder
-    if not os.path.isdir(ROOT_FOLDER):
-        os.mkdir(ROOT_FOLDER)
-        print("Created %s" % ROOT_FOLDER)
-
     # Create vimbox config
-    if os.path.isfile(CONFIG_FILE):
-        config = read_config(CONFIG_FILE)
-        # Check current defaults are present (version missmatch)
-        if set(config.keys()) < set(DEFAULT_CONFIG.keys()):
+    config = read_config(CONFIG_FILE)
+    # Check current defaults are present (version missmatch)
+    if set(config.keys()) < set(DEFAULT_CONFIG.keys()):
 
-            print("Updating config")
-            for key, value in DEFAULT_CONFIG.items():
-                if key not in config:
-                    print("%s = %s" % (key, value))
-                    config[key] = value
-            # Update config
-            write_config(CONFIG_FILE, config)
-
-        elif set(config.keys()) > set(DEFAULT_CONFIG.keys()):
-
-            # Extra fields (probably from old versions)
-            outdated_fields = (set(config.keys()) - set(DEFAULT_CONFIG.keys()))
-            if outdated_fields:
-                print(
-                    "\nOutdated fields %s, remove with vimbox config\n" %
-                    ", ".join(outdated_fields)
-                )
-
-    else:
-        # Default config
-        config = DEFAULT_CONFIG
+        print("Updating config")
+        for key, value in DEFAULT_CONFIG.items():
+            if key not in config:
+                print("%s = %s" % (key, value))
+                config[key] = value
+        # Update config
         write_config(CONFIG_FILE, config)
-        print("Created %s" % CONFIG_FILE)
+
+    elif set(config.keys()) > set(DEFAULT_CONFIG.keys()):
+
+        # Extra fields (probably from old versions)
+        outdated_fields = (set(config.keys()) - set(DEFAULT_CONFIG.keys()))
+        if outdated_fields:
+            print(
+                "\nOutdated fields %s, remove with vimbox config\n" %
+                ", ".join(outdated_fields)
+            )
 
     return config
 
 
 def get_cache():
-    config = read_config(CONFIG_FILE)
-    return config['cache']
+    # note that we do not use load_config here on purpose. If instalation failed
+    # this will be called in .bashrc to set arguments. It is safer to return
+    # empty directly that having any code running.
+    if os.path.isfile(CONFIG_FILE):
+        config = read_config(CONFIG_FILE)
+        return config['cache']
+    else:
+        return []
 
 
 def get_complete_arguments():
-    return ['config', 'ls'] + get_cache()
+    return ['setup', 'cache', 'config', 'ls', 'cp', 'mv', 'rm'] + get_cache()
 
 
 def register_file(remote_file, config, is_encripted):
@@ -252,12 +214,14 @@ def local_edit(local_file, local_content, no_edit=False):
         if os.path.isfile(local_file):
             edited_local_content = read_file(local_file)
         else:
-            # edited content is None if we start from scratch but do nothing on vim
+            # edited content is None if we start from scratch but do nothing on
+            # vim
             edited_local_content = None
     else:
         edited_local_content = local_content
 
     return edited_local_content
+
 
 def list_local(remote_file, config):
 

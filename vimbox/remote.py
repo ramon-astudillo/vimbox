@@ -16,9 +16,11 @@ from vimbox.local import (
     write_file,
     read_file,
     write_config,
+    read_config,
     mergetool,
     list_local,
-    CONFIG_FILE
+    CONFIG_FILE,
+    DEFAULT_CONFIG
 )
 from vimbox.crypto import (
     get_path_hash,
@@ -57,33 +59,52 @@ def get_user_account(dropbox_client):
     return user, error
 
 
+def install_backend():
+
+    if os.path.isfile(CONFIG_FILE):
+        config = read_config(CONFIG_FILE)
+        if 'DROPBOX_TOKEN' in config:
+            print("Found valid config in %s" % CONFIG_FILE)
+            exit()
+
+    # Prompt user for a token
+    print(
+        "\nI need you to create a dropbox app and give me an acess token."
+        "Go here \n\nhttps://www.dropbox.com/developers/apps/\n\n"
+        "1) Select Dropbox API\n"
+        "2) Select either App folder or Full Dropbox\n"
+        "3) Name is irrelevant but vimbox may help you remember\n"
+    )
+    dropbox_token = raw_input("Push \"generate acess token\" to get one and paste it here: ")
+    dropbox_client = dropbox.Dropbox(dropbox_token)
+
+    # Validate token by connecting to dropbox
+    user_acount, error = get_user_account(dropbox_client)
+    if user_acount is None:
+        print("Could not connect to dropbox %s" % error)
+        exit(1)
+    else:
+
+        print("Connected to dropbox account %s (%s)" % (
+            user_acount.name.display_name,
+            user_acount.email)
+        )
+        # Store
+        config = DEFAULT_CONFIG
+        config['DROPBOX_TOKEN'] = dropbox_token
+        write_config(CONFIG_FILE, config)
+        print("Created config in %s" % CONFIG_FILE)
+
+
 def get_client(config):
 
     # TODO: Add here switch to other clients
     # Basic conection check
     if config.get('DROPBOX_TOKEN', None) is None:
+        install_client(config)
 
-        # Prompt user for a token
-        print(
-            "\nA dropbox access token for vimbox is needed, "
-            "see\n\nhttps://www.dropbox.com/developers/apps/\n"
-        )
-        dropbox_token = raw_input('Please provide Dropbox token: ')
-        dropbox_client = dropbox.Dropbox(dropbox_token)
-
-        # Validate token by connecting to dropbox
-        user_acount, error = get_user_account(dropbox_client)
-        if user_acount is None:
-            print("Could not connect to dropbox %s" % error)
-            exit(1)
-        else:
-            # Store
-            config['DROPBOX_TOKEN'] = dropbox_token
-            write_config(CONFIG_FILE, config)
-    else:
-
-        # Checking here for dropbox status can make it too slow
-        dropbox_client = dropbox.Dropbox(config['DROPBOX_TOKEN'])
+    # Checking here for dropbox status can make it too slow
+    dropbox_client = dropbox.Dropbox(config['DROPBOX_TOKEN'])
 
     return dropbox_client
 

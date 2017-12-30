@@ -1,18 +1,41 @@
 import sys
 import os
 import getpass
-from vimbox.remote import list_folders, copy, remove
+from vimbox.remote import list_folders, copy, remove, install_backend
 from vimbox.local import (
     edit_config,
     get_cache,
     get_complete_arguments,
     load_config,
-    IS_INSTALLED,
-    install
+    ROOT_FOLDER,
+    modify_bashrc,
+    local_install_check
 )
 # TODO: This should end up in remote
 from vimbox import edit
 
+
+def install():
+
+    # Check if we are in virtual environment
+    virtualenv = False
+    if hasattr(sys, 'real_prefix'):
+        virtualenv = True
+        print("\nVirtual environment detected: %s" % sys.prefix)
+        print("Config files and bash autocomplete will be installed inside")
+
+    # Create config folder
+    if not os.path.isdir(ROOT_FOLDER):
+        os.mkdir(ROOT_FOLDER)
+        print("Created %s" % ROOT_FOLDER)
+
+    # Configure back-end
+    install_backend()
+
+    # Modify bashrc
+    modify_bashrc(virtualenv)
+
+    print("vimbox installed sucessfully")
 
 def vimbox_help():
     print("\nvimbox [-f -e ls config] /path/to/file\n")
@@ -23,27 +46,31 @@ def main(args=None):
     This is refered as vimbox in setup.py
     """
 
-    if not IS_INSTALLED:
-        install()
-        print("vimbox installed sucessfully")
-        exit()
-
     # From command line
     if args is None:
         args = sys.argv[1:]
 
     if len(args) == 0:
         vimbox_help()
+        exit(1)
 
-    elif args[0] == 'cache':
+    # Sanity check: back-end is installed
+    if args[0] not in ['setup', 'complete']:
+        local_install_check()
 
-        for cached_file in get_cache():
-            print(cached_file)
+    if args[0] == 'setup':
+
+        install()
 
     elif args[0] == 'complete':
 
         for autocomplete_option in get_complete_arguments():
             print(autocomplete_option)
+
+    elif args[0] == 'cache':
+
+        for cached_file in get_cache():
+            print(cached_file)
 
     elif args[0] == 'config':
 

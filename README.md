@@ -6,13 +6,13 @@ while having as few files as possible locally (even none). Current features are
 
 * No need for the dropbox client (uses the Python API v2)
 
+* Merge of local and remote discrepancies through `vimdiff`
+
 * File browsing autocomplete with `TAB` as if folders were local
 
 * Optional removal of local files after pushing to remote
 
 * Offline mode keeps all functionalities
-
-* Merge of local and remote discrepancies through `vimdiff`
 
 * Importable methods to use in other modules
 
@@ -54,38 +54,71 @@ the `pycript` module.
 
 # Install
 
-## Install the python module
-
-Clone
+Clone the repo and install it
 
     git clone git@gitlab.com:ramon-astudillo/vimbox.git
     sudo pip install vimbox/
 
-Upgrade after version change
+Configure the back-end by calling the program for the first time.
 
-    sudo pip install vimbox/ --upgrade
+    vimbox setup
 
-## Create App on Dropbox
-
-Create the vimbox app
+The install menu will ask you for a dropbox acess token. Getting this is a
+simple process In any computer with a browser, create a new app on your dropbox
+account by visiting
 
     https://www.dropbox.com/developers/apps/create
 
-    Dropbox API
-    Full Dropbox - Access ...
-    Name vimbox
+and use following configuration
 
-Generate Access token, store in .env
+* `Dropbox API`
 
-    DROPBOX_TOKEN=<token>
+* Both `App folder` and `Full Dropbox` are possible. The former is better for a
+  try-out
 
-Get dropbox directory tree
+* Put a name. This is irrelevant, but `vimbox` may help you remeber
 
-https://stackoverflow.com/questions/31485418/build-directory-tree-from-dropbox-api#31487098
+After this is done you will see a control pannel for the app. Use the
+`Generated access token` botton to get an acess token that you can paste into
+the install prompt. 
 
-To get folder autocomplete
+# Upgrade 
 
-    complete -W "$(vimbox cache)" 'vimbox'
+If you want to update to the latest version
+
+    sudo pip install vimbox/ --upgrade
+
+For development, you can work on a virtual environment
+
+# Install Details
+
+The vimbox installer will do two changes in your system. It will create a
+`.vimbox` folder on your personal area. It will also add the following line to
+your `.bashrc` to load the cache of remote folders
+
+    complete -W "$(vimbox complete)" 'vimbox'
+
+*NOTE:* If you use a virtualenv this changes will be performed inside of the
+virtual environment. Deleting the virtualenv will undo this changes. See next
+section for details.
+
+# Develop
+
+To develop the easiest is to use a virtual environment. Vimbox will detect this
+and store ist `.vimbox` config folder in the same folder where the install is
+carried out. As an example
+
+    virtualenv venv
+    source venv/bin/activate
+    pip install -r requirements.txt
+    python setup.py develop
+
+The `.vimbox` folder will be created in the foder from which pip is called.
+*NOTE:* Vimbox will first look for pre-existing `.vimbox` installs in your
+home. If you have a version installed and you do not want to use that config,
+create an empty `.vimbox` folder locally, previously with
+
+    mkdir .vimbox
 
 # Troubleshooting
 
@@ -154,14 +187,18 @@ Roadmap
     - how to handle already encripted files (two hash tables?)
     - `vimbox -k` 
 
-* Add specific help for commands
+### Future v0.0.6
 
-* Proper full installation
-    - `setup.py` adds `complete` to `.bash_profile`
+* Add specific help for commands
 
 * Move all dropbox code to `dropbox client`
 
-### v0.0.6
+* Clean up namespaces of methods
+
+### 
+
+* Proper full installation
+    - `setup.py` adds `complete` to `.bash_profile`
 
 * Simulated bash in remote
     vimbox rm /logs/mylog
