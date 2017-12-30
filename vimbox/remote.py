@@ -65,35 +65,37 @@ def install_backend():
         config = read_config(CONFIG_FILE)
         if 'DROPBOX_TOKEN' in config:
             print("Found valid config in %s" % CONFIG_FILE)
-            exit()
 
-    # Prompt user for a token
-    print(
-        "\nI need you to create a dropbox app and give me an acess token."
-        "Go here \n\nhttps://www.dropbox.com/developers/apps/\n\n"
-        "1) Select Dropbox API\n"
-        "2) Select either App folder or Full Dropbox\n"
-        "3) Name is irrelevant but vimbox may help you remember\n"
-    )
-    dropbox_token = raw_input("Push \"generate acess token\" to get one and paste it here: ")
-    dropbox_client = dropbox.Dropbox(dropbox_token)
-
-    # Validate token by connecting to dropbox
-    user_acount, error = get_user_account(dropbox_client)
-    if user_acount is None:
-        print("Could not connect to dropbox %s" % error)
-        exit(1)
     else:
 
-        print("Connected to dropbox account %s (%s)" % (
-            user_acount.name.display_name,
-            user_acount.email)
+        # Prompt user for a token
+        print(
+            "\nI need you to create a dropbox app and give me an acess token."
+            "Go here \n\nhttps://www.dropbox.com/developers/apps/\n\n"
+            "1) Select Dropbox API\n"
+            "2) Select either App folder or Full Dropbox\n"
+            "3) Name is irrelevant but vimbox may help you remember\n"
         )
-        # Store
-        config = DEFAULT_CONFIG
-        config['DROPBOX_TOKEN'] = dropbox_token
-        write_config(CONFIG_FILE, config)
-        print("Created config in %s" % CONFIG_FILE)
+        dropbox_token = raw_input("Push \"generate acess token\" to get one"
+                                  " and paste it here: ")
+        dropbox_client = dropbox.Dropbox(dropbox_token)
+
+        # Validate token by connecting to dropbox
+        user_acount, error = get_user_account(dropbox_client)
+        if user_acount is None:
+            print("Could not connect to dropbox %s" % error)
+            exit(1)
+        else:
+
+            print("Connected to dropbox account %s (%s)" % (
+                user_acount.name.display_name,
+                user_acount.email)
+            )
+            # Store
+            config = DEFAULT_CONFIG
+            config['DROPBOX_TOKEN'] = dropbox_token
+            write_config(CONFIG_FILE, config)
+            print("Created config in %s" % CONFIG_FILE)
 
 
 def get_client(config):
