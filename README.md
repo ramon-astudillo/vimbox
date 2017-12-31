@@ -1,22 +1,29 @@
 VimBox
 ======
 
-`VimBox` allows you to manually/programmatically sync notes/logs across machines
-while having as few files as possible locally (even none). Current features are
+I use vim a lot, I keep a lot of notes across machines. `VimBox` was born as a
+cheap way to sync those notes using dropbox while having a bit more control
+than with their client, namely
 
-* No need for the dropbox client (uses the Python API v2)
+* Manual sync: `vimbox /notes/cookbook` will download the remote file open it in `vim` and push it to remote upon closing.
 
-* Merge of local and remote discrepancies through `vimdiff`
+* Minimal syncing: Can be set to keep zero files in the computer. Local files can be used to work offline.
 
-* File browsing autocomplete with `TAB` as if folders were local
+* Merge operation: If there are discrepancies between local and remote `vimdiff` will be called instead of `vim`.
 
-* Optional removal of local files after pushing to remote
+* Autocomplete: File browsing autocomplete with `TAB` as if folders were local. It uses `bash` `complete` command for this.
 
-* Offline mode keeps all functionalities
+* Optional encryption in the dropbox side with `pycrypto`. Names will be hashed and content encripted.
 
-* Importable methods to use in other modules
+* Comes with the expected `vimbox ls` (`rm` `cp` `mv`)
 
-* Seamless file encryption in the dropbox side
+* Importable methods to use in other modules `from vimbox import edit, move`.
+
+* Code is though to replace `vim` and `vimdiff` by other editors
+
+* Code is though to add backends other than dropbox (paper is in sight)
+
+* Works in OSX and Linux, uses dropbox v2 API.
 
 # Examples
 
@@ -80,9 +87,9 @@ and use following configuration
 
 After this is done you will see a control pannel for the app. Use the
 `Generated access token` botton to get an acess token that you can paste into
-the install prompt. 
+the install prompt.
 
-# Upgrade 
+# Upgrade
 
 If you want to update to the latest version
 
@@ -131,28 +138,14 @@ It is necessary to manually link this as
 
 Roadmap
 
-* Other backends e.g. `vimbox /evernote/notes/`
-    - `CloudBlaze` is an alternative to dropbox
-    - `evernote` seems accessible
-    - `dropbox paper` does not seem to have an API at the moment
-
 * Proper paths for temporary files
 
 * wrapper around vim (tunnel all options)
     :( forces to sync files by separate, big change of flow. Unfrequent use
 
-* Update autocomplete from vimbox after new register (instead of `source`)
-
 * pipes `cat mylog | vimbox pipe -f /logs/mylog` and `vimbox cat /logs/mylog`
 
-* File properties model to allow encrypting folders or having files with no
-  local copy
-
-* Programmatic edit operations: `append()`, `overwrite()`
-    - Useful for other modules e.g. `pomot add`
-    - config should be read once in import
-    - Info that the user can screw-up (cache, hashes) should not be on config
-    - Think if vim-merge should be separated from the rest.
+* Info that the user can screw-up (cache, hashes) should not be on config
 
 * Add `find` semantics i.e. `vimbox /folder1/folder2/*` regexp will look
   downwards on the tree and return the matches if there is many, open directly
@@ -165,11 +158,7 @@ Roadmap
     - `Fix` offline created files not uploaded unless re-modified
     - :( not possible without file cache
 
-* `vimbox --cached ls /path/` 
-
-* Handle installation in virtualenv
-    - local `~/.vimbox/` and `.bash_profile`
-    - :( what about conda and others, this opens a can of worms
+* `vimbox --cached ls /path/`
 
 * Unit test with back-end and editor mock-ups
     - This should also help abstracting those for future switches
@@ -181,11 +170,18 @@ Roadmap
 
 * Increased privacy: encrypt/decrypt inside `vim` using `vim -x`
     - differentiate editor-encryption from normal encryption
-    - `vimbox -x` 
+    - `vimbox -x`
 
 * Back-end side encription with stored key on client side
     - how to handle already encripted files (two hash tables?)
-    - `vimbox -k` 
+    - `vimbox -k`
+
+* Other backends e.g. `vimbox /evernote/notes/`
+    - `dropbox paper` has an API, unclear how flexible
+    - `CloudBlaze` is an alternative to dropbox
+    - `evernote` seems accessible
+
+* Set editors used in config
 
 ### Future v0.0.6
 
@@ -195,7 +191,12 @@ Roadmap
 
 * Clean up namespaces of methods
 
-### 
+###
+
+* Handle installation in virtualenv
+    - local `~/.vimbox/` and `.bash_profile`
+
+* Update autocomplete from vimbox after new register (instead of `source`)
 
 * Proper full installation
     - `setup.py` adds `complete` to `.bash_profile`
@@ -216,7 +217,7 @@ Roadmap
 
 * Fix `vimbox -e /path/to/file` on existing files not allowed
 
-* Major refactor edit() _push() functions probably better than VimBox class 
+* Major refactor edit() _push() functions probably better than VimBox class
 
 ### v0.0.3
 
