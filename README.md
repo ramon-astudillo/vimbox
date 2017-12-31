@@ -11,7 +11,7 @@ than with their client, namely
 
 * Merge operation: If there are discrepancies between local and remote `vimdiff` will be called instead of `vim`.
 
-* Autocomplete: File browsing autocomplete with `TAB` as if folders were local. It uses `bash` `complete` command for this.
+* Autocomplete: Folder browsing autocomplete with `TAB` as if folders were local. It uses `bash` `complete` command for this.
 
 * Optional encryption in the dropbox side with `pycrypto`. Names will be hashed and content encripted.
 
@@ -21,7 +21,7 @@ than with their client, namely
 
 * Code is though to replace `vim` and `vimdiff` by other editors
 
-* Code is though to add backends other than dropbox (paper is in sight)
+* Code is though to add backends other than `dropbox` (paper is in sight)
 
 * Works in OSX and Linux, uses dropbox v2 API.
 
@@ -155,18 +155,11 @@ Roadmap
   `regexp` print options otherwise.
 
 * `vimbox sync` to sync entire cache
-    - `Fix` offline created files not uploaded unless re-modified
-    - :( not possible without file cache
+    - only makes sense with no local copy option
 
 * `vimbox --cached ls /path/`
 
 * Unit test with back-end and editor mock-ups
-    - This should also help abstracting those for future switches
-    - How to switch back-end? example
-        from vimbox.remote import client_switch
-        # This calls `vimbox.remote.dropbox_client` or
-        # `vimbox.remote.mockup_client`
-        client = client_switch('dropbox:user')
 
 * Increased privacy: encrypt/decrypt inside `vim` using `vim -x`
     - differentiate editor-encryption from normal encryption
@@ -177,6 +170,7 @@ Roadmap
     - `vimbox -k`
 
 * Other backends e.g. `vimbox /evernote/notes/`
+    - mockup back-end for testing
     - `dropbox paper` has an API, unclear how flexible
     - `CloudBlaze` is an alternative to dropbox
     - `evernote` seems accessible
@@ -202,6 +196,7 @@ Roadmap
     - `setup.py` adds `complete` to `.bash_profile`
 
 * Simulated bash in remote
+
     vimbox rm /logs/mylog
     vimbox cp /logs/mylog /path/
     vimbox cp /logs/mylog /path/mylog2
