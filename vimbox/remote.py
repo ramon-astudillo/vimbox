@@ -438,7 +438,6 @@ def remove(remote_file, config=None, dropbox_client=None, force=False):
             exit(1)
 
     # Hash name if necessary
-    import ipdb;ipdb.set_trace(context=30)
     if remote_file in config['path_hashes'].values():
         original_name = remote_file
         remote_file = get_path_hash(remote_file)
