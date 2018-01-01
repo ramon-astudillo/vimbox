@@ -95,7 +95,9 @@ def main(args=None):
     elif args[0] == 'rm':
 
         if len(args) == 2:
-            remove(args[1])
+            remove(args[1], force=False)
+        elif len(args) == 3 and args[1] == '-R':
+            remove(args[2], force=True)
         else:
             vimbox_help()
 
@@ -103,7 +105,7 @@ def main(args=None):
 
         if len(args) == 3:
             copy(args[1], args[2])
-            remove(args[1])
+            remove(args[1], force=True)
         else:
             vimbox_help()
 

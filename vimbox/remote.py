@@ -10,7 +10,7 @@ import dropbox
 from dropbox.exceptions import ApiError
 from dropbox.files import WriteMode
 #
-from vimbox.local import (
+from local import (
     load_config,
     get_local_content,
     write_file,
@@ -22,7 +22,7 @@ from vimbox.local import (
     CONFIG_FILE,
     DEFAULT_CONFIG
 )
-from vimbox.crypto import (
+from crypto import (
     get_path_hash,
     encript_content,
     decript_content,
@@ -157,7 +157,11 @@ def _push(new_local_content, remote_file, config=None, dropbox_client=None,
     return error
 
 
-def is_file(remote_file, dropbox_client):
+def is_file(remote_file, dropbox_client, config):
+
+    # Hash name if necessary
+    if remote_file in config['path_hashes'].values():
+        remote_file = get_path_hash(remote_file)
 
     # Note that with no connection we wont be able to know if the file
     try:
@@ -176,7 +180,7 @@ def pull(remote_file, force_creation, config=None, dropbox_client=None,
     local_file, local_content = get_local_content(remote_file, config)
 
     remote_folder = os.path.dirname(remote_file)
-    if force_creation and is_file(remote_folder, dropbox_client):
+    if force_creation and is_file(remote_folder, dropbox_client, config):
         # It can be that the path we want to create uses names that are already
         # files. Here we test this at least one level
         # Quick exit on decription failure
@@ -402,7 +406,7 @@ def copy(remote_source, remote_target, config=None, dropbox_client=None):
         print("%12s %s %s" % (yellow("copied"), remote_source, remote_target))
 
 
-def remove(remote_file, config=None, dropbox_client=None):
+def remove(remote_file, config=None, dropbox_client=None, force=False):
 
     # Load config if not provided
     if config is None:
@@ -412,20 +416,48 @@ def remove(remote_file, config=None, dropbox_client=None):
     if dropbox_client is None:
         dropbox_client = get_client(config)
 
-    # Disallow deleting of encripted files that have unknown name
-    if is_encripted_path(remote_file):
+    # Disallow deleting of encripted files that have unknown name. Also consider
+    # the unfrequent file is registered but user uses hash name
+    if (
+        remote_file not in config['path_hashes'] and
+        is_encripted_path(remote_file)
+    ):
         print("Can not delete uncached encripted files")
         exit(1)
 
     # Disallow deleting of folders.
-    if not is_file(remote_file, dropbox_client):
-        print("Can not delete folders")
-        exit(1)
+    if not force and not is_file(remote_file, dropbox_client, config):
+        is_file(remote_file, dropbox_client, config)
+        result, error = get_folders(dropbox_client, remote_file)
+        if error:
+            print("Could not find %s" % remote_file)
+            exit(1)
 
+        if result.entries != []:
+            print("Can only delete empty folders")
+            exit(1)
+
+    # Hash name if necessary
+    import ipdb;ipdb.set_trace(context=30)
+    if remote_file in config['path_hashes'].values():
+        original_name = remote_file
+        remote_file = get_path_hash(remote_file)
+    else:
+        original_name = remote_file
+
+    # TODO: This should go to the client specific part and have exception
+    # handling
+    if remote_file[-1] == '/':
+        # Remove backslash
+        # TODO: This is input sanity check should go in the client dependent
+        # part
+        remote_file = remote_file[:-1]
     sucess = dropbox_client.files_delete_v2(remote_file)
+
     if sucess:
-        print("%12s %s" % (yellow("removed"), remote_file))
+        print("%12s %s" % (yellow("removed"), original_name))
 
         # If encripted remove from path_hashes
-        if remote_file in config['path_hashes'].values():
-            del config['path_hashes']
+        if remote_file in config['path_hashes']:
+            del config['path_hashes'][remote_file]
+            write_config(CONFIG_FILE, config)
