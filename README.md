@@ -9,19 +9,19 @@ than with their client, namely
 
 * Minimal syncing: Can be set to keep zero files in the computer. Local files can be used to work offline.
 
-* Merge operation: If there are discrepancies between local and remote `vimdiff` will be called instead of `vim`.
+* Merge operation: If there are discrepancies between local and remote, `vimdiff` will be called instead of `vim`.
 
 * Autocomplete: Folder browsing autocomplete with `TAB` as if folders were local. It uses `bash` `complete` command for this.
 
-* Optional encryption in the dropbox side with `pycrypto`. Names will be hashed and content encripted.
+* Optional encryption in the dropbox side with `pycrypto`. Names will be hashed and content encrypted.
 
 * Comes with the expected `vimbox ls` (`rm` `cp` `mv`)
 
 * Importable methods to use in other modules `from vimbox import edit, move`.
 
-* Code is though to replace `vim` and `vimdiff` by other editors
+* Code is thought to replace `vim` and `vimdiff` by other editors
 
-* Code is though to add backends other than `dropbox` (paper is in sight)
+* Code is thought to add backends other than `dropbox` (paper is in sight)
 
 * Works in OSX and Linux, uses dropbox v2 API.
 
@@ -120,16 +120,9 @@ carried out. As an example
     pip install -r requirements.txt
     python setup.py develop
 
-The `.vimbox` folder will be created in the foder from which pip is called.
-*NOTE:* Vimbox will first look for pre-existing `.vimbox` installs in your
-home. If you have a version installed and you do not want to use that config,
-create an empty `.vimbox` folder locally, previously with
-
-    mkdir .vimbox
-
 # Troubleshooting
 
-In OSx with macports, entry_points get installed in a folder not in the PATH.
+In OSX with macports, entry points get installed in a folder not in the PATH.
 It is necessary to manually link this as
 
     sudo ln -s /opt/local/Library/Frameworks/Python.framework/Versions/2.7/bin/vimbox /Users/$(whoami)/bin/vimbox
@@ -165,12 +158,12 @@ Roadmap
     - differentiate editor-encryption from normal encryption
     - `vimbox -x`
 
-* Back-end side encription with stored key on client side
-    - how to handle already encripted files (two hash tables?)
+* Back-end side encryption with stored key on client side
+    - how to handle already encrypted files (two hash tables?)
     - `vimbox -k`
 
 * Other backends e.g. `vimbox /evernote/notes/`
-    - mockup back-end for testing
+    - mock-up back-end for testing
     - `dropbox paper` has an API, unclear how flexible
     - `CloudBlaze` is an alternative to dropbox
     - `evernote` seems accessible
@@ -216,10 +209,10 @@ Roadmap
 
 ### v0.0.3
 
-* Optional encription on the Dropbox side
-    - `vimbox -e /logs/private.log` to encript with password
+* Optional encryption on the Dropbox side
+    - `vimbox -e /logs/private.log` to encrypt with password
     - Once created, file works as any other file
-    - Display unencripted names locally with `vimbox ls`, in red.
+    - Display unencrypted names locally with `vimbox ls`, in red.
     - Password not visible during input
 
 * Fancy colored outputs print()s
