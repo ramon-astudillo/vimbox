@@ -201,7 +201,11 @@ def pull(remote_file, force_creation, config=None, dropbox_client=None,
         exit(0)
 
     # Force use of -f to create new folders
-    if remote_content is None and not force_creation:
+    if (
+        fetch_status == 'online' and
+        remote_content is None and
+        not force_creation
+    ):
         print('\nYou need to create a file, use -f or -e\n')
         exit(0)
 
