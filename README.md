@@ -170,7 +170,11 @@ Roadmap
 
 * Set editors used in config
 
+* `vimbox mkdir /cosa/`
+
 ### Future v0.0.6
+
+* Move encripted files
 
 * Add specific help for commands
 
