@@ -164,6 +164,8 @@ Roadmap
     - how to handle already encrypted files (two hash tables?)
     - `vimbox -k`
 
+* `vimbox /tentative/path/file` tests also if the MD5 exists (allows to guess en cripted file names)
+
 * Other backends e.g. `vimbox /evernote/notes/`
     - mock-up back-end for testing
     - `dropbox paper` has an API, unclear how flexible
