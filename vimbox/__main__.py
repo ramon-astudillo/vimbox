@@ -1,18 +1,30 @@
 import sys
 import os
 import getpass
-from vimbox.remote import list_folders, copy, remove, install_backend
-from vimbox.local import (
-    edit_config,
-    get_cache,
-    get_complete_arguments,
-    load_config,
-    ROOT_FOLDER,
-    modify_bashrc,
-    local_install_check
-)
+# vimbox
+import remote
+import local
 # TODO: This should end up in remote
 from vimbox import edit
+
+
+# Commands and help
+COMMAND_HELP = {
+    'setup': ('setup', 'set-up dropbox backend'),
+    '-f': ('-f /path/to/file', 'create file'),
+    '': ('/path/to/file', 'open created file'),
+    '-e': ('-e /path/to/file', 'create encripted file'),
+    'cache': ('cache', 'show cached folders'),
+    'config': ('config', 'open vimbox config in editor'),
+    'ls': ('ls /path/to/folder/', 'list files in remote folder'),
+    'rm': ('rm /path/to/folder', 'remove file'),
+    'rm -R': ('rm -R /path/to/folder/', 'remove folder'),
+    'cp': ('cp /path/to/file /path2/to/[file2]', 'copy file'),
+    'mv': ('mv /path/to/file /path2/to/[file2]', 'move file'),
+}
+COMMAND_ORDER = [
+    'setup', '-f', '-e', '', 'cache', 'config', 'ls', 'rm', 'rm -R', 'cp', 'mv'
+]
 
 
 def install():
@@ -25,21 +37,29 @@ def install():
         print("Config files and bash autocomplete will be installed inside")
 
     # Create config folder
-    if not os.path.isdir(ROOT_FOLDER):
-        os.mkdir(ROOT_FOLDER)
-        print("Created %s" % ROOT_FOLDER)
+    if not os.path.isdir(local.ROOT_FOLDER):
+        os.mkdir(local.ROOT_FOLDER)
+        print("Created %s" % local.ROOT_FOLDER)
 
     # Configure back-end
-    install_backend()
+    remote.install_backend()
 
     # Modify bashrc
-    modify_bashrc(virtualenv)
+    local.modify_bashrc(virtualenv)
 
     print("vimbox installed sucessfully")
 
-def vimbox_help():
-    print("\nvimbox [-f -e ls config] /path/to/file\n")
+
+def vimbox_help(command=None):
+    if command is None:
+        print("")
+        for command in COMMAND_ORDER:
+            print("vimbox %-35s %s" % COMMAND_HELP[command])
+        print("")
+    else:
+        print("\nvimbox %-35s %s\n" % COMMAND_HELP[command])
     exit()
+
 
 def main(args=None):
     """
@@ -56,56 +76,62 @@ def main(args=None):
 
     # Sanity check: back-end is installed
     if args[0] not in ['setup', 'complete']:
-        local_install_check()
+        local.local_install_check()
 
-    if args[0] == 'setup':
+    if args[0] == 'help':
+        if len(args) > 1 and args[1] in COMMAND_ORDER:
+            vimbox_help(args[1])
+        else:
+            vimbox_help()
+
+    elif args[0] == 'setup':
 
         install()
 
     elif args[0] == 'complete':
 
-        for autocomplete_option in get_complete_arguments():
+        for autocomplete_option in local.get_complete_arguments():
             print(autocomplete_option)
 
     elif args[0] == 'cache':
 
-        for cached_file in get_cache():
+        for cached_file in sorted(local.get_cache()):
             print(cached_file)
 
     elif args[0] == 'config':
 
-        edit_config()
+        local.edit_config()
 
     elif args[0] == 'ls':
 
         if len(args) == 1:
-            list_folders('')
+            remote.list_folders('')
         elif len(args) == 2:
-            list_folders(args[1])
+            remote.list_folders(args[1])
         else:
             vimbox_help()
 
     elif args[0] == 'cp':
 
         if len(args) == 3:
-            copy(args[1], args[2])
+            remote.copy(args[1], args[2])
         else:
             vimbox_help()
 
     elif args[0] == 'rm':
 
         if len(args) == 2:
-            remove(args[1], force=False)
+            remote.remove(args[1], force=False)
         elif len(args) == 3 and args[1] == '-R':
-            remove(args[2], force=True)
+            remote.remove(args[2], force=True)
         else:
             vimbox_help()
 
     elif args[0] == 'mv':
 
         if len(args) == 3:
-            copy(args[1], args[2])
-            remove(args[1], force=True)
+            remote.copy(args[1], args[2])
+            remote.remove(args[1], force=True)
         else:
             vimbox_help()
 
@@ -138,11 +164,11 @@ def main(args=None):
             if encript:
                 print('\nOnly files can be encripted\n')
             else:
-                list_folders(remote_file)
+                remote.list_folders(remote_file)
         else:
 
             # Get config
-            config = load_config()
+            config = local.load_config()
 
             # Create new encripted file or register existing one
             if encript:

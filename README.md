@@ -57,7 +57,7 @@ To create files encrypted on the dropbox side, use `-e` instead of `-f`
 you will be prompted for a password. It wont be stored anyway so remember it.
 The rest of `vimbox` functionalities are retained after creation but you will
 need to input the password for each `_pull` from the remote. Encryption uses
-the `pycript` module.
+the `pycripto` module.
 
 # Install
 
@@ -70,7 +70,7 @@ Configure the back-end by calling the program for the first time.
 
     vimbox setup
 
-The install menu will ask you for a dropbox acess token. Getting this is a
+The install menu will ask you for a dropbox access token. Getting this is a
 simple process In any computer with a browser, create a new app on your dropbox
 account by visiting
 
@@ -83,7 +83,7 @@ and use following configuration
 * Both `App folder` and `Full Dropbox` are possible. The former is better for a
   try-out
 
-* Put a name. This is irrelevant, but `vimbox` may help you remeber
+* Put a name. This is irrelevant, but `vimbox-<your name>` may help you remember
 
 After this is done you will see a control pannel for the app. Use the
 `Generated access token` botton to get an acess token that you can paste into
@@ -93,26 +93,28 @@ the install prompt.
 
 If you want to update to the latest version
 
-    sudo pip install vimbox/ --upgrade
+    cd vimbox
+    git pull origin master
+    sudo pip install . --upgrade
 
 For development, you can work on a virtual environment
 
 # Install Details
 
-The vimbox installer will do two changes in your system. It will create a
+The `vimbox setup` will do two changes in your system. It will create a
 `.vimbox` folder on your personal area. It will also add the following line to
 your `.bashrc` to load the cache of remote folders
 
     complete -W "$(vimbox complete)" 'vimbox'
 
-*NOTE:* If you use a virtualenv this changes will be performed inside of the
-virtual environment. Deleting the virtualenv will undo this changes. See next
-section for details.
+**NOTE:** If you use a `virtualenv` this changes will be performed inside of
+the virtual environment. Deleting the `virtualenv` will undo this changes. See
+next section for details.
 
 # Develop
 
 To develop the easiest is to use a virtual environment. Vimbox will detect this
-and store ist `.vimbox` config folder in the same folder where the install is
+and store the `.vimbox` config folder in the same folder where the install is
 carried out. As an example
 
     virtualenv venv
@@ -122,8 +124,8 @@ carried out. As an example
 
 # Troubleshooting
 
-In OSX with macports, entry points get installed in a folder not in the PATH.
-It is necessary to manually link this as
+In OSX with macports, python entry points get installed in a folder not in the
+PATH. It is necessary to manually link this as
 
     sudo ln -s /opt/local/Library/Frameworks/Python.framework/Versions/2.7/bin/vimbox /Users/$(whoami)/bin/vimbox
 
@@ -170,19 +172,21 @@ Roadmap
 
 * Set editors used in config
 
+* Move encripted files
+
 * `vimbox mkdir /cosa/`
 
 ### Future v0.0.6
-
-* Move encripted files
-
-* Add specific help for commands
 
 * Move all dropbox code to `dropbox client`
 
 * Clean up namespaces of methods
 
 ###
+
+* Handle error when trying to create file on root
+
+* Add specific help for commands
 
 * Handle installation in virtualenv
     - local `~/.vimbox/` and `.bash_profile`
