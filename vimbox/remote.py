@@ -419,8 +419,10 @@ def remove(remote_file, config=None, dropbox_client=None, force=False,
 
     # Disallow deleting of encrypted files that have unknown name. Also consider
     # the unfrequent file is registered but user uses hash name
-    if remote_file not in config['path_hashes']:
-        if crypto.is_encrypted_path(remote_file):
+    if (
+        remote_file not in config['path_hashes'] and
+        crypto.is_encrypted_path(remote_file)
+    ):
             print("Can not delete uncached encrypted files")
             exit(1)
 
