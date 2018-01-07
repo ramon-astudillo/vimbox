@@ -4,9 +4,6 @@ import getpass
 # vimbox
 import remote
 import local
-# TODO: This should end up in remote
-from vimbox import edit
-
 
 # Commands and help
 COMMAND_HELP = {
@@ -217,7 +214,7 @@ def main(args=None):
                 password = None
 
             # Call function
-            edit(
+            remote.edit(
                 remote_file,
                 force_creation=force_creation,
                 password=password,
