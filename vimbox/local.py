@@ -2,8 +2,9 @@ import os
 import sys
 import yaml
 from subprocess import call
-from vimbox.crypto import get_path_hash
-from vimbox.diogenes import style
+# vimbox modules
+import crypto
+import diogenes
 
 # Locate the vimbox config. If we are inside a virtual environment look for it
 # inside
@@ -32,7 +33,7 @@ MERGETOOL = 'vimdiff'
 
 
 # Bash font styles
-red = style(font_color='light red')
+red = diogenes.style(font_color='light red')
 
 
 def modify_bashrc(virtualenv):
@@ -149,7 +150,7 @@ def register_file(remote_file, config, is_encripted):
 
     # Register file hash in the local cache
     if is_encripted:
-        remote_file_hash = get_path_hash(remote_file)
+        remote_file_hash = crypto.get_path_hash(remote_file)
         if remote_file_hash not in config['path_hashes']:
             config['path_hashes'][remote_file_hash] = remote_file
             write_config(CONFIG_FILE, config)

@@ -166,8 +166,6 @@ Roadmap
     - how to handle already encrypted files (two hash tables?)
     - `vimbox -k`
 
-* `vimbox /tentative/path/file` tests also if the MD5 exists (allows to guess en cripted file names)
-
 * Other backends e.g. `vimbox /evernote/notes/`
     - mock-up back-end for testing
     - `dropbox paper` has an API, unclear how flexible
@@ -184,13 +182,15 @@ Roadmap
 
 * Move all dropbox code to `dropbox client` to factor out back-end code
 
+###
+
+* `vimbox /tentative/path/file` tests also if the MD5 exists (allows to guess en cripted file names)
+
 * Clean up namespaces of methods
-    - [ ] use module names at the begining of method calls
+    - [x] use module names at the begining of method calls
     - [x] move edit to `remote`
 
 * Fix opening encrypted file does not register it
-
-###
 
 * Handle error when trying to create file on root
 

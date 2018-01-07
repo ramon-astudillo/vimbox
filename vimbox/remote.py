@@ -11,35 +11,15 @@ import dropbox
 from dropbox.exceptions import ApiError
 from dropbox.files import WriteMode
 #
-from local import (
-    load_config,
-    get_local_file,
-    get_local_content,
-    register_file,
-    write_file,
-    read_file,
-    write_config,
-    read_config,
-    mergetool,
-    list_local,
-    local_edit,
-    CONFIG_FILE,
-    DEFAULT_CONFIG
-)
-from crypto import (
-    get_path_hash,
-    encrypt_content,
-    decript_content,
-    is_encrypted_path,
-    validate_password
-)
-from vimbox.diogenes import style
+import local
+import crypto
+import diogenes
 
 
 # Bash font styles
-red = style(font_color='light red')
-yellow = style(font_color='yellow')
-green = style(font_color='light green')
+red = diogenes.style(font_color='light red')
+yellow = diogenes.style(font_color='yellow')
+green = diogenes.style(font_color='light green')
 
 
 def get_user_account(dropbox_client):
@@ -66,10 +46,10 @@ def get_user_account(dropbox_client):
 
 def install_backend():
 
-    if os.path.isfile(CONFIG_FILE):
-        config = read_config(CONFIG_FILE)
+    if os.path.isfile(local.CONFIG_FILE):
+        config = local.read_config(local.CONFIG_FILE)
         if 'DROPBOX_TOKEN' in config:
-            print("Found valid config in %s" % CONFIG_FILE)
+            print("Found valid config in %s" % local.CONFIG_FILE)
 
     else:
 
@@ -97,10 +77,10 @@ def install_backend():
                 user_acount.email)
             )
             # Store
-            config = DEFAULT_CONFIG
+            config = local.DEFAULT_CONFIG
             config['DROPBOX_TOKEN'] = dropbox_token
-            write_config(CONFIG_FILE, config)
-            print("Created config in %s" % CONFIG_FILE)
+            local.write_config(local.CONFIG_FILE, config)
+            print("Created config in %s" % local.CONFIG_FILE)
 
 
 def get_client(config):
@@ -124,7 +104,7 @@ def _push(new_local_content, remote_file, config=None, dropbox_client=None,
 
     # Load config
     if config is None:
-        config = load_config()
+        config = local.load_config()
 
     # Get client
     if dropbox_client is None:
@@ -133,9 +113,9 @@ def _push(new_local_content, remote_file, config=None, dropbox_client=None,
     # If encrypted get encrypted remote-name
     if password is not None:
         # Hash filename
-        remote_file_hash = get_path_hash(remote_file)
+        remote_file_hash = crypto.get_path_hash(remote_file)
         # Encript content
-        new_local_content = encrypt_content(new_local_content, password)
+        new_local_content = crypto.encrypt_content(new_local_content, password)
     else:
         remote_file_hash = remote_file
 
@@ -167,7 +147,7 @@ def is_file(remote_file, dropbox_client, config):
     # Hash name if necessary
     is_encrypted = False
     if remote_file in config['path_hashes'].values():
-        remote_file = get_path_hash(remote_file)
+        remote_file = crypto.get_path_hash(remote_file)
         is_encrypted = True
 
     # Note that with no connection we wont be able to know if the file exists
@@ -183,7 +163,7 @@ def is_file(remote_file, dropbox_client, config):
         else:
             # Maybe it is encrypted, but unregistered
             try:
-                remote_file = get_path_hash(remote_file)
+                remote_file = crypto.get_path_hash(remote_file)
                 result = dropbox_client.files_alpha_get_metadata(remote_file)
                 file_exists = True
                 is_encrypted = True
@@ -197,7 +177,7 @@ def pull(remote_file, force_creation, config=None, dropbox_client=None,
          password=None):
 
     # Fetch local content for this file
-    local_file, local_content = get_local_content(remote_file, config)
+    local_file, local_content = local.get_local_content(remote_file, config)
 
     # Fetch remote content for this file
     remote_content, fetch_status = fetch(
@@ -229,12 +209,12 @@ def pull(remote_file, force_creation, config=None, dropbox_client=None,
 
     elif local_content is not None and local_content != remote_content:
 
-        # Content conflict, call mergetool
+        # Content conflict, call local.mergetool
         old_local_file = "%s.OLD" % local_file
-        write_file(old_local_file, local_content)
-        write_file(local_file, remote_content)
-        mergetool(old_local_file, local_file)
-        merged_content = read_file(local_file)
+        local.write_file(old_local_file, local_content)
+        local.write_file(local_file, remote_content)
+        local.mergetool(old_local_file, local_file)
+        merged_content = local.read_file(local_file)
         # Clean up extra temporary file
         os.remove(old_local_file)
 
@@ -264,7 +244,7 @@ def fetch(remote_file, config=None, dropbox_client=None, password=None,
 
     # Load config
     if config is None:
-        config = load_config()
+        config = local.load_config()
 
     # Get client
     if dropbox_client is None:
@@ -272,7 +252,7 @@ def fetch(remote_file, config=None, dropbox_client=None, password=None,
 
     # If encrypted get encrypted remote-name
     if password or is_encrypted:
-        remote_file_hash = get_path_hash(remote_file)
+        remote_file_hash = crypto.get_path_hash(remote_file)
     else:
         remote_file_hash = remote_file
 
@@ -299,7 +279,9 @@ def fetch(remote_file, config=None, dropbox_client=None, password=None,
         # print("%s does not exist" % (remote_file))
 
     if remote_content is not None and password is not None:
-        remote_content, sucess = decript_content(remote_content, password)
+        remote_content, sucess = crypto.decript_content(
+            remote_content, password
+        )
         if not sucess:
             status = 'decription-failed'
 
@@ -342,7 +324,7 @@ def list_folders(remote_file, config=None, dropbox_client=None):
 
     # Load config
     if config is None:
-        config = load_config()
+        config = local.load_config()
 
     # Get client
     if dropbox_client is None:
@@ -382,7 +364,7 @@ def list_folders(remote_file, config=None, dropbox_client=None):
     else:
 
         # If it fails resort to local cache
-        display_folders = list_local(remote_file, config)
+        display_folders = local.list_local(remote_file, config)
         print("\n%s cache for %s " % (red("offline"), remote_file))
         display_string = "".join(
             ["%s\n" % folder for folder in sorted(display_folders)]
@@ -396,7 +378,7 @@ def copy(remote_source, remote_target, config=None, dropbox_client=None):
 
     # Load config if not provided
     if config is None:
-        config = load_config()
+        config = local.load_config()
 
     # Get client if not provided
     if dropbox_client is None:
@@ -414,7 +396,7 @@ def copy(remote_source, remote_target, config=None, dropbox_client=None):
     if (
         remote_source in config['path_hashes'].values() or
         remote_target in config['path_hashes'].values() or
-        is_encrypted_path(remote_target)
+        crypto.is_encrypted_path(remote_target)
     ):
         print("copy/move operations not allowed in encrypted files")
         exit(1)
@@ -429,7 +411,7 @@ def remove(remote_file, config=None, dropbox_client=None, force=False,
 
     # Load config if not provided
     if config is None:
-        config = load_config()
+        config = local.load_config()
 
     # Get client if not provided
     if dropbox_client is None:
@@ -438,12 +420,9 @@ def remove(remote_file, config=None, dropbox_client=None, force=False,
     # Disallow deleting of encrypted files that have unknown name. Also consider
     # the unfrequent file is registered but user uses hash name
     if remote_file not in config['path_hashes']:
-        if is_encrypted_path(remote_file):
+        if crypto.is_encrypted_path(remote_file):
             print("Can not delete uncached encrypted files")
             exit(1)
-        else:
-            # To delete we just need password to be not None
-            password = 'something'
 
     # Disallow deleting of folders.
     if not force and not is_file(remote_file, dropbox_client, config)[0]:
@@ -459,7 +438,7 @@ def remove(remote_file, config=None, dropbox_client=None, force=False,
     # Hash name if necessary
     if remote_file in config['path_hashes'].values():
         original_name = remote_file
-        remote_file = get_path_hash(remote_file)
+        remote_file = crypto.get_path_hash(remote_file)
     else:
         original_name = remote_file
 
@@ -478,7 +457,7 @@ def remove(remote_file, config=None, dropbox_client=None, force=False,
         # If encrypted remove from path_hashes
         if remote_file in config['path_hashes']:
             del config['path_hashes'][remote_file]
-            write_config(CONFIG_FILE, config)
+            local.write_config(local.CONFIG_FILE, config)
 
 
 def edit(remote_file, config=None, dropbox_client=None, remove_local=None,
@@ -498,7 +477,7 @@ def edit(remote_file, config=None, dropbox_client=None, remove_local=None,
 
     # Load config if not provided
     if config is None:
-        config = load_config()
+        config = local.load_config()
     if remove_local is None:
         remove_local = config['remove_local']
 
@@ -507,7 +486,7 @@ def edit(remote_file, config=None, dropbox_client=None, remove_local=None,
         dropbox_client = get_client(config)
 
     # Needed variable names
-    local_file = get_local_file(remote_file, config)
+    local_file = local.get_local_file(remote_file, config)
 
     # Do basic checks on remote: Does it exist? is it encripted?
     file_exists, is_encrypted = is_file(remote_file, dropbox_client, config)
@@ -536,7 +515,7 @@ def edit(remote_file, config=None, dropbox_client=None, remove_local=None,
         if not register_folder:
             print('\nFile encryption only with register_folder = True\n')
             exit()
-        password = validate_password(password)
+        password = crypto.validate_password(password)
 
     if force_creation and file_exists:
         # It can be that the path we want to create uses names that are already
@@ -545,7 +524,7 @@ def edit(remote_file, config=None, dropbox_client=None, remove_local=None,
         print('\n%s exists as a file in remote!\n' % remote_file)
         exit(0)
 
-    # fetch remote content, merge if neccesary with mergetool
+    # fetch remote content, merge if neccesary with local.mergetool
     local_content, remote_content, merged_content, _ = pull(
         remote_file,
         force_creation,
@@ -560,14 +539,14 @@ def edit(remote_file, config=None, dropbox_client=None, remove_local=None,
             edited_content = merged_content
         else:
             # Dummy no edit, but still makes local copy
-            edited_content = local_edit(
+            edited_content = local.local_edit(
                 local_file,
                 merged_content,
                 no_edit=True
             )
     else:
         # Edit with edit tool and retieve content
-        edited_content = local_edit(local_file, merged_content)
+        edited_content = local.local_edit(local_file, merged_content)
 
     # TODO: Programatic edit operations here
 
@@ -605,7 +584,7 @@ def edit(remote_file, config=None, dropbox_client=None, remove_local=None,
                 # TODO: Right now we only register the folder
                 # NOTE: We try this anyaway because of independen hash
                 # resgistration
-                register_file(remote_file, config, password is not None)
+                local.register_file(remote_file, config, password is not None)
 
             # Remove local copy if solicited
             if remove_local and os.path.isfile(local_file):
@@ -625,7 +604,7 @@ def edit(remote_file, config=None, dropbox_client=None, remove_local=None,
                 # TODO: Right now we only register the folder
                 # NOTE: We try this anyaway because of independen hash
                 # resgistration
-                register_file(remote_file, config, password is not None)
+                local.register_file(remote_file, config, password is not None)
 
         elif error == 'api-error':
 
@@ -653,7 +632,7 @@ def edit(remote_file, config=None, dropbox_client=None, remove_local=None,
             # TODO: Right now we only register the folder
             # NOTE: We try this anyaway because of independen hash
             # resgistration
-            register_file(remote_file, config, password is not None)
+            local.register_file(remote_file, config, password is not None)
 
     else:
         # No changes needed on either side
@@ -664,4 +643,4 @@ def edit(remote_file, config=None, dropbox_client=None, remove_local=None,
             # TODO: Right now we only register the folder
             # NOTE: We try this anyaway because of independen hash
             # resgistration
-            register_file(remote_file, config, password is not None)
+            local.register_file(remote_file, config, password is not None)
