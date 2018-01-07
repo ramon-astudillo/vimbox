@@ -13,7 +13,7 @@ COMMAND_HELP = {
     'setup': ('setup', 'set-up dropbox backend'),
     '-f': ('-f /path/to/file', 'create file'),
     '': ('/path/to/file', 'open created file'),
-    '-e': ('-e /path/to/file', 'create encripted file'),
+    '-e': ('-e /path/to/file', 'create encrypted file'),
     'cache': ('cache', 'show cached folders'),
     'config': ('config', 'open vimbox config in editor'),
     'ls': ('ls /path/to/folder/', 'list files in remote folder'),
@@ -48,6 +48,56 @@ def install():
     local.modify_bashrc(virtualenv)
 
     print("vimbox installed sucessfully")
+
+
+def password_prompt(remote_file, config):
+
+    # Check if file in cache already
+    if remote_file in config['path_hashes'].values():
+        print('\nCan not re-encrypt a registered file.\n')
+        exit()
+
+    # Prompt for password
+    password = getpass.getpass('Input file password: ')
+    password2 = getpass.getpass('Repeat file password: ')
+    if password != password2:
+        print("Passwords do not match!")
+        exit()
+
+    return password
+
+
+def argument_handling(args):
+
+    # Edit / ls alias
+    remote_file = None
+    force_creation = False
+    encrypt = False
+    for option in args:
+        if option == '-f':
+            # Create new file
+            force_creation = True
+        elif option == '-e':
+            # Create new encrypted file
+            force_creation = True
+            encrypt = True
+        elif option[0] == '/':
+            # Dropbox path
+            remote_file = option
+        else:
+            vimbox_help()
+
+    # Sanity checks
+    # Check we got a file path
+    if remote_file is None:
+        vimbox_help()
+
+    # Quick exit: edit file is a folder
+    if remote_file[-1] == '/' and encrypt:
+        print('\nOnly files can be encrypted\n')
+        exit()
+
+    return remote_file, force_creation, encrypt
 
 
 def vimbox_help(command=None):
@@ -86,24 +136,30 @@ def main(args=None):
 
     elif args[0] == 'setup':
 
+        # Set-up back-end
         install()
 
     elif args[0] == 'complete':
 
+        # strings to store when calling command -W in .basrc
         for autocomplete_option in local.get_complete_arguments():
             print(autocomplete_option)
 
     elif args[0] == 'cache':
 
+        # Folders chached in this computer (latter minus commans e.g. ls)
         for cached_file in sorted(local.get_cache()):
             print(cached_file)
 
     elif args[0] == 'config':
 
+        # Open config in editor
         local.edit_config()
 
     elif args[0] == 'ls':
 
+        # List contents of folder
+        local.edit_config()
         if len(args) == 1:
             remote.list_folders('')
         elif len(args) == 2:
@@ -113,6 +169,7 @@ def main(args=None):
 
     elif args[0] == 'cp':
 
+        # Copy file to file or folder
         if len(args) == 3:
             remote.copy(args[1], args[2])
         else:
@@ -120,6 +177,7 @@ def main(args=None):
 
     elif args[0] == 'rm':
 
+        # Remove file or folder
         if len(args) == 2:
             remote.remove(args[1], force=False)
         elif len(args) == 3 and args[1] == '-R':
@@ -129,6 +187,7 @@ def main(args=None):
 
     elif args[0] == 'mv':
 
+        # Move file to file or folder
         if len(args) == 3:
             remote.copy(args[1], args[2])
             remote.remove(args[1], force=True)
@@ -137,57 +196,27 @@ def main(args=None):
 
     else:
 
-        # Edit / ls alias
-        remote_file = None
-        force_creation = False
-        encript = False
-        for option in args:
-            if option == '-f':
-                # Create new file
-                force_creation = True
-            elif option == '-e':
-                # Create new encripted file
-                force_creation = True
-                encript = True
-            elif option[0] == '/':
-                # Dropbox path
-                remote_file = option
-            else:
-                vimbox_help()
+        # Get flags from arguments
+        remote_file, force_creation, encrypt = argument_handling(args)
 
-        # Check we got a file path
-        if remote_file is None:
-            vimbox_help()
-
-        # Quick exit: edit file is a folder
         if remote_file[-1] == '/':
-            if encript:
-                print('\nOnly files can be encripted\n')
-            else:
-                remote.list_folders(remote_file)
+
+            # Alias for ls
+            remote.list_folders(remote_file)
         else:
+
+            # Edit
 
             # Get config
             config = local.load_config()
 
-            # Create new encripted file or register existing one
-            if encript:
-
-                # Check if file in cache already
-                if remote_file in config['path_hashes'].values():
-                    print('\nCan not re-encript a registered file.\n')
-                    exit()
-
-                # Prompt for password
-                password = getpass.getpass('Input file password: ')
-                password2 = getpass.getpass('Repeat file password: ')
-                if password != password2:
-                    print("Passwords do not match!")
-                    exit()
-
+            # Create new encrypted file or register existing one
+            if encrypt:
+                password = password_prompt(remote_file, config)
             else:
                 password = None
 
+            # Call function
             edit(
                 remote_file,
                 force_creation=force_creation,
