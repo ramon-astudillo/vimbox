@@ -156,7 +156,6 @@ def main(args=None):
     elif args[0] == 'ls':
 
         # List contents of folder
-        local.edit_config()
         if len(args) == 1:
             remote.list_folders('')
         elif len(args) == 2:

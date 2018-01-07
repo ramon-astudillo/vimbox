@@ -6,11 +6,11 @@ try:
     from Crypto.Cipher import AES
     from Crypto.Hash import MD5
 except:
-    # print("\nMissing module pycrypto, no encription available")
+    # print("\nMissing module pycrypto, no encryption available")
     pass
 
-# ACHTUNG: Changing this may yield incorrect dencription errors!
-HEADER = '# this was encripted'
+# ACHTUNG: Changing this may yield incorrect dencryption errors!
+HEADER = '# this was encrypted'
 
 
 def validate_password(password):
@@ -41,7 +41,7 @@ def validate_password(password):
     return password
 
 
-def encript_content(text, password):
+def encrypt_content(text, password):
 
     obj = AES.new(password, AES.MODE_CBC, 'This is an IV456')
 
@@ -66,7 +66,10 @@ def decript_content(text_cipher, password):
     items = headed_text.split('\n')
     header = items[0]
     text = "\n".join(items[1:])
-    return text, header.rstrip() == HEADER.rstrip()
+    return text, (
+        header.rstrip() == HEADER.rstrip() or
+        header.rstrip() == "# this was encripted" # Hack for pre v0.0.6, autofix
+    )
 
 
 def get_path_hash(path_str):
@@ -79,7 +82,7 @@ def get_path_hash(path_str):
     return "%s/.%s" % (dirname, h.hexdigest())
 
 
-def is_encripted_path(path_str):
-    """Check if path is that of an encripted file"""
+def is_encrypted_path(path_str):
+    """Check if path is that of an encrypted file"""
     basename = os.path.basename(path_str)
     return re.match('\.[a-z0-9]', basename) and len(basename) == 33

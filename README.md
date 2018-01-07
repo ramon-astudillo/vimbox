@@ -135,6 +135,8 @@ Roadmap
 
 * Proper paths for temporary files
 
+* Update autocomplete from vimbox after new register (instead of `source`)
+
 * wrapper around vim (tunnel all options)
     :( forces to sync files by separate, big change of flow. Unfrequent use
 
@@ -158,7 +160,7 @@ Roadmap
 
 * Increased privacy: encrypt/decrypt inside `vim` using `vim -x`
     - differentiate editor-encryption from normal encryption
-    - `vimbox -x`
+    - `vimbox -x` (`password is not None` no longer will be a good flag)
 
 * Back-end side encryption with stored key on client side
     - how to handle already encrypted files (two hash tables?)
@@ -180,9 +182,13 @@ Roadmap
 
 ### Future v0.0.6
 
-* Move all dropbox code to `dropbox client`
+* Move all dropbox code to `dropbox client` to factor out back-end code
 
 * Clean up namespaces of methods
+    - [ ] use module names at the begining of method calls
+    - [x] move edit to `remote`
+
+* Fix opening encrypted file does not register it
 
 ###
 
@@ -192,8 +198,6 @@ Roadmap
 
 * Handle installation in virtualenv
     - local `~/.vimbox/` and `.bash_profile`
-
-* Update autocomplete from vimbox after new register (instead of `source`)
 
 * Proper full installation
     - `setup.py` adds `complete` to `.bash_profile`
