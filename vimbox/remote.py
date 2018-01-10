@@ -450,11 +450,17 @@ def remove(remote_file, config=None, dropbox_client=None, force=False,
         # Remove backslash
         # TODO: This is input sanity check should go in the client dependent
         # part
-        remote_file = remote_file[:-1]
-    sucess = dropbox_client.files_delete_v2(remote_file)
+        sucess = dropbox_client.files_delete_v2(remote_file[:-1])
+    else:
+        sucess = dropbox_client.files_delete_v2(remote_file)
 
     if sucess:
         print("%12s %s" % (yellow("removed"), original_name))
+
+        # Unregister if it is a folder
+        if remote_file[-1] == '/' and remote_file in config['cache']:
+            config['cache'].remove(remote_file)
+            local.write_config(local.CONFIG_FILE, config)
 
         # If encrypted remove from path_hashes
         if remote_file in config['path_hashes']:
