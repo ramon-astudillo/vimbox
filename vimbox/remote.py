@@ -154,12 +154,15 @@ def is_file(remote_file, dropbox_client, config):
     try:
         result = dropbox_client.files_alpha_get_metadata(remote_file)
         file_exists = True
+        status = 'online'
     except ConnectionError:
         # This can be missleading
+        status = 'connection-error'
         file_exists = False
     except ApiError:
         if is_encrypted:
-            return False
+            status = 'api-error'
+            return None
         else:
             # Maybe it is encrypted, but unregistered
             try:
@@ -167,10 +170,12 @@ def is_file(remote_file, dropbox_client, config):
                 result = dropbox_client.files_alpha_get_metadata(remote_file)
                 file_exists = True
                 is_encrypted = True
+                status = 'online'
             except ApiError:
+                status = 'api-error'
                 file_exists = False
 
-    return file_exists and hasattr(result, 'content_hash'), is_encrypted
+    return file_exists and hasattr(result, 'content_hash'), is_encrypted, status
 
 
 def pull(remote_file, force_creation, config=None, dropbox_client=None,
@@ -223,14 +228,7 @@ def pull(remote_file, force_creation, config=None, dropbox_client=None,
         # No local content, or local matches remote
         merged_content = remote_content
 
-    # Provide status of operation
-    if fetch_status != 'online':
-        # Copy fetch error
-        online = False
-    else:
-        online = True
-
-    return local_content, remote_content, merged_content, online
+    return local_content, remote_content, merged_content, fetch_status
 
 
 def fetch(remote_file, config=None, dropbox_client=None, password=None,
@@ -269,7 +267,7 @@ def fetch(remote_file, config=None, dropbox_client=None, password=None,
 
         # Dropbox unrechable
         remote_content = None
-        status = 'connection-failed'
+        status = 'connection-error'
 
     except ApiError:
 
@@ -278,7 +276,11 @@ def fetch(remote_file, config=None, dropbox_client=None, password=None,
         status = 'online'
         # print("%s does not exist" % (remote_file))
 
-    if remote_content is not None and password is not None:
+    if (
+        status == 'online' and
+        remote_content is not None and
+        password is not None
+    ):
         remote_content, sucess = crypto.decript_content(
             remote_content, password
         )
@@ -497,10 +499,14 @@ def edit(remote_file, config=None, dropbox_client=None, remove_local=None,
     local_file = local.get_local_file(remote_file, config)
 
     # Do basic checks on remote: Does it exist? is it encripted?
-    file_exists, is_encrypted = is_file(remote_file, dropbox_client, config)
+    file_exists, is_encrypted, status = is_file(
+        remote_file,
+        dropbox_client,
+        config
+    )
 
     # Prompt for password if needed
-    if is_encrypted and password is None:
+    if status == 'online' and is_encrypted and password is None:
         password = getpass.getpass('Input file password: ')
 
     # Sanity checks
@@ -532,8 +538,8 @@ def edit(remote_file, config=None, dropbox_client=None, remove_local=None,
         print('\n%s exists as a file in remote!\n' % remote_file)
         exit(0)
 
-    # fetch remote content, merge if neccesary with local.mergetool
-    local_content, remote_content, merged_content, _ = pull(
+    # Fetch remote content, merge if neccesary with local.mergetool
+    local_content, remote_content, merged_content, fetch_status = pull(
         remote_file,
         force_creation,
         config=config,
@@ -542,6 +548,7 @@ def edit(remote_file, config=None, dropbox_client=None, remove_local=None,
     )
 
     # Call editor on merged code if solicited
+    # TODO: Programatic edit operations here
     if diff_mode:
         if remove_local:
             edited_content = merged_content
@@ -556,8 +563,6 @@ def edit(remote_file, config=None, dropbox_client=None, remove_local=None,
         # Edit with edit tool and retieve content
         edited_content = local.local_edit(local_file, merged_content)
 
-    # TODO: Programatic edit operations here
-
     # Abort if file being created but no changes
     if edited_content is None:
         # For debug purposes
@@ -566,20 +571,33 @@ def edit(remote_file, config=None, dropbox_client=None, remove_local=None,
         # File creation aborted
         exit()
 
-    # TODO: We would need do a second pull if edit too too much time
+    # Pull again if recovered offline status
+    if fetch_status == 'connection-error':
+        local_content, remote_content, merged_content, fetch_status = pull(
+            remote_file,
+            force_creation,
+            config=config,
+            dropbox_client=dropbox_client,
+            password=password
+        )
 
+    # TODO:Need hardening against offline model and edit colision
     if edited_content != remote_content:
 
         # Update remote if there are changes
 
-        # Push changes to dropbox
-        error = _push(
-            edited_content,
-            remote_file,
-            config,
-            dropbox_client,
-            password=password
-        )
+        # Push changes to dropbox. If the pull just failed because connection
+        # was not there, do not push
+        if fetch_status == 'connection-error':
+            error = _push(
+                edited_content,
+                remote_file,
+                config,
+                dropbox_client,
+                password=password
+            )
+        else:
+            error == 'connection-error'
 
         # Remove local file
         if error is None:
