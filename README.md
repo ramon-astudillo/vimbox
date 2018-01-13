@@ -153,6 +153,7 @@ Roadmap
 
 * `vimbox sync` to sync entire cache
     - only makes sense with no local copy option
+    - should also remove files note xisting in cache
 
 * `vimbox --cached ls /path/`
 
@@ -178,16 +179,20 @@ Roadmap
 
 * `vimbox mkdir /cosa/`. Right now this is achieved by creating a file inside
 
+* Logic needs to be cleaned up. In particular paths touching crypto or
+  offline/api-failures
 
 ### Future v0.0.6
 
 * Fix cache add/remove
-    - `rm` seems not to unregister 
     - `ls` should register
 
 * Move all dropbox code to `dropbox client` to factor out back-end code
 
 ###
+
+* Better offline mode support (local file listing, no password needed, second
+  pull if connection regained)
 
 * `vimbox /tentative/path/file` tests also if the MD5 exists (allows to guess en cripted file names)
 
