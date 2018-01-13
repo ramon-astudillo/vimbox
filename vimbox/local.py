@@ -227,18 +227,36 @@ def local_edit(local_file, local_content, no_edit=False):
 def list_local(remote_file, config):
 
     path_hashes = config['path_hashes']
-    folders = list(set([os.path.dirname(path) for path in config['cache']]))
-    offset = len(remote_file)
-    display_folders = set()
-    for folder in folders:
-        if folder[:offset] == remote_file:
-            display_folders |= set([folder[offset:].split('/')[0]])
-    display_folders = sorted(display_folders)
-    # Display encripted files in red
+
+    if config.get('remove_local', False):
+        # There is no local files, so just use the cache
+        folders = list(set([os.path.dirname(path) for path in config['cache']]))
+        offset = len(remote_file)
+        display_folders = set()
+        for folder in folders:
+            if folder[:offset] == remote_file:
+                display_folders |= set([folder[offset:].split('/')[0]])
+        display_folders = sorted(display_folders)
+        # As of now cache only contains folders
+        are_folder = [True]*len(display_folders)
+    else:
+        # There are local files, so we can list those
+        display_folders = sorted(
+            os.listdir(get_local_file(remote_file, config))
+        )
+        # These can be both files and folders
+        are_folder = map(os.path.isdir, [
+            get_local_file("%s/%s" % (remote_file, rfile), config)
+            for rfile in display_folders
+        ])
+
     new_display_folders = []
-    for file_folder in display_folders:
-        key = file_folder
-        if key in path_hashes:
-            file_folder = red(key)
-        new_display_folders.append(os.path.basename(file_folder) + '/')
+    for file_folder, is_folder in zip(display_folders, are_folder):
+        if is_folder:
+            new_display_folders.append(os.path.basename(file_folder) + '/')
+        else:
+            if "%s%s" % (remote_file, file_folder) in path_hashes.values():
+                # Display encripted files in red
+                file_folder = red(file_folder)
+            new_display_folders.append(os.path.basename(file_folder))
     return new_display_folders

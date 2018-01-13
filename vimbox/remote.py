@@ -365,7 +365,7 @@ def list_folders(remote_file, config=None, dropbox_client=None):
 
         # If it fails resort to local cache
         display_folders = local.list_local(remote_file, config)
-        print("\n%s cache for %s " % (red("offline"), remote_file))
+        print("\n%s content for %s " % (red("offline"), remote_file))
         display_string = "".join(
             ["%s\n" % folder for folder in sorted(display_folders)]
         )
