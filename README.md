@@ -135,8 +135,6 @@ Roadmap
 
 * Proper paths for temporary files
 
-* Update autocomplete from vimbox after new register (instead of `source`)
-
 * wrapper around vim (tunnel all options)
     :( forces to sync files by separate, big change of flow. Unfrequent use
 
@@ -156,8 +154,6 @@ Roadmap
 
 * `vimbox --cached ls /path/`
 
-* Unit test with back-end and editor mock-ups
-
 * Increased privacy: encrypt/decrypt inside `vim` using `vim -x`
     - differentiate editor-encryption from normal encryption
     - `vimbox -x` (`password is not None` no longer will be a good flag)
@@ -166,8 +162,10 @@ Roadmap
     - how to handle already encrypted files (two hash tables?)
     - `vimbox -k`
 
+* Update autocomplete from vimbox after new register (instead of `source`)
+
 * Other backends e.g. `vimbox /evernote/notes/`
-    - mock-up back-end for testing
+    - Unit test with back-end and editor mock-ups 
     - `dropbox paper` has an API, unclear how flexible
     - `CloudBlaze` is an alternative to dropbox
     - `evernote` seems accessible
@@ -178,12 +176,11 @@ Roadmap
 
 * `vimbox mkdir /cosa/`. Right now this is achieved by creating a file inside
 
-
 ### Future v0.0.6
 
 * Fix cache add/remove
-    - `rm` seems not to unregister 
-    - `ls` should register
+    [x] `rm` now unregisters both chache and file hash
+    [] `ls` should register
 
 * Move all dropbox code to `dropbox client` to factor out back-end code
 
