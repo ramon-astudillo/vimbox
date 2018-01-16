@@ -142,7 +142,15 @@ def _push(new_local_content, remote_file, config=None, dropbox_client=None,
     return error
 
 
-def is_file(remote_file, dropbox_client, config):
+def is_file(remote_file, dropbox_client=None, config=None):
+
+    # Load config
+    if config is None:
+        config = local.load_config()
+
+    # Get client
+    if dropbox_client is None:
+        dropbox_client = get_client(config)
 
     # Hash name if necessary
     is_encrypted = False
@@ -531,12 +539,13 @@ def edit(remote_file, config=None, dropbox_client=None, remove_local=None,
             exit()
         password = crypto.validate_password(password)
 
-    if force_creation and file_exists:
+    # It is advantageous to allow -f for created files in automatic programs
+    # if force_creation and file_exists:
         # It can be that the path we want to create uses names that are already
         # files. Here we test this at least one level
         # Quick exit on decription failure
-        print('\n%s exists as a file in remote!\n' % remote_file)
-        exit(0)
+    #    print('\n%s exists as a file in remote!\n' % remote_file)
+    #    exit(0)
 
     # Fetch remote content, merge if neccesary with local.mergetool
     local_content, remote_content, merged_content, fetch_status = pull(
@@ -588,7 +597,7 @@ def edit(remote_file, config=None, dropbox_client=None, remove_local=None,
 
         # Push changes to dropbox. If the pull just failed because connection
         # was not there, do not push
-        if fetch_status == 'connection-error':
+        if fetch_status != 'connection-error':
             error = _push(
                 edited_content,
                 remote_file,
@@ -597,7 +606,7 @@ def edit(remote_file, config=None, dropbox_client=None, remove_local=None,
                 password=password
             )
         else:
-            error == 'connection-error'
+            error = 'connection-error'
 
         # Remove local file
         if error is None:
