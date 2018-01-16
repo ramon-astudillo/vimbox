@@ -170,7 +170,8 @@ def is_file(remote_file, dropbox_client=None, config=None):
     except ApiError:
         if is_encrypted:
             status = 'api-error'
-            return None
+            file_exists = False
+            is_encrypted = False
         else:
             # Maybe it is encrypted, but unregistered
             try:
