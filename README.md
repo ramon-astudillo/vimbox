@@ -179,10 +179,12 @@ Roadmap
 * `vimbox mkdir /cosa/`. Right now this is achieved by creating a file inside
 
 
-### Future v0.0.6
+### Future v0.1.0
+
+* Bug fix `vimbox rm` for encripted files
 
 * Fix cache add/remove
-    - `rm` seems not to unregister 
+    - `rm` seems not to unregister
     - `ls` should register
 
 * Move all dropbox code to `dropbox client` to factor out back-end code
