@@ -472,8 +472,6 @@ def remove(remote_file, config=None, dropbox_client=None, force=False,
         local_file = local.get_local_file(remote_file, config)
         if os.path.isdir(local_file):
             os.rmdir(local_file)
-        else:
-            os.remove(local_file)
 
         # Unregister if it is a folder
         if remote_file[-1] == '/' and remote_file in config['cache']:
