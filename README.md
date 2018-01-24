@@ -181,7 +181,9 @@ Roadmap
 
 ### Future v0.1.0
 
-* Bug fix `vimbox rm` for encripted files
+* Bug fix for encripted files `vimbox rm`. 
+    - Name collision when creating unencrypted with same name.
+    - Encripted files not properly registered 
 
 * Fix cache add/remove
     - `rm` seems not to unregister
