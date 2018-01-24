@@ -368,6 +368,11 @@ def list_folders(remote_file, config=None, dropbox_client=None):
             ["%s\n" % folder for folder in sorted(new_display_folders)]
         )
 
+        # Add file to cache
+        if remote_file not in config['cache']:
+            config['cache'].append(remote_file)
+            local.write_config(local.CONFIG_FILE, config)
+
     elif error == 'api-error':
 
         display_string = "Folder does not exist in remote!"
@@ -472,8 +477,6 @@ def remove(remote_file, config=None, dropbox_client=None, force=False,
         local_file = local.get_local_file(remote_file, config)
         if os.path.isdir(local_file):
             os.rmdir(local_file)
-        else:
-            os.remove(local_file)
 
         # Unregister if it is a folder
         if remote_file[-1] == '/' and remote_file in config['cache']:
