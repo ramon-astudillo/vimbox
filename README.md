@@ -172,6 +172,8 @@ Roadmap
     - `CloudBlaze` is an alternative to dropbox
     - `evernote` seems accessible
 
+* Import for virtualenv `vimbox setup --merge-config ~/.vimbox/config.yml`
+
 * Set editors used in config
 
 * Move encripted files
@@ -182,18 +184,18 @@ Roadmap
 ### Future v0.1.0
 
 * Bug fix for encripted files `vimbox rm`. 
-    - Name collision when creating unencrypted with same name.
-    - Encripted files not properly registered 
+    [ ] Name collision when creating unencrypted with same name.
+    [ ] Encripted files not properly registered 
 
 * Fix cache add/remove
-    - `rm` seems not to unregister
-    - `ls` should register
+    [x] `rm` seems not to unregister
+    [x] `ls` should register
 
 * Move all dropbox code to `dropbox client` to factor out back-end code
 
 ###
 
-* `vimbox /tentative/path/file` tests also if the MD5 exists (allows to guess en cripted file names)
+* `vimbox /tentative/path/file` tests also if the MD5 exists (allows to guess encrypted file names)
 
 * Clean up namespaces of methods
     - [x] use module names at the begining of method calls
