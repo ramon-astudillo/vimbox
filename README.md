@@ -1,7 +1,7 @@
 VimBox
 ======
 
-I use vim a lot, I keep a lot of notes across machines. `VimBox` was born as a
+I use vim a lot. I keep a lot of notes across machines. `VimBox` was born as a
 cheap way to sync those notes using dropbox while having a bit more control
 than with their client, namely
 
@@ -15,13 +15,15 @@ than with their client, namely
 
 * Optional encryption in the dropbox side with `pycrypto`. Names will be hashed and content encrypted.
 
+* `virtualenv` friendly: stores config and file cache inside `virtualenv` folder.
+
 * Comes with the expected `vimbox ls` (`rm` `cp` `mv`)
 
 * Importable methods to use in other modules `from vimbox import edit, move`.
 
 * Code is thought to replace `vim` and `vimdiff` by other editors
 
-* Code is thought to add backends other than `dropbox` (paper is in sight)
+* Code is thought to add backends other than `dropbox` (`dropbox paper` is in sight)
 
 * Works in OSX and Linux, uses dropbox v2 API.
 
@@ -42,13 +44,17 @@ Edit an exiting file on dropbox
 If the local and remote copies differ `vimdiff` will be called instead of
 `vim`. Default is always overwrite local with remote (right side)
 
-Browse files using
+Browse files in a folder using
 
-    vimbox / + <TAB>
+    vimbox /path/to/
 
-will autocomplete using local cache of registered folders. You can also use
-`vimbox /path/` or `vimbox ls /path/` to browse remote folder content. In
-offline mode this will use the local cache
+`VimBox` autocompletes folder with
+
+    vimbox /path/ + <TAB>
+
+This will use cache of registered folders load from your `~/.bashrc` via the
+`complete` command. This means that new folder will only be available in the
+cache the next time you open a window or if you `source`.
 
 To create files encrypted on the dropbox side, use `-e` instead of `-f`
 
@@ -170,23 +176,31 @@ Roadmap
     - `CloudBlaze` is an alternative to dropbox
     - `evernote` seems accessible
 
+* Import for virtualenv `vimbox setup --merge-config ~/.vimbox/config.yml`
+
 * Set editors used in config
 
 * Move encripted files
 
 * `vimbox mkdir /cosa/`. Right now this is achieved by creating a file inside
 
-### Future v0.0.6
+
+### Future v0.1.0
+
+* Bug fix for encripted files `vimbox rm`.
 
 * Fix cache add/remove
-    [x] `rm` now unregisters both chache and file hash
-    [] `ls` should register
+    [x] `rm` seems not to unregister
+    [x] `ls` should register
 
 * Move all dropbox code to `dropbox client` to factor out back-end code
 
-###
+* `vimbox /tentative/path/file` tests also if the MD5 exists
+    - allows to guess encrypted file names
+    - no more name collision when creating unencrypted with same name
 
-* `vimbox /tentative/path/file` tests also if the MD5 exists (allows to guess en cripted file names)
+* `vimbox -f `allowed on existing files (just opens)
+    - Helps solving bug above
 
 * Clean up namespaces of methods
     - [x] use module names at the begining of method calls
