@@ -550,14 +550,6 @@ def edit(remote_file, config=None, dropbox_client=None, remove_local=None,
             exit()
         password = crypto.validate_password(password)
 
-    # It is advantageous to allow -f for created files in automatic programs
-    # if force_creation and file_exists:
-        # It can be that the path we want to create uses names that are already
-        # files. Here we test this at least one level
-        # Quick exit on decription failure
-    #    print('\n%s exists as a file in remote!\n' % remote_file)
-    #    exit(0)
-
     # Fetch remote content, merge if neccesary with local.mergetool
     local_content, remote_content, merged_content, fetch_status = pull(
         remote_file,

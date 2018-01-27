@@ -1,7 +1,7 @@
 VimBox
 ======
 
-I use vim a lot, I keep a lot of notes across machines. `VimBox` was born as a
+I use vim a lot. I keep a lot of notes across machines. `VimBox` was born as a
 cheap way to sync those notes using dropbox while having a bit more control
 than with their client, namely
 
@@ -15,13 +15,15 @@ than with their client, namely
 
 * Optional encryption in the dropbox side with `pycrypto`. Names will be hashed and content encrypted.
 
+* `virtualenv` friendly: stores config and file cache inside `virtualenv` folder.
+
 * Comes with the expected `vimbox ls` (`rm` `cp` `mv`)
 
 * Importable methods to use in other modules `from vimbox import edit, move`.
 
 * Code is thought to replace `vim` and `vimdiff` by other editors
 
-* Code is thought to add backends other than `dropbox` (paper is in sight)
+* Code is thought to add backends other than `dropbox` (`dropbox paper` is in sight)
 
 * Works in OSX and Linux, uses dropbox v2 API.
 
@@ -46,12 +48,12 @@ Browse files in a folder using
 
     vimbox /path/to/
 
-`VimBox` autocompletes folder with 
+`VimBox` autocompletes folder with
 
     vimbox /path/ + <TAB>
 
-This will use cache of registered folders load from your `~/.bashrc` via the 
-`complete` command. This means that new folder will only be available in the 
+This will use cache of registered folders load from your `~/.bashrc` via the
+`complete` command. This means that new folder will only be available in the
 cache the next time you open a window or if you `source`.
 
 To create files encrypted on the dropbox side, use `-e` instead of `-f`
