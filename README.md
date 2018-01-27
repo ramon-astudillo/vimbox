@@ -77,8 +77,8 @@ Configure the back-end by calling the program for the first time.
     vimbox setup
 
 The install menu will ask you for a dropbox access token. Getting this is a
-simple process In any computer with a browser, create a new app on your dropbox
-account by visiting
+simple process. In any computer with a browser, create a new app on your
+dropbox account by visiting
 
     https://www.dropbox.com/developers/apps/create
 
@@ -114,8 +114,8 @@ your `.bashrc` to load the cache of remote folders
     complete -W "$(vimbox complete)" 'vimbox'
 
 **NOTE:** If you use a `virtualenv` this changes will be performed inside of
-the virtual environment. Deleting the `virtualenv` will undo this changes. See
-next section for details.
+the virtual environments `activate` script. Deleting the `virtualenv` will undo
+this changes. See next section for details.
 
 # Develop
 
@@ -130,8 +130,8 @@ carried out. As an example
 
 # Troubleshooting
 
-In OSX with macports, python entry points get installed in a folder not in the
-PATH. It is necessary to manually link this as
+In OSX with `macports`, python entry points get installed in a folder not in
+the PATH. It is necessary to manually link this as
 
     sudo ln -s /opt/local/Library/Frameworks/Python.framework/Versions/2.7/bin/vimbox /Users/$(whoami)/bin/vimbox
 
@@ -185,7 +185,7 @@ Roadmap
 * `vimbox mkdir /cosa/`. Right now this is achieved by creating a file inside
 
 
-### Future v0.1.0
+### v0.1.0
 
 * Bug fix for encripted files `vimbox rm`.
 
