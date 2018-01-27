@@ -42,13 +42,17 @@ Edit an exiting file on dropbox
 If the local and remote copies differ `vimdiff` will be called instead of
 `vim`. Default is always overwrite local with remote (right side)
 
-Browse files using
+Browse files in a folder using
 
-    vimbox / + <TAB>
+    vimbox /path/to/
 
-will autocomplete using local cache of registered folders. You can also use
-`vimbox /path/` or `vimbox ls /path/` to browse remote folder content. In
-offline mode this will use the local cache
+`VimBox` autocompletes folder with 
+
+    vimbox /path/ + <TAB>
+
+This will use cache of registered folders load from your `~/.bashrc` via the 
+`complete` command. This means that new folder will only be available in the 
+cache the next time you open a window or if you `source`.
 
 To create files encrypted on the dropbox side, use `-e` instead of `-f`
 
@@ -183,9 +187,7 @@ Roadmap
 
 ### Future v0.1.0
 
-* Bug fix for encripted files `vimbox rm`. 
-    [ ] Name collision when creating unencrypted with same name.
-    [ ] Encripted files not properly registered 
+* Bug fix for encripted files `vimbox rm`.
 
 * Fix cache add/remove
     [x] `rm` seems not to unregister
@@ -193,9 +195,12 @@ Roadmap
 
 * Move all dropbox code to `dropbox client` to factor out back-end code
 
-###
+* `vimbox /tentative/path/file` tests also if the MD5 exists
+    - allows to guess encrypted file names
+    - no more name collision when creating unencrypted with same name
 
-* `vimbox /tentative/path/file` tests also if the MD5 exists (allows to guess encrypted file names)
+* `vimbox -f `allowed on existing files (just opens)
+    - Helps solving bug above
 
 * Clean up namespaces of methods
     - [x] use module names at the begining of method calls
