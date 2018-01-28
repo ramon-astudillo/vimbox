@@ -518,14 +518,16 @@ def edit(remote_file, config=None, dropbox_client=None, remove_local=None,
     local_file = local.get_local_file(remote_file, config)
 
     # Do basic checks on remote: Does it exist? is it encripted?
-    file_exists, is_encrypted, status = is_file(
+    # TODO: This workflow need to be iproved to minimize remote calls and clean
+    # up the underlying logic
+    file_exists, is_encrypted, ping_status = is_file(
         remote_file,
         dropbox_client,
         config
     )
 
     # Prompt for password if needed
-    if status == 'online' and is_encrypted and password is None:
+    if ping_status == 'online' and is_encrypted and password is None:
         password = getpass.getpass('Input file password: ')
 
     # Sanity checks
@@ -584,7 +586,7 @@ def edit(remote_file, config=None, dropbox_client=None, remove_local=None,
         edited_content = local.local_edit(local_file, merged_content)
 
     # Abort if file being created but no changes
-    if edited_content is None:
+    if edited_content is None and ping_status != 'connection-error':
         # For debug purposes
         assert force_creation, \
             "Invalid status: edited local_file non existing but remote does"
