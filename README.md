@@ -137,7 +137,7 @@ the PATH. It is necessary to manually link this as
 
 # Versions
 
-Roadmap
+### Desired Features
 
 * Proper paths for temporary files
 
@@ -220,10 +220,10 @@ Roadmap
 
 * Simulated bash in remote
 
-    vimbox rm /logs/mylog
-    vimbox cp /logs/mylog /path/
-    vimbox cp /logs/mylog /path/mylog2
-    vimbox mv /logs/mylog /path/mylog2
+    - `vimbox rm /logs/mylog`
+    - `vimbox cp /logs/mylog /path/`
+    - `vimbox cp /logs/mylog /path/mylog2`
+    - `vimbox mv /logs/mylog /path/mylog2`
 
 ### v0.0.5
 
