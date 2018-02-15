@@ -25,7 +25,7 @@ than with their client, namely
 
 * Code is thought to add backends other than `dropbox` (`dropbox paper` is in sight)
 
-* Works in OSX and Linux, uses dropbox v2 API.
+* Works in OSX and Linux, uses dropbox v2 API (`python 2`!).
 
 # Examples
 
