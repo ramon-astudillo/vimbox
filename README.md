@@ -1,7 +1,7 @@
 VimBox
 ======
 
-I use vim a lot, I keep a lot of notes across machines. `VimBox` was born as a
+I use vim a lot. I keep a lot of notes across machines. `VimBox` was born as a
 cheap way to sync those notes using dropbox while having a bit more control
 than with their client, namely
 
@@ -15,13 +15,15 @@ than with their client, namely
 
 * Optional encryption in the dropbox side with `pycrypto`. Names will be hashed and content encrypted.
 
+* `virtualenv` friendly: stores config and file cache inside `virtualenv` folder.
+
 * Comes with the expected `vimbox ls` (`rm` `cp` `mv`)
 
 * Importable methods to use in other modules `from vimbox import edit, move`.
 
 * Code is thought to replace `vim` and `vimdiff` by other editors
 
-* Code is thought to add backends other than `dropbox` (paper is in sight)
+* Code is thought to add backends other than `dropbox` (`dropbox paper` is in sight)
 
 * Works in OSX and Linux, uses dropbox v2 API.
 
@@ -42,13 +44,17 @@ Edit an exiting file on dropbox
 If the local and remote copies differ `vimdiff` will be called instead of
 `vim`. Default is always overwrite local with remote (right side)
 
-Browse files using
+Browse files in a folder using
 
-    vimbox / + <TAB>
+    vimbox /path/to/
 
-will autocomplete using local cache of registered folders. You can also use
-`vimbox /path/` or `vimbox ls /path/` to browse remote folder content. In
-offline mode this will use the local cache
+`VimBox` autocompletes folder with
+
+    vimbox /path/ + <TAB>
+
+This will use cache of registered folders load from your `~/.bashrc` via the
+`complete` command. This means that new folder will only be available in the
+cache the next time you open a window or if you `source`.
 
 To create files encrypted on the dropbox side, use `-e` instead of `-f`
 
@@ -71,8 +77,8 @@ Configure the back-end by calling the program for the first time.
     vimbox setup
 
 The install menu will ask you for a dropbox access token. Getting this is a
-simple process In any computer with a browser, create a new app on your dropbox
-account by visiting
+simple process. In any computer with a browser, create a new app on your
+dropbox account by visiting
 
     https://www.dropbox.com/developers/apps/create
 
@@ -108,8 +114,8 @@ your `.bashrc` to load the cache of remote folders
     complete -W "$(vimbox complete)" 'vimbox'
 
 **NOTE:** If you use a `virtualenv` this changes will be performed inside of
-the virtual environment. Deleting the `virtualenv` will undo this changes. See
-next section for details.
+the virtual environments `activate` script. Deleting the `virtualenv` will undo
+this changes. See next section for details.
 
 # Develop
 
@@ -124,8 +130,8 @@ carried out. As an example
 
 # Troubleshooting
 
-In OSX with macports, python entry points get installed in a folder not in the
-PATH. It is necessary to manually link this as
+In OSX with `macports`, python entry points get installed in a folder not in
+the PATH. It is necessary to manually link this as
 
     sudo ln -s /opt/local/Library/Frameworks/Python.framework/Versions/2.7/bin/vimbox /Users/$(whoami)/bin/vimbox
 
@@ -134,8 +140,6 @@ PATH. It is necessary to manually link this as
 Roadmap
 
 * Proper paths for temporary files
-
-* Update autocomplete from vimbox after new register (instead of `source`)
 
 * wrapper around vim (tunnel all options)
     :( forces to sync files by separate, big change of flow. Unfrequent use
@@ -156,8 +160,6 @@ Roadmap
 
 * `vimbox --cached ls /path/`
 
-* Unit test with back-end and editor mock-ups
-
 * Increased privacy: encrypt/decrypt inside `vim` using `vim -x`
     - differentiate editor-encryption from normal encryption
     - `vimbox -x` (`password is not None` no longer will be a good flag)
@@ -166,8 +168,10 @@ Roadmap
     - how to handle already encrypted files (two hash tables?)
     - `vimbox -k`
 
+* Update autocomplete from vimbox after new register (instead of `source`)
+
 * Other backends e.g. `vimbox /evernote/notes/`
-    - mock-up back-end for testing
+    - Unit test with back-end and editor mock-ups 
     - `dropbox paper` has an API, unclear how flexible
     - `CloudBlaze` is an alternative to dropbox
     - `evernote` seems accessible
@@ -181,11 +185,9 @@ Roadmap
 * `vimbox mkdir /cosa/`. Right now this is achieved by creating a file inside
 
 
-### Future v0.1.0
+### v0.1.0
 
-* Bug fix for encripted files `vimbox rm`. 
-    [ ] Name collision when creating unencrypted with same name.
-    [ ] Encripted files not properly registered 
+* Bug fix for encripted files `vimbox rm`.
 
 * Fix cache add/remove
     [x] `rm` seems not to unregister
@@ -193,9 +195,12 @@ Roadmap
 
 * Move all dropbox code to `dropbox client` to factor out back-end code
 
-###
+* `vimbox /tentative/path/file` tests also if the MD5 exists
+    - allows to guess encrypted file names
+    - no more name collision when creating unencrypted with same name
 
-* `vimbox /tentative/path/file` tests also if the MD5 exists (allows to guess encrypted file names)
+* `vimbox -f `allowed on existing files (just opens)
+    - Helps solving bug above
 
 * Clean up namespaces of methods
     - [x] use module names at the begining of method calls

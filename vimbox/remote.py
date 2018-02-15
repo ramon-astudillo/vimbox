@@ -4,6 +4,7 @@ Contains remote primitives indepenedent of back-end used and back-end switch
 Handles back-end errors in a unified way
 """
 import os
+import shutil
 import getpass
 #
 from requests.exceptions import ConnectionError
@@ -417,6 +418,11 @@ def copy(remote_source, remote_target, config=None, dropbox_client=None):
         print("copy/move operations not allowed in encrypted files")
         exit(1)
 
+    # For folder we need to remove the ending back-slash
+    if remote_source[-1] == '/':
+        remote_source = remote_source[:-1]
+    if remote_target[-1] == '/':
+        remote_target = remote_target[:-1]
     sucess = dropbox_client.files_copy_v2(remote_source, remote_target)
     if sucess:
         print("%12s %s %s" % (yellow("copied"), remote_source, remote_target))
@@ -476,7 +482,7 @@ def remove(remote_file, config=None, dropbox_client=None, force=False,
         # Remove local copy
         local_file = local.get_local_file(remote_file, config)
         if os.path.isdir(local_file):
-            os.rmdir(local_file)
+            shutil.rmtree(local_file)
 
         # Unregister if it is a folder
         if remote_file[-1] == '/' and remote_file in config['cache']:
@@ -551,14 +557,6 @@ def edit(remote_file, config=None, dropbox_client=None, remove_local=None,
             print('\nFile encryption only with register_folder = True\n')
             exit()
         password = crypto.validate_password(password)
-
-    # It is advantageous to allow -f for created files in automatic programs
-    # if force_creation and file_exists:
-        # It can be that the path we want to create uses names that are already
-        # files. Here we test this at least one level
-        # Quick exit on decription failure
-    #    print('\n%s exists as a file in remote!\n' % remote_file)
-    #    exit(0)
 
     # Fetch remote content, merge if neccesary with local.mergetool
     local_content, remote_content, merged_content, fetch_status = pull(
