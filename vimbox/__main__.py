@@ -13,7 +13,7 @@ COMMAND_HELP = {
     '-e': ('-e /path/to/file', 'create encrypted file'),
     'cache': ('cache', 'show cached folders'),
     'config': ('config', 'open vimbox config in editor'),
-    'ls': ('ls /path/to/folder/', 'list files in remote folder'),
+    'ls': ('ls /path/to/folder/', 'list files in remote folder, update cache'),
     'rm': ('rm /path/to/folder', 'remove file'),
     'rm -R': ('rm -R /path/to/folder/', 'remove folder'),
     'cp': ('cp /path/to/file /path2/to/[file2]', 'copy file'),

@@ -171,7 +171,7 @@ Roadmap
 * Update autocomplete from vimbox after new register (instead of `source`)
 
 * Other backends e.g. `vimbox /evernote/notes/`
-    - Unit test with back-end and editor mock-ups 
+    - Unit test with back-end and editor mock-ups
     - `dropbox paper` has an API, unclear how flexible
     - `CloudBlaze` is an alternative to dropbox
     - `evernote` seems accessible
@@ -184,6 +184,10 @@ Roadmap
 
 * `vimbox mkdir /cosa/`. Right now this is achieved by creating a file inside
 
+### Upcoming v0.1.1
+
+* Fix inconsistent cache: When altered I one client does not update on other clients
+    - Use `vimbox ls` to update cache
 
 ### v0.1.0
 
