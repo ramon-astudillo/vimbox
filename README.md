@@ -186,6 +186,8 @@ Roadmap
 
 * `vimbox mkdir /cosa/`. Right now this is achieved by creating a file inside
 
+* Can not create top level files. Have a warning at least.
+
 ### Upcoming v0.1.1
 
 * Fix inconsistent cache: When altered I one client does not update on other clients
