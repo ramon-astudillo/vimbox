@@ -144,8 +144,6 @@ Roadmap
 * wrapper around vim (tunnel all options)
     :( forces to sync files by separate, big change of flow. Unfrequent use
 
-* pipes `cat mylog | vimbox pipe -f /logs/mylog` and `vimbox cat /logs/mylog`
-
 * Info that the user can screw-up (cache, hashes) should not be on config
 
 * Add `find` semantics i.e. `vimbox /folder1/folder2/*` regexp will look
@@ -171,7 +169,7 @@ Roadmap
 * Update autocomplete from vimbox after new register (instead of `source`)
 
 * Other backends e.g. `vimbox /evernote/notes/`
-    - Unit test with back-end and editor mock-ups
+    [ ] Unit test with back-end and editor mock-ups
     - `dropbox paper` has an API, unclear how flexible
     - `CloudBlaze` is an alternative to dropbox
     - `evernote` seems accessible
@@ -180,6 +178,10 @@ Roadmap
 
 * Set editors used in config
 
+* pipes would allow for a cheap remote-local transfer, for example
+    - `cat mylog | vimbox pipe -f /logs/mylog`
+    - `vimbox cat /logs/slides | pandoc -o slides.pdf`
+
 * Move encripted files
 
 * `vimbox mkdir /cosa/`. Right now this is achieved by creating a file inside
@@ -187,7 +189,7 @@ Roadmap
 ### Upcoming v0.1.1
 
 * Fix inconsistent cache: When altered I one client does not update on other clients
-    - Use `vimbox ls` to update cache
+    - Using `vimbox ls` now updates cache
 
 ### v0.1.0
 
