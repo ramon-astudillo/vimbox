@@ -241,6 +241,21 @@ def pull(remote_file, force_creation, config=None, dropbox_client=None,
     return local_content, remote_content, merged_content, fetch_status
 
 
+def cat(remote_file, config=None, dropbox_client=None, password=None,
+        is_encrypted=False):
+
+    remote_content, status = fetch(
+        remote_file,
+        config=config,
+        dropbox_client=dropbox_client,
+        password=password,
+        is_encrypted=is_encrypted
+    )
+
+    if status == 'online':
+        print(remote_content)
+
+
 def fetch(remote_file, config=None, dropbox_client=None, password=None,
           is_encrypted=False):
     """
@@ -361,7 +376,7 @@ def list_folders(remote_file, config=None, dropbox_client=None):
         display_folders = sorted(display_folders)
 
         # Update to match folder
-        if remote_file[-1] == '/':
+        if remote_file and remote_file[-1] == '/':
 
             # Remove folder paths no more in remote
             for path in config['cache']:

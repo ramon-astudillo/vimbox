@@ -178,15 +178,20 @@ Roadmap
 
 * Set editors used in config
 
-* pipes would allow for a cheap remote-local transfer, for example
-    - `cat mylog | vimbox pipe -f /logs/mylog`
-    - `vimbox cat /logs/slides | pandoc -o slides.pdf`
+* Avoid two calls when working with remote
+
+* Factor `remote.edit()` logic
 
 * Move encripted files
 
 * `vimbox mkdir /cosa/`. Right now this is achieved by creating a file inside
 
 ### Upcoming v0.1.1
+
+* pipes to allow for a cheap remote-local transfer, for example
+    [ ] `cat mylog | vimbox pipe -f /logs/mylog`
+        - needs Factor `remote.edit()` logic
+    [x] `vimbox cat /logs/slides | pandoc -o slides.pdf`
 
 * Fix inconsistent cache: When altered I one client does not update on other clients
     - Using `vimbox ls` now updates cache

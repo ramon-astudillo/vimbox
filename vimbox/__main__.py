@@ -171,6 +171,12 @@ def main(args=None):
         else:
             vimbox_help()
 
+    elif args[0] == 'cat':
+
+        # Copy file to file or folder
+        for arg in args[1:]:
+            remote.cat(arg)
+
     elif args[0] == 'rm':
 
         # Remove file or folder
