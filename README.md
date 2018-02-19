@@ -186,7 +186,7 @@ Roadmap
 
 * `vimbox mkdir /cosa/`. Right now this is achieved by creating a file inside
 
-* Can not create top level files. Have a warning at least.
+* Fix can not create encripted files at top level
 
 ### Upcoming v0.1.1
 
