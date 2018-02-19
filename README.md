@@ -188,6 +188,9 @@ Roadmap
 
 * Fix can not create encripted files at top level
 
+* Fix `IV456` initialization and syncing across clients
+    - Use a .vimbox/ folder in dropbox
+
 ### Upcoming v0.1.1
 
 * Fix inconsistent cache: When altered I one client does not update on other clients
