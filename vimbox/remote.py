@@ -372,7 +372,6 @@ def list_folders(remote_file, config=None, dropbox_client=None):
                         cache_folder != ''
                     ):
                         config['cache'].remove(path)
-                        print("Remove %s" % path)
 
             # Add missing folders
             if remote_file not in config['cache']:
@@ -381,7 +380,6 @@ def list_folders(remote_file, config=None, dropbox_client=None):
                 if folder[-1] == '/':
                     new_path = "%s%s" % (remote_file, folder)
                     if new_path not in config['cache']:
-                        print("Add %s" % new_path)
                         config['cache'].append(new_path)
 
             # Write cache
