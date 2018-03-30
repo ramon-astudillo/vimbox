@@ -241,6 +241,21 @@ def pull(remote_file, force_creation, config=None, dropbox_client=None,
     return local_content, remote_content, merged_content, fetch_status
 
 
+def cat(remote_file, config=None, dropbox_client=None, password=None,
+        is_encrypted=False):
+
+    remote_content, status = fetch(
+        remote_file,
+        config=config,
+        dropbox_client=dropbox_client,
+        password=password,
+        is_encrypted=is_encrypted
+    )
+
+    if status == 'online':
+        print(remote_content)
+
+
 def fetch(remote_file, config=None, dropbox_client=None, password=None,
           is_encrypted=False):
     """
@@ -348,6 +363,7 @@ def list_folders(remote_file, config=None, dropbox_client=None):
     # Try first remote
     result, error = get_folders(dropbox_client, remote_file)
     if result:
+
         # Differentiate file and folders
         display_folders = []
         for x in result.entries:
@@ -358,6 +374,33 @@ def list_folders(remote_file, config=None, dropbox_client=None):
                 # Folder
                 display_folders.append("%s/" % x.name)
         display_folders = sorted(display_folders)
+
+        # Update to match folder
+        if remote_file and remote_file[-1] == '/':
+
+            # Remove folder paths no more in remote
+            for path in config['cache']:
+                if path[:len(remote_file)] == remote_file:
+                    cache_folder = path[len(remote_file):].split('/')[0] + '/'
+                    if (
+                        cache_folder not in display_folders and
+                        cache_folder != ''
+                    ):
+                        config['cache'].remove(path)
+
+            # Add missing folders
+            if remote_file not in config['cache']:
+                config['cache'].append(remote_file)
+            for folder in display_folders:
+                if folder[-1] == '/':
+                    new_path = "%s%s" % (remote_file, folder)
+                    if new_path not in config['cache']:
+                        config['cache'].append(new_path)
+
+            # Write cache
+            config['cache'] = sorted(config['cache'])
+            local.write_config(local.CONFIG_FILE, config)
+
         # Display encrypted files in red
         new_display_folders = []
         for file_folder in display_folders:

@@ -144,8 +144,6 @@ the PATH. It is necessary to manually link this as
 * wrapper around vim (tunnel all options)
     :( forces to sync files by separate, big change of flow. Unfrequent use
 
-* pipes `cat mylog | vimbox pipe -f /logs/mylog` and `vimbox cat /logs/mylog`
-
 * Info that the user can screw-up (cache, hashes) should not be on config
 
 * Add `find` semantics i.e. `vimbox /folder1/folder2/*` regexp will look

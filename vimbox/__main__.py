@@ -13,14 +13,16 @@ COMMAND_HELP = {
     '-e': ('-e /path/to/file', 'create encrypted file'),
     'cache': ('cache', 'show cached folders'),
     'config': ('config', 'open vimbox config in editor'),
-    'ls': ('ls /path/to/folder/', 'list files in remote folder'),
+    'ls': ('ls /path/to/folder/', 'list files in remote folder, update cache'),
     'rm': ('rm /path/to/folder', 'remove file'),
     'rm -R': ('rm -R /path/to/folder/', 'remove folder'),
     'cp': ('cp /path/to/file /path2/to/[file2]', 'copy file'),
     'mv': ('mv /path/to/file /path2/to/[file2]', 'move file'),
+    'cat': ('cat /path/to/file /path2/file', 'concatenate file outputs')
 }
 COMMAND_ORDER = [
-    'setup', '-f', '-e', '', 'cache', 'config', 'ls', 'rm', 'rm -R', 'cp', 'mv'
+    'setup', '-f', '-e', '', 'cache', 'config', 'ls', 'rm', 'rm -R', 'cp', 'mv',
+    'cat'
 ]
 
 
@@ -170,6 +172,12 @@ def main(args=None):
             remote.copy(args[1], args[2])
         else:
             vimbox_help()
+
+    elif args[0] == 'cat':
+
+        # Copy file to file or folder
+        for arg in args[1:]:
+            remote.cat(arg)
 
     elif args[0] == 'rm':
 
