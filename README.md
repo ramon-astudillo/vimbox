@@ -171,7 +171,7 @@ the PATH. It is necessary to manually link this as
 * Update autocomplete from vimbox after new register (instead of `source`)
 
 * Other backends e.g. `vimbox /evernote/notes/`
-    - Unit test with back-end and editor mock-ups 
+    [ ] Unit test with back-end and editor mock-ups
     - `dropbox paper` has an API, unclear how flexible
     - `CloudBlaze` is an alternative to dropbox
     - `evernote` seems accessible
@@ -180,10 +180,28 @@ the PATH. It is necessary to manually link this as
 
 * Set editors used in config
 
+* Avoid two calls when working with remote
+
+* Factor `remote.edit()` logic
+
 * Move encripted files
 
 * `vimbox mkdir /cosa/`. Right now this is achieved by creating a file inside
 
+* Fix can not create encripted files at top level
+
+* Fix `IV456` initialization and syncing across clients
+    - Use a .vimbox/ folder in dropbox
+
+### Upcoming v0.1.1
+
+* pipes to allow for a cheap remote-local transfer, for example
+    [ ] `cat mylog | vimbox pipe -f /logs/mylog`
+        - needs Factor `remote.edit()` logic
+    [x] `vimbox cat /logs/slides | pandoc -o slides.pdf`
+
+* Fix inconsistent cache: When altered I one client does not update on other clients
+    - Using `vimbox ls` now updates cache
 
 ### v0.1.0
 
