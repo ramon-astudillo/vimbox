@@ -156,7 +156,11 @@ def register_file(remote_file, config, is_encripted):
             write_config(CONFIG_FILE, config)
 
 
-def get_local_file(remote_file, config):
+def get_local_file(remote_file, config=None):
+
+    if config is None:
+        config = load_config()
+
     if remote_file in config['path_hashes'].values():
         remote_file = crypto.get_path_hash(remote_file)
     return '%s/%s' % (config['local_root'], remote_file)
