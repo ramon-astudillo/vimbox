@@ -191,6 +191,8 @@ the PATH. It is necessary to manually link this as
 * Fix `IV456` initialization and syncing across clients
     - Use a .vimbox/ folder in dropbox
 
+* Fix viewing files but not editing them does not trigger delete locally
+
 ### Upcoming v0.1.1
 
 * pipes to allow for a cheap remote-local transfer, for example
