@@ -192,6 +192,8 @@ the PATH. It is necessary to manually link this as
     - Use a .vimbox/ folder in dropbox
     - OR just ask user for manual sync
 
+* Fix viewing files but not editing them does not trigger delete locally
+
 ### Upcoming v0.1.1
 
 * pipes to allow for a cheap remote-local transfer, for example

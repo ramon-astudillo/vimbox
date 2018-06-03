@@ -225,7 +225,7 @@ def pull(remote_file, force_creation, config=None, dropbox_client=None,
     elif local_content is not None and local_content != remote_content:
 
         # Content conflict, call local.mergetool
-        old_local_file = "%s.OLD" % local_file
+        old_local_file = "%s.local" % local_file
         local.write_file(old_local_file, local_content)
         local.write_file(local_file, remote_content)
         local.mergetool(old_local_file, local_file)
