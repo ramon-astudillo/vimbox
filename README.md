@@ -190,6 +190,7 @@ the PATH. It is necessary to manually link this as
 
 * Fix `IV456` initialization and syncing across clients
     - Use a .vimbox/ folder in dropbox
+    - OR just ask user for manual sync
 
 ### Upcoming v0.1.1
 
