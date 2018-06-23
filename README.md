@@ -178,8 +178,6 @@ the PATH. It is necessary to manually link this as
 
 * Set editors used in config
 
-* Avoid two calls when working with remote
-
 * Factor `remote.edit()` logic
 
 * Move encripted files
@@ -188,18 +186,25 @@ the PATH. It is necessary to manually link this as
 
 * Fix can not create encripted files at top level
 
-* Fix `IV456` initialization and syncing across clients
-    - Use a .vimbox/ folder in dropbox
-    - OR just ask user for manual sync
-
 * Fix viewing files but not editing them does not trigger delete locally
 
-### Upcoming v0.1.1
+* Input pipes `cat mylog | vimbox pipe -f /logs/mylog`
+    - needs Factor `remote.edit()` logic
+
+* Refactor backend primitives, create fake back-end for unit-testing
+    - Keep the number of primitives as low as possible
+    - Avoid two calls when working with remote
+
+### Upcoming v0.2.0
+
+- [ ] Fix `IV456` initialization and syncing across clients
+    - big change as if can screw up encrypted files with earlier 
+    - ask user for manual sync on setup
+
+### v0.1.1
 
 * pipes to allow for a cheap remote-local transfer, for example
-    [ ] `cat mylog | vimbox pipe -f /logs/mylog`
-        - needs Factor `remote.edit()` logic
-    [x] `vimbox cat /logs/slides | pandoc -o slides.pdf`
+    - [x] `vimbox cat /logs/slides | pandoc -o slides.pdf`
 
 * Fix inconsistent cache: When altered I one client does not update on other clients
     - Using `vimbox ls` now updates cache
