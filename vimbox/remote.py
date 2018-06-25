@@ -484,6 +484,7 @@ def remove(remote_file, config=None, dropbox_client=None, force=False,
 
     # Disallow deleting of encrypted files that have unknown name. Also consider
     # the unfrequent file is registered but user uses hash name
+    import ipdb;ipdb.set_trace(context=30)
     if (
         remote_file not in config['path_hashes'] and
         crypto.is_encrypted_path(remote_file)
@@ -590,6 +591,7 @@ def edit(remote_file, config=None, dropbox_client=None, remove_local=None,
         print("%s exists localy but is not registered" % remote_folder)
 
     # If this is a registered encrypted file, we will need a password
+    import ipdb;ipdb.set_trace(context=30)
     if remote_file in config['path_hashes'].values() and force_creation:
         print('\nCan not re-encrypt a registered file.\n')
         exit()

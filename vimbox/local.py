@@ -63,6 +63,8 @@ def modify_bashrc(virtualenv):
 
 
 def write_config(file_path, config):
+    # Ensure str s in the cache
+    config['cache'] = map(str, config['cache'])
     with open(file_path, 'w') as fid:
         yaml.dump(config, fid, default_flow_style=False)
 

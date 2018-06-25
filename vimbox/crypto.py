@@ -43,7 +43,10 @@ def validate_password(password):
 
 def encrypt_content(text, password):
 
-    obj = AES.new(password, AES.MODE_CBC, 'This is an IV456')
+    # Generate IV
+    iv = str(os.urandom(16).encode('hex'))
+    import ipdb;ipdb.set_trace(context=30)
+    obj = AES.new(password, AES.MODE_CBC, iv)
 
     # Create header to be a multiple of 16
     old_length = len("%s\n%s" % (HEADER, text))
@@ -54,12 +57,15 @@ def encrypt_content(text, password):
         padded_header = HEADER
     # Add header
     headed_text = "%s\n%s" % (padded_header, text)
-    return obj.encrypt(headed_text)
+    return iv + obj.encrypt(headed_text)
 
 
 def decript_content(text_cipher, password):
 
-    obj = AES.new(password, AES.MODE_CBC, 'This is an IV456')
+    iv = text_cipher[:16]
+    text_cipher = text_cipher[16:]
+
+    obj = AES.new(password, AES.MODE_CBC, iv)
     headed_text = obj.decrypt(text_cipher)
 
     # Separate header from body, return also check that decription worked
