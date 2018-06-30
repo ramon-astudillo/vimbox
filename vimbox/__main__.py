@@ -33,7 +33,6 @@ def install():
     if hasattr(sys, 'real_prefix'):
         virtualenv = True
         print("\nVirtual environment detected: %s" % sys.prefix)
-        print("Config files and bash autocomplete will be installed inside")
 
     # Create config folder
     if not os.path.isdir(local.ROOT_FOLDER):

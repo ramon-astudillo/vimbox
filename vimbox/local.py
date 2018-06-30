@@ -63,6 +63,8 @@ def modify_bashrc(virtualenv):
 
 
 def write_config(file_path, config):
+    # Ensure str s in the cache
+    config['cache'] = map(str, config['cache'])
     with open(file_path, 'w') as fid:
         yaml.dump(config, fid, default_flow_style=False)
 
@@ -157,12 +159,8 @@ def register_file(remote_file, config, is_encripted):
 
 
 def get_local_file(remote_file, config=None):
-
     if config is None:
         config = load_config()
-
-    if remote_file in config['path_hashes'].values():
-        remote_file = crypto.get_path_hash(remote_file)
     return '%s/%s' % (config['local_root'], remote_file)
 
 
