@@ -197,6 +197,10 @@ the PATH. It is necessary to manually link this as
 
 * Fix `vimbox mv` does not update `path_hashes`
 
+* Fix undeleted local files conflict when creating folders of same name
+
+* Fix virtualenv not storing the files inside it
+
 ### Upcoming v0.2.0
 
 - [ ] Fix `IV456` initialization and syncing across clients

@@ -5,3 +5,4 @@
 *.swp
 DATA/
 vimbox.egg-info/
+.vim

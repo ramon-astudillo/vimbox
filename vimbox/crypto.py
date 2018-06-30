@@ -2,12 +2,8 @@ import os
 import re
 from math import ceil
 #
-try:
-    from Crypto.Cipher import AES
-    from Crypto.Hash import MD5
-except:
-    # print("\nMissing module pycrypto, no encryption available")
-    pass
+from Crypto.Cipher import AES
+from Crypto.Hash import MD5
 
 # ACHTUNG: Changing this may yield incorrect dencryption errors!
 HEADER = '# this was encrypted'
@@ -44,8 +40,7 @@ def validate_password(password):
 def encrypt_content(text, password):
 
     # Generate IV
-    iv = str(os.urandom(16).encode('hex'))
-    import ipdb;ipdb.set_trace(context=30)
+    iv = str(os.urandom(16))
     obj = AES.new(password, AES.MODE_CBC, iv)
 
     # Create header to be a multiple of 16
@@ -55,26 +50,27 @@ def encrypt_content(text, password):
         padded_header = HEADER + (' ' * (new_length - old_length))
     else:
         padded_header = HEADER
-    # Add header
+    # Add header and encrypt
     headed_text = "%s\n%s" % (padded_header, text)
     return iv + obj.encrypt(headed_text)
 
 
 def decript_content(text_cipher, password):
 
+    # Recover IV
     iv = text_cipher[:16]
-    text_cipher = text_cipher[16:]
-
+    text_cipher_body = text_cipher[16:]
+    # Decrypt
     obj = AES.new(password, AES.MODE_CBC, iv)
-    headed_text = obj.decrypt(text_cipher)
-
+    headed_text = obj.decrypt(text_cipher_body)
     # Separate header from body, return also check that decription worked
     items = headed_text.split('\n')
     header = items[0]
     text = "\n".join(items[1:])
+
     return text, (
         header.rstrip() == HEADER.rstrip() or
-        header.rstrip() == "# this was encripted" # Hack for pre v0.0.6, autofix
+        header.rstrip() == "# this was encripted"  # Hack pre v0.0.6, autofix
     )
 
 
