@@ -195,6 +195,10 @@ the PATH. It is necessary to manually link this as
     - Keep the number of primitives as low as possible
     - Avoid two calls when working with remote
 
+* Fix `vimbox mv` does not update `path_hashes`
+
+* Fix undeleted local files conflict when creating folders of same name
+
 ### Upcoming v0.2.0
 
 - [ ] Fix `IV456` initialization and syncing across clients

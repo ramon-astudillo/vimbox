@@ -434,6 +434,10 @@ def list_folders(remote_file, config=None, dropbox_client=None):
     print("\n%s\n" % display_string.rstrip())
 
 
+def get_path_components(path):
+    return tuple(filter(None, path.split('/')))
+
+
 def copy(remote_source, remote_target, config=None, dropbox_client=None):
 
     # Load config if not provided
@@ -452,13 +456,26 @@ def copy(remote_source, remote_target, config=None, dropbox_client=None):
             print("source and target are the same")
             exit(1)
 
-    # Do not allow to copy on encrypted files
+    # Do not allow to copy encrypted files or folder containing them
+    hashed_paths = set([
+         get_path_components(path) for path in config['path_hashes'].values()
+    ])
+    hashed_remote_source = get_path_components(remote_source)
+    hashed_remote_target = get_path_components(remote_target)
+    # Add also partial paths
+    hashed_paths |= set([
+        path[:len(hashed_remote_source)] for path in hashed_paths
+    ])
+    hashed_paths |= set([
+        path[:len(hashed_remote_target)] for path in hashed_paths
+    ])
     if (
-        remote_source in config['path_hashes'].values() or
-        remote_target in config['path_hashes'].values() or
+        hashed_remote_source in hashed_paths or
+        hashed_remote_target in hashed_paths or
+        crypto.is_encrypted_path(remote_source) or
         crypto.is_encrypted_path(remote_target)
     ):
-        print("copy/move operations not allowed in encrypted files")
+        print("\ncopy/move operations can not include encrypted files\n")
         exit(1)
 
     # For folder we need to remove the ending back-slash
@@ -567,7 +584,7 @@ def edit(remote_file, config=None, dropbox_client=None, remove_local=None,
     local_file = local.get_local_file(remote_file, config)
 
     # Do basic checks on remote: Does it exist? is it encripted?
-    # TODO: This workflow need to be iproved to minimize remote calls and clean
+    # TODO: This workflow need to be improved to minimize remote calls and clean
     # up the underlying logic
     file_exists, is_encrypted, ping_status = is_file(
         remote_file,
