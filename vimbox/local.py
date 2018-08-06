@@ -1,7 +1,7 @@
 import os
 import sys
 import yaml
-from subprocess import call
+import subprocess
 # vimbox modules
 import crypto
 import diogenes
@@ -34,6 +34,22 @@ MERGETOOL = 'vimdiff'
 
 # Bash font styles
 red = diogenes.style(font_color='light red')
+
+
+def source_bashrc():
+
+    if hasattr(sys, 'real_prefix'):
+        bashrc = "%s/bin/activate" % sys.prefix
+    else:
+        bashrc = "%s/.bashrc" % os.environ['HOME']
+
+    subprocess.Popen(
+            "%s %s" % ('source', bashrc),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            shell=True
+    )
+    print("%s %s" % ('source', bashrc))
 
 
 def modify_bashrc(virtualenv):
@@ -198,13 +214,13 @@ def read_file(file_path):
 def mergetool(old_local_file, local_file):
     # Show content conflict with vimdiff
     print(" ".join([MERGETOOL, '%s %s' % (old_local_file, local_file)]))
-    call([MERGETOOL, old_local_file, local_file])
+    subprocess.call([MERGETOOL, old_local_file, local_file])
 
 
 def edittool(local_file):
     # call your editor
     print(" ".join([EDITTOOL, '%s' % local_file]))
-    call([EDITTOOL, '%s' % local_file])
+    subprocess.call([EDITTOOL, '%s' % local_file])
     # TODO: Check for abnormal termination
 
 
