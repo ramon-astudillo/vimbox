@@ -201,11 +201,13 @@ the PATH. It is necessary to manually link this as
 
 * Fix virtualenv not storing the files inside it
 
+
 ### Upcoming v0.2.0
 
-- [ ] Fix `IV456` initialization and syncing across clients
-    - big change as if can screw up encrypted files with earlier 
-    - ask user for manual sync on setup
+- [ ] canary run before doing new changes
+
+- [x] Fix `IV` initialization and syncing across clients
+    - big change as if can screw up encrypted files with earlier
 
 ### v0.1.1
 
