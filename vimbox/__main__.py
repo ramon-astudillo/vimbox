@@ -127,6 +127,8 @@ def main(args=None):
         local.local_install_check()
 
     if args[0] == 'help':
+
+        # help
         if len(args) > 1 and args[1] in COMMAND_ORDER:
             vimbox_help(args[1])
         else:
@@ -206,6 +208,7 @@ def main(args=None):
 
             # Alias for ls
             remote.list_folders(remote_file)
+
         else:
 
             # Edit

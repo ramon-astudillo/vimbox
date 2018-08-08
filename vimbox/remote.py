@@ -36,9 +36,10 @@ def get_user_account(dropbox_client):
         user = None
         error = 'connection-error'
 
-    except ApiError:
+    except ApiError as exception:
 
         # API error
+        print(exception)
         user = None
         error = 'api-error'
 
@@ -113,6 +114,8 @@ def _push(new_local_content, remote_file, config=None, dropbox_client=None,
 
     # If encrypted get encrypted remote-name
     if password is not None:
+        # Validate pasword
+        password = crypto.validate_password(password)
         # Hash filename
         remote_file_hash = crypto.get_path_hash(remote_file)
         # Encript content
@@ -135,8 +138,10 @@ def _push(new_local_content, remote_file, config=None, dropbox_client=None,
         # File non-existing or unreachable
         error = 'connection-error'
 
-    except ApiError:
+    except ApiError as exception:
 
+        # API error
+        print(exception)
         # File non-existing or unreachable
         error = 'api-error'
 
@@ -168,8 +173,9 @@ def is_file(remote_file, dropbox_client=None, config=None):
         # This can be missleading
         status = 'connection-error'
         file_exists = False
-    except ApiError:
+    except ApiError as exception:
         if is_encrypted:
+            print(exception)
             status = 'api-error'
             file_exists = False
             is_encrypted = False
@@ -181,7 +187,8 @@ def is_file(remote_file, dropbox_client=None, config=None):
                 file_exists = True
                 is_encrypted = True
                 status = 'online'
-            except ApiError:
+            except ApiError as exception:
+                print(exception)
                 status = 'api-error'
                 file_exists = False
 
@@ -200,7 +207,6 @@ def pull(remote_file, force_creation, config=None, dropbox_client=None,
         config=config,
         dropbox_client=dropbox_client,
         password=password,
-        is_encrypted=password is not None  # This changes w/ vimbox -x
     )
 
     # Quick exit on decription failure
@@ -217,6 +223,7 @@ def pull(remote_file, force_creation, config=None, dropbox_client=None,
         print('\nYou need to create a file, use -f or -e\n')
         exit(0)
 
+    # Merge
     if remote_content is None:
 
         # No file in remote (we could be creating one or syncing after offline)
@@ -256,14 +263,14 @@ def cat(remote_file, config=None, dropbox_client=None, password=None,
         print(remote_content)
 
 
-def fetch(remote_file, config=None, dropbox_client=None, password=None,
-          is_encrypted=False):
+def fetch(remote_file, config=None, dropbox_client=None, password=None):
     """
     Get local and remote content and coresponding file paths
     """
 
     # Name of the remote file
     assert remote_file[0] == '/', "Dropbox remote paths start with /"
+    assert remote_file[-1] != '/', "Can only fetch files"
 
     # Load config
     if config is None:
@@ -273,8 +280,8 @@ def fetch(remote_file, config=None, dropbox_client=None, password=None,
     if dropbox_client is None:
         dropbox_client = get_client(config)
 
-    # If encrypted get encrypted remote-name
-    if password or is_encrypted:
+    # If encrypted use encrypted remote-name directly. Otherwise try both
+    if password:
         remote_file_hash = crypto.get_path_hash(remote_file)
     else:
         remote_file_hash = remote_file
@@ -294,23 +301,38 @@ def fetch(remote_file, config=None, dropbox_client=None, password=None,
         remote_content = None
         status = 'connection-error'
 
-    except ApiError:
+    except ApiError as exception:
 
-        # File non-existing
-        remote_content = None
-        status = 'online'
-        # print("%s does not exist" % (remote_file))
+        # File does not exist, try encrypted name
+        try:
+            remote_file_hash = crypto.get_path_hash(remote_file)
+            metadata, response = dropbox_client.files_download(
+                remote_file_hash
+            )
+            remote_content = response.content
+            status = 'online'
 
-    if (
-        status == 'online' and
-        remote_content is not None and
-        password is not None
-    ):
-        remote_content, sucess = crypto.decript_content(
-            remote_content, password
-        )
-        if not sucess:
-            status = 'decription-failed'
+            # Fond encrypted content, decrypt
+            if not password:
+                password = getpass.getpass('Input file password: ')
+            password = crypto.validate_password(password)
+            remote_content, sucess = crypto.decript_content(
+                remote_content, password
+            )
+
+            # FIXME: This needs to be taken into consideration
+            # If encryption is used we need to register the file in the cache
+            # if not register_folder:
+            #    print('\nFile encryption only with register_folder = True\n')
+            #    exit()
+
+            if not sucess:
+                status = 'decription-failed'
+
+        except:
+            # File non-existing
+            remote_content = None
+            status = 'online'
 
     return remote_content, status
 
@@ -555,9 +577,9 @@ def remove(remote_file, config=None, dropbox_client=None, force=False,
             local.write_config(local.CONFIG_FILE, config)
 
 
-def edit(remote_file, config=None, dropbox_client=None, remove_local=None,
-         diff_mode=False, force_creation=False, register_folder=True,
-         password=None):
+def edit(remote_file, config=None, dropbox_client=None,
+         remove_local=None, diff_mode=False,
+         force_creation=False, register_folder=True, password=None):
     """
     Edit or create existing file
 
@@ -570,53 +592,24 @@ def edit(remote_file, config=None, dropbox_client=None, remove_local=None,
     password         Optional encryption/decription on client side
     """
 
+    # Checks
+    if remote_file[-1] == '/':
+        print("Can not edit folders")
+        exit()
+
     # Load config if not provided
     if config is None:
         config = local.load_config()
     if remove_local is None:
         remove_local = config['remove_local']
-
     # Get client if not provided
     if dropbox_client is None:
         dropbox_client = get_client(config)
 
-    # Needed variable names
-    local_file = local.get_local_file(remote_file, config)
-
-    # Do basic checks on remote: Does it exist? is it encripted?
-    # TODO: This workflow need to be improved to minimize remote calls and clean
-    # up the underlying logic
-    file_exists, is_encrypted, ping_status = is_file(
-        remote_file,
-        dropbox_client,
-        config
-    )
-
-    # Prompt for password if needed
-    if ping_status == 'online' and is_encrypted and password is None:
-        password = getpass.getpass('Input file password: ')
-
-    # Sanity checks
-    # TODO: This has to be cleaner.
-    remote_folder = "%s/" % os.path.dirname(remote_file)
-    if (
-        register_folder and
-        os.path.isdir(os.path.dirname(local_file)) and
-        remote_folder not in config['cache']
-    ):
-        print("%s exists localy but is not registered" % remote_folder)
-
-    # If this is a registered encrypted file, we will need a password
+    # Trying to create a registered file
     if remote_file in config['path_hashes'].values() and force_creation:
         print('\nCan not re-encrypt a registered file.\n')
         exit()
-
-    if password:
-        # If encryption is used we need to register the file in the cache
-        if not register_folder:
-            print('\nFile encryption only with register_folder = True\n')
-            exit()
-        password = crypto.validate_password(password)
 
     # Fetch remote content, merge if neccesary with local.mergetool
     local_content, remote_content, merged_content, fetch_status = pull(
@@ -627,9 +620,13 @@ def edit(remote_file, config=None, dropbox_client=None, remove_local=None,
         password=password
     )
 
+    # Needed variable names
+    local_file = local.get_local_file(remote_file, config)
+
     # Call editor on merged code if solicited
     # TODO: Programatic edit operations here
     if diff_mode:
+
         if remove_local:
             edited_content = merged_content
         else:
@@ -644,7 +641,7 @@ def edit(remote_file, config=None, dropbox_client=None, remove_local=None,
         edited_content = local.local_edit(local_file, merged_content)
 
     # Abort if file being created but no changes
-    if edited_content is None and ping_status != 'connection-error':
+    if edited_content is None and fetch_status != 'connection-error':
         # For debug purposes
         assert force_creation, \
             "Invalid status: edited local_file non existing but remote does"
@@ -661,7 +658,7 @@ def edit(remote_file, config=None, dropbox_client=None, remove_local=None,
             password=password
         )
 
-    # TODO:Need hardening against offline model and edit colision
+    # TODO: Need hardening against offline model and edit colision
     if edited_content != remote_content:
 
         # Update remote if there are changes
@@ -688,7 +685,7 @@ def edit(remote_file, config=None, dropbox_client=None, remove_local=None,
             # Register file in cache
             if register_folder:
                 # TODO: Right now we only register the folder
-                # NOTE: We try this anyaway because of independen hash
+                # NOTE: We try this anyway because of independen hash
                 # resgistration
                 local.register_file(remote_file, config, password is not None)
 
