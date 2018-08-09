@@ -99,6 +99,11 @@ def argument_handling(args):
 
 
 def vimbox_help(command=None):
+
+    import pkg_resources
+    vimbox_version = pkg_resources.require("vimbox")[0].version
+    print("\nvimbox %s" % vimbox_version)
+
     if command is None:
         print("")
         for command in COMMAND_ORDER:
