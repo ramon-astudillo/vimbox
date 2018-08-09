@@ -66,12 +66,12 @@ def decript_content(text_cipher, password):
     headed_text = obj.decrypt(text_cipher_body)
     # Separate header from body, return also check that decription worked
     try:
-        items = headed_text.decode("utf-7").split('\n')
+        items = headed_text.decode("utf-8").split('\n')
         header = items[0].rstrip()
         text = "\n".join(items[1:])
     except UnicodeDecodeError:
-        items = None 
-        header = None 
+        items = None
+        header = None
         text = headed_text
 
     return text, (
