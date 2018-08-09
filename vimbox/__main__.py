@@ -4,6 +4,7 @@ import getpass
 # vimbox
 from vimbox import remote
 from vimbox import local
+from vimbox import __version__
 
 # Commands and help
 COMMAND_HELP = {
@@ -44,10 +45,7 @@ def install():
 
     # Modify bashrc
     local.modify_bashrc(virtualenv)
-
-    import pkg_resources
-    vimbox_version = pkg_resources.require("vimbox")[0].version
-    print("vimbox %s installed sucessfully\n" % vimbox_version)
+    print("vimbox %s installed sucessfully\n" % __version__)
 
 
 def password_prompt(remote_file, config):
@@ -102,9 +100,7 @@ def argument_handling(args):
 
 def vimbox_help(command=None):
 
-    import pkg_resources
-    vimbox_version = pkg_resources.require("vimbox")[0].version
-    print("\nvimbox %s" % vimbox_version)
+    print("\nvimbox %s" % __version__)
 
     if command is None:
         print("")
