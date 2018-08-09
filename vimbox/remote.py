@@ -117,11 +117,14 @@ def _push(new_local_content, remote_file, config=None, dropbox_client=None,
     # If encrypted get encrypted remote-name
     if password is not None:
         # Validate pasword
-        password = crypto.validate_password(password)
+        validated_password = crypto.validate_password(password)
         # Hash filename
         remote_file_hash = crypto.get_path_hash(remote_file)
         # Encript content
-        new_local_content = crypto.encrypt_content(new_local_content, password)
+        new_local_content = crypto.encrypt_content(
+            new_local_content,
+            validated_password
+        )
     else:
         remote_file_hash = remote_file
 
@@ -208,7 +211,7 @@ def pull(remote_file, force_creation, config=None, dropbox_client=None,
     local_file, local_content = local.get_local_content(remote_file, config)
 
     # Fetch remote content for this file
-    remote_content, fetch_status = fetch(
+    remote_content, fetch_status, password = fetch(
         remote_file,
         config=config,
         dropbox_client=dropbox_client,
@@ -251,13 +254,19 @@ def pull(remote_file, force_creation, config=None, dropbox_client=None,
         # No local content, or local matches remote
         merged_content = remote_content
 
-    return local_content, remote_content, merged_content, fetch_status
+    return (
+        local_content,
+        remote_content,
+        merged_content,
+        fetch_status,
+        password
+    )
 
 
 def cat(remote_file, config=None, dropbox_client=None, password=None,
         is_encrypted=False):
 
-    remote_content, status = fetch(
+    remote_content, status, password = fetch(
         remote_file,
         config=config,
         dropbox_client=dropbox_client,
@@ -321,9 +330,9 @@ def fetch(remote_file, config=None, dropbox_client=None, password=None):
             # Fond encrypted content, decrypt
             if not password:
                 password = getpass.getpass('Input file password: ')
-            password = crypto.validate_password(password)
+            validated_password = crypto.validate_password(password)
             remote_content, sucess = crypto.decript_content(
-                remote_content, password
+                remote_content, validated_password
             )
 
             # FIXME: This needs to be taken into consideration
@@ -334,13 +343,14 @@ def fetch(remote_file, config=None, dropbox_client=None, password=None):
 
             if not sucess:
                 status = 'decription-failed'
+                password = None
 
         except ApiError as exception:
             # File non-existing
             remote_content = None
             status = 'online'
 
-    return remote_content, status
+    return remote_content, status, password
 
 
 def get_folders(dropbox_client, remote_folder):
@@ -618,7 +628,8 @@ def edit(remote_file, config=None, dropbox_client=None,
         exit()
 
     # Fetch remote content, merge if neccesary with local.mergetool
-    local_content, remote_content, merged_content, fetch_status = pull(
+    local_content, remote_content, merged_content, fetch_status, password = \
+    pull(
         remote_file,
         force_creation,
         config=config,
@@ -656,7 +667,8 @@ def edit(remote_file, config=None, dropbox_client=None,
 
     # Pull again if recovered offline status
     if fetch_status == 'connection-error':
-        local_content, remote_content, merged_content, fetch_status = pull(
+        local_content, remote_content, merged_content, fetch_status, password\
+        = pull(
             remote_file,
             force_creation,
             config=config,
