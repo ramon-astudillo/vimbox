@@ -2,8 +2,8 @@ import sys
 import os
 import getpass
 # vimbox
-import remote
-import local
+from vimbox import remote
+from vimbox import local
 
 # Commands and help
 COMMAND_HELP = {

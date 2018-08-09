@@ -12,9 +12,9 @@ import dropbox
 from dropbox.exceptions import ApiError
 from dropbox.files import WriteMode
 #
-import local
-import crypto
-import diogenes
+from vimbox import local
+from vimbox import crypto
+from vimbox import diogenes
 
 
 # Bash font styles

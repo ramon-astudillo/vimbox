@@ -3,8 +3,8 @@ import sys
 import yaml
 import subprocess
 # vimbox modules
-import crypto
-import diogenes
+from vimbox import crypto
+from vimbox import diogenes
 
 # Locate the vimbox config. If we are inside a virtual environment look for it
 # inside
