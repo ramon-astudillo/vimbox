@@ -80,7 +80,7 @@ def modify_bashrc(virtualenv):
 
 def write_config(file_path, config):
     # Ensure str s in the cache
-    config['cache'] = map(str, config['cache'])
+    config['cache'] = list(map(str, config['cache']))
     with open(file_path, 'w') as fid:
         yaml.dump(config, fid, default_flow_style=False)
 
@@ -97,8 +97,7 @@ def edit_config():
 
 def local_install_check():
     if not os.path.isfile(CONFIG_FILE):
-        print("Missing config in %s" % CONFIG_FILE)
-        print("Run vimbox setup")
+        print("\nMissing config in %s\nRun vimbox setup\n" % CONFIG_FILE)
         exit(1)
 
 
@@ -136,7 +135,7 @@ def get_cache():
     # empty directly that having any code running.
     if os.path.isfile(CONFIG_FILE):
         config = read_config(CONFIG_FILE)
-        return config['cache']
+        return list(config['cache'])
     else:
         return []
 

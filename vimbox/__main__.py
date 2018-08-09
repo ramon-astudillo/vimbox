@@ -45,7 +45,9 @@ def install():
     # Modify bashrc
     local.modify_bashrc(virtualenv)
 
-    print("vimbox installed sucessfully")
+    import pkg_resources
+    vimbox_version = pkg_resources.require("vimbox")[0].version
+    print("vimbox %s installed sucessfully\n" % vimbox_version)
 
 
 def password_prompt(remote_file, config):

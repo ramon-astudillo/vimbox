@@ -4,6 +4,7 @@ Contains remote primitives indepenedent of back-end used and back-end switch
 Handles back-end errors in a unified way
 """
 import os
+import sys
 import shutil
 import getpass
 #
@@ -58,13 +59,14 @@ def install_backend():
         # Prompt user for a token
         print(
             "\nI need you to create a dropbox app and give me an acess token."
-            "Go here \n\nhttps://www.dropbox.com/developers/apps/\n\n"
-            "1) Select Dropbox API\n"
+            " Go here \n\nhttps://www.dropbox.com/developers/apps/\n\n"
+            "1) Create App, select Dropbox API\n"
             "2) Select either App folder or Full Dropbox\n"
             "3) Name is irrelevant but vimbox may help you remember\n"
         )
-        dropbox_token = raw_input("Push \"generate acess token\" to get one"
-                                  " and paste it here: ")
+        dropbox_token = input(
+            "Press \"generate acess token\" to get one and paste it here: "
+        )
         dropbox_client = dropbox.Dropbox(dropbox_token)
 
         # Validate token by connecting to dropbox
@@ -122,6 +124,10 @@ def _push(new_local_content, remote_file, config=None, dropbox_client=None,
         new_local_content = crypto.encrypt_content(new_local_content, password)
     else:
         remote_file_hash = remote_file
+
+        # This seems to be needed for the API for Python3
+        if sys.version_info[0] > 2: 
+            new_local_content = str.encode(new_local_content)
 
     try:
 
@@ -292,7 +298,7 @@ def fetch(remote_file, config=None, dropbox_client=None, password=None):
         metadata, response = dropbox_client.files_download(
             remote_file_hash
         )
-        remote_content = response.content
+        remote_content = response.content.decode("utf-8")
         status = 'online'
 
     except ConnectionError:
@@ -329,7 +335,7 @@ def fetch(remote_file, config=None, dropbox_client=None, password=None):
             if not sucess:
                 status = 'decription-failed'
 
-        except:
+        except ApiError as exception:
             # File non-existing
             remote_content = None
             status = 'online'
