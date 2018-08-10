@@ -128,11 +128,11 @@ def _push(new_local_content, remote_file, config=None, dropbox_client=None,
     else:
         remote_file_hash = remote_file
 
-        # This seems to be needed for the API for Python3
-        if sys.version_info[0] > 2:
-            new_local_content = str.encode(new_local_content)
-        else:
-            new_local_content = str.encode(str(new_local_content))
+#        # This seems to be needed for the API for Python3
+#        if sys.version_info[0] > 2:
+#            new_local_content = str.encode(new_local_content)
+#        else:
+#            new_local_content = str.encode(str(new_local_content))
     try:
 
         # Upload file to the server
