@@ -129,9 +129,10 @@ def _push(new_local_content, remote_file, config=None, dropbox_client=None,
         remote_file_hash = remote_file
 
         # This seems to be needed for the API for Python3
-        if sys.version_info[0] > 2: 
+        if sys.version_info[0] > 2:
             new_local_content = str.encode(new_local_content)
-
+        else:
+            new_local_content = str.encode(str(new_local_content))
     try:
 
         # Upload file to the server
@@ -629,13 +630,13 @@ def edit(remote_file, config=None, dropbox_client=None,
 
     # Fetch remote content, merge if neccesary with local.mergetool
     local_content, remote_content, merged_content, fetch_status, password = \
-    pull(
-        remote_file,
-        force_creation,
-        config=config,
-        dropbox_client=dropbox_client,
-        password=password
-    )
+        pull(
+            remote_file,
+            force_creation,
+            config=config,
+            dropbox_client=dropbox_client,
+            password=password
+        )
 
     # Needed variable names
     local_file = local.get_local_file(remote_file, config)
@@ -667,14 +668,14 @@ def edit(remote_file, config=None, dropbox_client=None,
 
     # Pull again if recovered offline status
     if fetch_status == 'connection-error':
-        local_content, remote_content, merged_content, fetch_status, password\
-        = pull(
-            remote_file,
-            force_creation,
-            config=config,
-            dropbox_client=dropbox_client,
-            password=password
-        )
+        local_content, remote_content, merged_content, fetch_status, password =\
+            pull(
+                remote_file,
+                force_creation,
+                config=config,
+                dropbox_client=dropbox_client,
+                password=password
+            )
 
     # TODO: Need hardening against offline model and edit colision
     if edited_content != remote_content:

@@ -1,4 +1,5 @@
 import os
+import codecs
 import sys
 import yaml
 import subprocess
@@ -81,12 +82,12 @@ def modify_bashrc(virtualenv):
 def write_config(file_path, config):
     # Ensure str s in the cache
     config['cache'] = list(map(str, config['cache']))
-    with open(file_path, 'w') as fid:
+    with codecs.open(file_path, 'w', 'utf-8') as fid:
         yaml.dump(config, fid, default_flow_style=False)
 
 
 def read_config(file_path):
-    with open(file_path, 'r') as fid:
+    with codecs.open(file_path, 'r', 'utf-8') as fid:
         config = yaml.load(fid)
     return config
 
@@ -192,7 +193,7 @@ def get_local_content(remote_file, config):
     # Look for local content
     if os.path.isfile(local_file):
         # Read local content
-        with open(local_file, 'r') as fid_local:
+        with codecs.open(local_file, 'r', 'utf-8') as fid_local:
             local_content = fid_local.read()
     else:
         local_content = None
@@ -201,12 +202,12 @@ def get_local_content(remote_file, config):
 
 
 def write_file(file_path, content):
-    with open(file_path, 'w') as fid_local:
+    with codecs.open(file_path, 'w', "utf-8") as fid_local:
         fid_local.write(content)
 
 
 def read_file(file_path):
-    with open(file_path, 'r') as fid_local:
+    with codecs.open(file_path, 'r', "utf-8") as fid_local:
         return fid_local.read()
 
 
