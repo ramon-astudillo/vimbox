@@ -308,7 +308,8 @@ def fetch(remote_file, config=None, dropbox_client=None, password=None):
         metadata, response = dropbox_client.files_download(
             remote_file_hash
         )
-        remote_content = response.content.decode("utf-8")
+        remote_content = response.content
+        #remote_content = response.content.decode("utf-8")
         status = 'online'
 
     except ConnectionError:
