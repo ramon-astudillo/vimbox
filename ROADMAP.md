@@ -50,6 +50,7 @@
 ### v0.3.0
 
 - [x] Python3 compatibility (in beta)
+- Minor fixes
 
 ### v0.2.0
 
