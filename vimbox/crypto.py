@@ -1,4 +1,5 @@
 import os
+import sys
 import re
 from math import ceil
 #
@@ -40,8 +41,12 @@ def validate_password(password):
 def encrypt_content(text, password):
 
     # Generate IV
-    iv = str(os.urandom(16)) # does not work with Python3
-    #iv = os.urandom(16)
+    if sys.version_info[0] > 2:
+        # Python3
+        iv = os.urandom(16)
+    else:
+        # Python2
+        iv = str(os.urandom(16)) 
     obj = AES.new(password, AES.MODE_CBC, iv)
 
     # Create header to be a multiple of 16
@@ -65,25 +70,26 @@ def decript_content(text_cipher, password):
     obj = AES.new(password, AES.MODE_CBC, iv)
     headed_text = obj.decrypt(text_cipher_body)
     # Separate header from body, return also check that decription worked
-#    try:
-#        items = headed_text.decode("utf-8").split('\n')
-#        header = items[0].rstrip()
-#        text = "\n".join(items[1:])
-#    except UnicodeDecodeError:
-#        items = None
-#        header = None
-#        text = headed_text
-
-    items = headed_text.split('\n')
-    header = items[0]
-    text = "\n".join(items[1:])
+    if sys.version_info[0] > 2:
+        # Python3
+        try:
+            items = headed_text.decode("utf-8").split('\n')
+            header = items[0].rstrip()
+            text = "\n".join(items[1:])
+        except UnicodeDecodeError:
+            items = None
+            header = None
+            text = headed_text
+    else:
+        # Python2
+        items = headed_text.split('\n')
+        header = items[0].rstrip()
+        text = "\n".join(items[1:])
 
 
     return text, (
-#        header == HEADER.rstrip() or
-#        header == "# this was encripted"  # Hack pre v0.0.6, autofix
-        header.rstrip() == HEADER.rstrip() or
-        header.rstrip() == "# this was encripted"  # Hack pre v0.0.6, autofix
+        header == HEADER or
+        header == "# this was encripted"  # Hack pre v0.0.6, autofix
     )
 
 
@@ -93,8 +99,12 @@ def get_path_hash(path_str):
     basename = os.path.basename(path_str)
     #
     h = MD5.new()
-    h.update(basename)
-#    h.update(basename.encode("utf-8"))
+    if sys.version_info[0] > 2:
+        # Python3
+        h.update(basename.encode("utf-8"))
+    else:
+        # Python2
+        h.update(basename)
     return "%s/.%s" % (dirname, h.hexdigest())
 
 

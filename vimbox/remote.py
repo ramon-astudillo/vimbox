@@ -127,12 +127,9 @@ def _push(new_local_content, remote_file, config=None, dropbox_client=None,
         )
     else:
         remote_file_hash = remote_file
+        if sys.version_info[0] > 2:
+            new_local_content = str.encode(new_local_content)
 
-#        # This seems to be needed for the API for Python3
-#        if sys.version_info[0] > 2:
-#            new_local_content = str.encode(new_local_content)
-#        else:
-#            new_local_content = str.encode(str(new_local_content))
     try:
 
         # Upload file to the server
@@ -309,8 +306,11 @@ def fetch(remote_file, config=None, dropbox_client=None, password=None):
             remote_file_hash
         )
         remote_content = response.content
-        #remote_content = response.content.decode("utf-8")
         status = 'online'
+
+        if sys.version_info[0] > 2:
+            # Python3    
+            remote_content = remote_content.decode("utf-8")
 
     except ConnectionError:
 
