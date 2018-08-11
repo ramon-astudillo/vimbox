@@ -268,8 +268,7 @@ def cat(remote_file, config=None, dropbox_client=None, password=None,
         remote_file,
         config=config,
         dropbox_client=dropbox_client,
-        password=password,
-        is_encrypted=is_encrypted
+        password=password
     )
 
     if status == 'online':
@@ -309,7 +308,7 @@ def fetch(remote_file, config=None, dropbox_client=None, password=None):
         status = 'online'
 
         if sys.version_info[0] > 2:
-            # Python3    
+            # Python3
             remote_content = remote_content.decode("utf-8")
 
     except ConnectionError:
