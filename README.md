@@ -17,9 +17,9 @@ than with their client, namely
 
 * `virtualenv` friendly: stores config and file cache inside `virtualenv` folder.
 
-* Comes with the expected `vimbox ls` (`rm` `cp` `mv`)
+* Comes with the expected `vimbox ls` (`rm` `cp` `mv`, `cat`)
 
-* Importable methods to use in other modules `from vimbox import edit, move`.
+* Importable methods to use in other modules `from vimbox.remote import edit, move`.
 
 * Code is thought to replace `vim` and `vimdiff` by other editors
 

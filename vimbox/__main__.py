@@ -150,7 +150,7 @@ def main(args=None):
 
     elif args[0] == 'cache':
 
-        # Folders chached in this computer (latter minus commans e.g. ls)
+        # Folders cached in this computer (latter minus commans e.g. ls)
         for cached_file in sorted(local.get_cache()):
             print(cached_file)
 
