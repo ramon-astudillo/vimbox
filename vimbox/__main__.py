@@ -2,7 +2,7 @@ import sys
 import os
 import getpass
 # vimbox
-from vimbox import remote
+from vimbox.remote import primitives
 from vimbox import local
 from vimbox import __version__
 
@@ -41,7 +41,7 @@ def install():
         print("Created %s" % local.ROOT_FOLDER)
 
     # Configure back-end
-    remote.install_backend()
+    primitives.install_backend()
 
     # Modify bashrc
     local.modify_bashrc(virtualenv)
@@ -163,9 +163,9 @@ def main(args=None):
 
         # List contents of folder
         if len(args) == 1:
-            remote.list_folders('')
+            primitives.list_folders('')
         elif len(args) == 2:
-            remote.list_folders(args[1])
+            primitives.list_folders(args[1])
         else:
             vimbox_help()
 
@@ -173,7 +173,7 @@ def main(args=None):
 
         # Copy file to file or folder
         if len(args) == 3:
-            remote.copy(args[1], args[2])
+            primitives.copy(args[1], args[2])
         else:
             vimbox_help()
 
@@ -181,15 +181,15 @@ def main(args=None):
 
         # Copy file to file or folder
         for arg in args[1:]:
-            remote.cat(arg)
+            primitives.cat(arg)
 
     elif args[0] == 'rm':
 
         # Remove file or folder
         if len(args) == 2:
-            remote.remove(args[1], force=False)
+            primitives.remove(args[1], force=False)
         elif len(args) == 3 and args[1] == '-R':
-            remote.remove(args[2], force=True)
+            primitives.remove(args[2], force=True)
         else:
             vimbox_help()
 
@@ -197,8 +197,8 @@ def main(args=None):
 
         # Move file to file or folder
         if len(args) == 3:
-            remote.copy(args[1], args[2])
-            remote.remove(args[1], force=True)
+            primitives.copy(args[1], args[2])
+            primitives.remove(args[1], force=True)
         else:
             vimbox_help()
 
@@ -210,7 +210,7 @@ def main(args=None):
         if remote_file[-1] == '/':
 
             # Alias for ls
-            remote.list_folders(remote_file)
+            primitives.list_folders(remote_file)
 
         else:
 
@@ -226,7 +226,7 @@ def main(args=None):
                 password = None
 
             # Call function
-            remote.edit(
+            primitives.edit(
                 remote_file,
                 force_creation=force_creation,
                 password=password,
