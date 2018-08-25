@@ -162,43 +162,48 @@ def main(args=None):
     elif args[0] == 'ls':
 
         # List contents of folder
+        client = primitives.VimboxClient('dropbox')
         if len(args) == 1:
-            primitives.list_folders('')
+            client.list_folders('')
         elif len(args) == 2:
-            primitives.list_folders(args[1])
+            client.list_folders(args[1])
         else:
             vimbox_help()
 
     elif args[0] == 'cp':
 
         # Copy file to file or folder
+        client = primitives.VimboxClient('dropbox')
         if len(args) == 3:
-            primitives.copy(args[1], args[2])
+            client.copy(args[1], args[2])
         else:
             vimbox_help()
 
     elif args[0] == 'cat':
 
         # Copy file to file or folder
+        client = primitives.VimboxClient('dropbox')
         for arg in args[1:]:
-            primitives.cat(arg)
+            client.cat(arg)
 
     elif args[0] == 'rm':
 
         # Remove file or folder
+        client = primitives.VimboxClient('dropbox')
         if len(args) == 2:
-            primitives.remove(args[1], force=False)
+            client.remove(args[1], force=False)
         elif len(args) == 3 and args[1] == '-R':
-            primitives.remove(args[2], force=True)
+            client.remove(args[2], force=True)
         else:
             vimbox_help()
 
     elif args[0] == 'mv':
 
         # Move file to file or folder
+        client = primitives.VimboxClient('dropbox')
         if len(args) == 3:
-            primitives.copy(args[1], args[2])
-            primitives.remove(args[1], force=True)
+            client.copy(args[1], args[2])
+            client.remove(args[1], force=True)
         else:
             vimbox_help()
 
@@ -210,27 +215,27 @@ def main(args=None):
         if remote_file[-1] == '/':
 
             # Alias for ls
-            primitives.list_folders(remote_file)
+            client = primitives.VimboxClient('dropbox')
+            client.list_folders(remote_file)
 
         else:
 
             # Edit
 
             # Get config
-            config = local.load_config()
+            client = primitives.VimboxClient('dropbox')
 
             # Create new encrypted file or register existing one
             if encrypt:
-                password = password_prompt(remote_file, config)
+                password = password_prompt(remote_file, client.config)
             else:
                 password = None
 
             # Call function
-            primitives.edit(
+            client.edit(
                 remote_file,
                 force_creation=force_creation,
                 password=password,
-                config=config
             )
 
 if __name__ == "__main__":
