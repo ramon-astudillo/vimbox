@@ -22,8 +22,8 @@ COMMAND_HELP = {
     'cat': ('cat /path/to/file /path2/file', 'concatenate file outputs')
 }
 COMMAND_ORDER = [
-    'setup', '-f', '-e', '', 'cache', 'config', 'ls', 'rm', 'rm -R', 'cp', 'mv',
-    'cat'
+    'setup', '-f', '-e', '', 'cache', 'config', 'ls', 'rm', 'rm -R', 'cp',
+    'mv', 'cat'
 ]
 
 
@@ -71,6 +71,8 @@ def argument_handling(args):
     remote_file = None
     force_creation = False
     encrypt = False
+    intial_text = None
+
     for option in args:
         if option == '-f':
             # Create new file
@@ -80,8 +82,13 @@ def argument_handling(args):
             force_creation = True
             encrypt = True
         elif option[0] == '/':
+            assert not remote_file, "Only one file path can be edited at a time"
             # Dropbox path
             remote_file = option
+        elif force_creation and remote_file:
+            # If there is an extra argument not matching the previous and we are
+            # in creation mode, admit this is as initial text
+            initial_text = option
         else:
             vimbox_help()
 
@@ -95,7 +102,7 @@ def argument_handling(args):
         print('\nOnly files can be encrypted\n')
         exit()
 
-    return remote_file, force_creation, encrypt
+    return remote_file, force_creation, encrypt, initial_text
 
 
 def vimbox_help(command=None):
@@ -117,9 +124,18 @@ def main(args=None):
     This is refered as vimbox in setup.py
     """
 
-    # From command line
     if args is None:
+        # From command line
         args = sys.argv[1:]
+        backend = 'dropbox'
+    else:
+        # As function
+        # Allow specifying the mockup backend for unit testing
+        if '--mockup' in args:
+            backend = 'fake'
+            args.remove('--mockup')
+        else:
+            backend = 'dropbox'
 
     if len(args) == 0:
         vimbox_help()
@@ -162,7 +178,7 @@ def main(args=None):
     elif args[0] == 'ls':
 
         # List contents of folder
-        client = primitives.VimboxClient('dropbox')
+        client = primitives.VimboxClient(backend)
         if len(args) == 1:
             client.list_folders('')
         elif len(args) == 2:
@@ -173,7 +189,7 @@ def main(args=None):
     elif args[0] == 'cp':
 
         # Copy file to file or folder
-        client = primitives.VimboxClient('dropbox')
+        client = primitives.VimboxClient(backend)
         if len(args) == 3:
             client.copy(args[1], args[2])
         else:
@@ -182,14 +198,14 @@ def main(args=None):
     elif args[0] == 'cat':
 
         # Copy file to file or folder
-        client = primitives.VimboxClient('dropbox')
+        client = primitives.VimboxClient(backend)
         for arg in args[1:]:
             client.cat(arg)
 
     elif args[0] == 'rm':
 
         # Remove file or folder
-        client = primitives.VimboxClient('dropbox')
+        client = primitives.VimboxClient(backend)
         if len(args) == 2:
             client.remove(args[1], force=False)
         elif len(args) == 3 and args[1] == '-R':
@@ -200,7 +216,7 @@ def main(args=None):
     elif args[0] == 'mv':
 
         # Move file to file or folder
-        client = primitives.VimboxClient('dropbox')
+        client = primitives.VimboxClient(backend)
         if len(args) == 3:
             client.copy(args[1], args[2])
             client.remove(args[1], force=True)
@@ -210,12 +226,13 @@ def main(args=None):
     else:
 
         # Get flags from arguments
-        remote_file, force_creation, encrypt = argument_handling(args)
+        remote_file, force_creation, encrypt, initial_text = \
+            argument_handling(args)
 
         if remote_file[-1] == '/':
 
             # Alias for ls
-            client = primitives.VimboxClient('dropbox')
+            client = primitives.VimboxClient(backend)
             client.list_folders(remote_file)
 
         else:
@@ -223,7 +240,7 @@ def main(args=None):
             # Edit
 
             # Get config
-            client = primitives.VimboxClient('dropbox')
+            client = primitives.VimboxClient(backend)
 
             # Create new encrypted file or register existing one
             if encrypt:
@@ -236,6 +253,7 @@ def main(args=None):
                 remote_file,
                 force_creation=force_creation,
                 password=password,
+                initial_text=initial_text
             )
 
 if __name__ == "__main__":

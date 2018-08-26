@@ -5,10 +5,8 @@ Handles back-end errors in a unified way
 """
 import os
 import sys
-import shutil
+# import shutil
 import getpass
-#
-from requests.exceptions import ConnectionError
 #
 from vimbox import local
 from vimbox import crypto
@@ -38,15 +36,19 @@ class VimboxClient():
                 install_backend,
                 StorageBackEnd
             )
-            # Install if not prsent
+            # Install if necessary
             if self.config.get('DROPBOX_TOKEN', None) is None:
                 install_backend(local.CONFIG_FILE, local.DEFAULT_CONFIG)
             self.client = StorageBackEnd(self.config['DROPBOX_TOKEN'])
 
         elif backend_name == 'fake':
-
-            # TODO: Fake backend for unit testing
-            raise NotImplementedError()
+            from vimbox.remote.fake import (
+                install_backend,
+                StorageBackEnd
+            )
+            if self.config is None:
+                install_backend(local.CONFIG_FILE, local.DEFAULT_CONFIG)
+            self.client = StorageBackEnd()
 
         else:
             raise Exception("Unknown backend %s" % backend_name)
@@ -116,7 +118,7 @@ class VimboxClient():
                 # If encryption is used we need to register the file in the
                 # cache
                 # if not register_folder:
-                #    print('\nFile encryption only with register_folder = True\n')
+                #    print('\nFile encryption only with register_folder \n')
                 #    EXIT()
 
                 if not sucess:
@@ -335,7 +337,7 @@ class VimboxClient():
                 exit(1)
 
         # Disallow deleting of folders.
-        # TODO: Handle hashing in encrypter files here
+        # TODO: Handle hashing in encrypted files here
         if not force and not self.is_file(remote_file)[0]:
             result, error = self.client.list_folders(remote_file)
             if error:
@@ -384,7 +386,8 @@ class VimboxClient():
                 local.write_config(local.CONFIG_FILE, self.config)
 
     def edit(self, remote_file, remove_local=None, diff_mode=False,
-             force_creation=False, register_folder=True, password=None):
+             force_creation=False, register_folder=True, password=None,
+             initial_text=None):
         """
         Edit or create existing file
 
@@ -425,13 +428,19 @@ class VimboxClient():
         if force_creation and content['remote']:
             print("\nFile exists, can not be created\n")
             exit(1)
+        elif force_creation and content['local'] and content['remote'] is None:
+            print("\nRecovered local version from %s\n" % remote_file)
 
         # Needed variable names
         local_file = self.get_local_file(remote_file)
 
         # Call editor on merged code if solicited
         # TODO: Programatic edit operations here
-        if diff_mode:
+        if initial_text:
+            assert not content['remote'], "Can not overwrite remote"
+            content['edited'] = initial_text
+
+        elif diff_mode:
 
             if remove_local:
                 content['edited'] = content['merged']
@@ -565,7 +574,6 @@ class VimboxClient():
             is_encripted = False
 
         return is_file, is_encripted, status
-
 
     # LOCAL METHODS
 
