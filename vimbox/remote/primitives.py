@@ -25,13 +25,16 @@ def get_path_components(path):
 
 class VimboxClient():
 
-    def __init__(self, backend_name):
+    def __init__(self, config=None):
 
         # Load local config if not provided
-        self.config = local.load_config()
+        if not config:
+            self.config = local.load_config()
+        else:
+            self.config = config
 
         # Get reference to remote client
-        if backend_name == 'dropbox':
+        if self.config['backend_name'] == 'dropbox':
             from vimbox.remote.dropbox_api import (
                 install_backend,
                 StorageBackEnd
@@ -41,7 +44,7 @@ class VimboxClient():
                 install_backend(local.CONFIG_FILE, local.DEFAULT_CONFIG)
             self.client = StorageBackEnd(self.config['DROPBOX_TOKEN'])
 
-        elif backend_name == 'fake':
+        elif self.config['backend_name'] == 'fake':
             from vimbox.remote.fake import (
                 install_backend,
                 StorageBackEnd
@@ -51,7 +54,9 @@ class VimboxClient():
             self.client = StorageBackEnd()
 
         else:
-            raise Exception("Unknown backend %s" % backend_name)
+            raise Exception(
+                "Unknown backend %s" % self.config['backend_name']
+            )
 
     # REMOTE METHODS
 
@@ -79,10 +84,16 @@ class VimboxClient():
                 # Encoding for Python3
                 new_local_content = str.encode(new_local_content)
         # Overwrite remote
-        self.client.files_upload(
+        error = self.client.files_upload(
             new_local_content,
             remote_file_hash,
         )
+
+        # On sucess add folder to cache
+        remote_folder = os.path.dirname(remote_file)
+        if error is None and remote_folder not in self.config['cache']:
+            self.config['cache'].append(remote_folder)
+            local.write_config(local.CONFIG_FILE, self.config)
 
     def fetch(self, remote_file, password=None):
         """
@@ -325,7 +336,7 @@ class VimboxClient():
                 )
             )
 
-    def remove(self, remote_file, force=False, password=None):
+    def remove(self, remote_file, recursive=False, password=None):
 
         # Disallow deleting of encrypted files that have unknown name. Also
         # consider the unfrequent file is registered but user uses hash name
@@ -336,9 +347,13 @@ class VimboxClient():
                 print("Can not delete uncached encrypted files")
                 exit(1)
 
+        if recursive and remote_file[-1] != '/':
+            print("rm -R only make sense with folders (missing /)")
+            exit(1)
+
         # Disallow deleting of folders.
         # TODO: Handle hashing in encrypted files here
-        if not force and not self.is_file(remote_file)[0]:
+        if not recursive and not self.is_file(remote_file)[0]:
             result, error = self.client.list_folders(remote_file)
             if error:
                 print("Could not find %s" % remote_file)
@@ -438,12 +453,16 @@ class VimboxClient():
         # TODO: Programatic edit operations here
         if initial_text:
             assert not content['remote'], "Can not overwrite remote"
+            assert not content['local'], "Local content exists"
             content['edited'] = initial_text
+            # Write to local file as well
+            local.write_file(local_file, content['edited'])
 
         elif diff_mode:
 
             if remove_local:
                 content['edited'] = content['merged']
+
             else:
                 # Dummy no edit, but still makes local copy
                 content['edited'] = local.local_edit(

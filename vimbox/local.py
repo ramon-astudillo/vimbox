@@ -27,7 +27,9 @@ DEFAULT_CONFIG = {
     # This will store dict() s of hash: file_path for encripted files
     'path_hashes': {},
     # By default remove all synced files
-    'remove_local': False
+    'remove_local': False,
+    # Backend (right now dropbox or fake)
+    'backend_name': 'dropbox'
 }
 EDITTOOL = 'vim'
 MERGETOOL = 'vimdiff'
@@ -81,7 +83,7 @@ def modify_bashrc(virtualenv):
 
 def write_config(file_path, config):
     # Ensure str s in the cache
-    config['cache'] = list(map(str, config['cache']))
+    config['cache'] = list(set(map(str, config['cache'])))
     #with codecs.open(file_path, 'w', 'utf-8') as fid:
     with open(file_path, 'w') as fid:
         yaml.dump(config, fid, default_flow_style=False)
