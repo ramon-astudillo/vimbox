@@ -121,7 +121,7 @@ def vimbox_help(command=None):
     exit()
 
 
-def main(args=None, config=None):
+def main(args=None, config=None, password=None):
     """
     This is refered as vimbox in setup.py
     """
@@ -239,10 +239,8 @@ def main(args=None, config=None):
             client = primitives.VimboxClient(config=config)
 
             # Create new encrypted file or register existing one
-            if encrypt:
+            if encrypt and password is None:
                 password = password_prompt(remote_file, client.config)
-            else:
-                password = None
 
             # Call function
             client.edit(

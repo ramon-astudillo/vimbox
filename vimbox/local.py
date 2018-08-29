@@ -1,5 +1,4 @@
 import os
-#import codecs
 import sys
 import yaml
 import subprocess
@@ -83,14 +82,12 @@ def modify_bashrc(virtualenv):
 
 def write_config(file_path, config):
     # Ensure str s in the cache
-    config['cache'] = list(set(map(str, config['cache'])))
-    #with codecs.open(file_path, 'w', 'utf-8') as fid:
+    config['cache'] = sorted(set(map(str, config['cache'])))
     with open(file_path, 'w') as fid:
         yaml.dump(config, fid, default_flow_style=False)
 
 
 def read_config(file_path):
-    #with codecs.open(file_path, 'r', 'utf-8') as fid:
     with open(file_path, 'r') as fid:
         config = yaml.load(fid)
     return config
@@ -163,19 +160,43 @@ def register_file(remote_file, config, is_encripted):
         is_registered = True
 
     # Register file
-    # TODO: Should be after sucesful vim edition
+    rewrite_config = False
     if not is_registered:
         config['cache'].append(remote_folder)
-        write_config(CONFIG_FILE, config)
-        print("Added %s" % remote_folder)
-        # Update autocomplete options
+        rewrite_config = True
+        print("Added to cache %s" % remote_folder)
 
     # Register file hash in the local cache
     if is_encripted:
         remote_file_hash = crypto.get_path_hash(remote_file)
         if remote_file_hash not in config['path_hashes']:
             config['path_hashes'][remote_file_hash] = remote_file
-            write_config(CONFIG_FILE, config)
+            rewrite_config = True
+            print("Added to hash list %s" % remote_file)
+
+    if rewrite_config:
+        write_config(CONFIG_FILE, config)
+
+
+def unregister_file(remote_file, config):
+
+    # Unregister if it is a folder
+    rewrite_config = False
+    if remote_file[-1] == '/' and remote_file in config['cache']:
+        config['cache'].remove(remote_file)
+        rewrite_config = True
+        print("Removed from cache %s" % remote_file)
+
+    # Unregister file hash
+    if remote_file in config['path_hashes'].keys():
+        print(
+        "Removed from hash list %s" % config['path_hashes'][remote_file]
+        )
+        del config['path_hashes'][remote_file]
+        rewrite_config = True
+
+    if rewrite_config:
+        write_config(CONFIG_FILE, config)
 
 
 def get_local_file(remote_file, config=None):
@@ -197,7 +218,6 @@ def get_local_content(remote_file, config):
     # Look for local content
     if os.path.isfile(local_file):
         # Read local content
-        #with codecs.open(local_file, 'r', 'utf-8') as fid_local:
         with open(local_file, 'r') as fid_local:
             local_content = fid_local.read()
     else:
@@ -207,13 +227,11 @@ def get_local_content(remote_file, config):
 
 
 def write_file(file_path, content):
-    #with codecs.open(file_path, 'w', "utf-8") as fid_local:
     with open(file_path, 'w') as fid_local:
         fid_local.write(content)
 
 
 def read_file(file_path):
-    #with codecs.open(file_path, 'r', "utf-8") as fid_local:
     with open(file_path, 'r') as fid_local:
         return fid_local.read()
 

@@ -6,3 +6,4 @@
 DATA/
 vimbox.egg-info/
 .vim
+venv/

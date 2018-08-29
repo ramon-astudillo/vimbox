@@ -89,12 +89,6 @@ class VimboxClient():
             remote_file_hash,
         )
 
-        # On sucess add folder to cache
-        remote_folder = os.path.dirname(remote_file)
-        if error is None and remote_folder not in self.config['cache']:
-            self.config['cache'].append(remote_folder)
-            local.write_config(local.CONFIG_FILE, self.config)
-
     def fetch(self, remote_file, password=None):
         """
         Get local and remote content and coresponding file paths
@@ -390,15 +384,19 @@ class VimboxClient():
             elif os.path.isdir(local_file):
                 #shutil.rmtree(local_file)
                 os.rmdir(local_file)
-            # Unregister if it is a folder
-            if remote_file[-1] == '/' and remote_file in self.config['cache']:
-                self.config['cache'].remove(remote_file)
-                local.write_config(local.CONFIG_FILE, self.config)
 
-            # If encrypted remove from path_hashes
-            if remote_file in self.config['path_hashes']:
-                del self.config['path_hashes'][remote_file]
-                local.write_config(local.CONFIG_FILE, self.config)
+            # TODO: Use unregister file
+            self.unregister_file(remote_file)
+
+#            # Unregister if it is a folder
+#            if remote_file[-1] == '/' and remote_file in self.config['cache']:
+#                self.config['cache'].remove(remote_file)
+#                local.write_config(local.CONFIG_FILE, self.config)
+#
+#            # If encrypted remove from path_hashes
+#            if remote_file in self.config['path_hashes']:
+#                del self.config['path_hashes'][remote_file]
+#                local.write_config(local.CONFIG_FILE, self.config)
 
     def edit(self, remote_file, remove_local=None, diff_mode=False,
              force_creation=False, register_folder=True, password=None,
@@ -576,15 +574,14 @@ class VimboxClient():
             # Register file in cache
             if register_folder:
                 # TODO: Right now we only register the folder
-                # NOTE: We try this anyaway because of independen hash
+                # NOTE: We try this anyway because of independen hash
                 # resgistration
                 self.register_file(remote_file, password is not None)
 
     def is_file(self, remote_file):
 
         is_file, status = self.client.is_file(remote_file)
-
-        if status == 'api-error':
+        if not is_file and status == 'online':
             # I file not found, try hashed version
             remote_file = crypto.get_path_hash(remote_file)
             is_file, status = self.client.is_file(remote_file)
@@ -601,6 +598,9 @@ class VimboxClient():
 
     def register_file(self, remote_file, is_encripted):
         return local.register_file(remote_file, self.config, is_encripted)
+
+    def unregister_file(self, remote_file):
+        return local.unregister_file(remote_file, self.config)
 
     def get_local_content(self, remote_file):
         return local.get_local_content(remote_file, self.config)

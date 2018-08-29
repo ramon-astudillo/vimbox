@@ -33,7 +33,8 @@ class StorageBackEnd():
         fake_remote_file = "%s/%s" % (
             self.fake_remote_folder, remote_file
         )
-        with codecs.open(fake_remote_file, 'w', 'utf-8') as fid:
+        #with codecs.open(fake_remote_file, 'w', 'utf-8') as fid:
+        with open(fake_remote_file, 'w') as fid:
             fid.write(remote_content)
 
     def _remote_read(self, remote_file):
@@ -41,7 +42,8 @@ class StorageBackEnd():
         fake_remote_file = "%s/%s" % (
             self.fake_remote_folder, remote_file
         )
-        with codecs.open(fake_remote_file, 'r', 'utf-8') as fid:
+        #with codecs.open(fake_remote_file, 'r', 'utf-8') as fid:
+        with open(fake_remote_file, 'r') as fid:
             remote_content = fid.read()
         return remote_content
 
