@@ -44,14 +44,18 @@ class VimboxClient():
                 install_backend(local.CONFIG_FILE, local.DEFAULT_CONFIG)
             self.client = StorageBackEnd(self.config['DROPBOX_TOKEN'])
 
-        elif self.config['backend_name'] == 'fake':
+        elif self.config['backend_name'] in ['fake', 'fake-offline']:
             from vimbox.remote.fake import (
                 install_backend,
                 StorageBackEnd
             )
             if self.config is None:
                 install_backend(local.CONFIG_FILE, local.DEFAULT_CONFIG)
-            self.client = StorageBackEnd()
+            if self.config['backend_name'] == 'fake-offline':
+                online = False 
+            else:
+                online = True
+            self.client = StorageBackEnd(online=online)
 
         else:
             raise Exception(

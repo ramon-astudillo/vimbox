@@ -13,20 +13,26 @@ def install_backend(self, config_file, config):
 
 class StorageBackEnd():
 
-    def __init__(self):
+    def __init__(self, online=True):
         self.fake_remote_folder = os.path.realpath(
             "/%s/../../tests/.fake_remote/" % os.path.dirname(__file__)
         )
         # Create storage folder if it does not exit
         if not os.path.isdir(self.fake_remote_folder):
             os.makedirs(self.fake_remote_folder)
+        self.online = online   
 
     def get_user_account(self):
         """Provide info on users current account"""
-        user = 'fake user'
-        # errors = [None, 'connection-error', 'api-error']
-        error = None
-        return user, None
+        if self.online:
+            user = 'fake user'
+            # errors = [None, 'connection-error', 'api-error']
+            error = None
+        else:
+            user = None
+            # errors = [None, 'connection-error', 'api-error']
+            error = 'connection-error'
+        return user, error 
 
     def _remote_write(self, remote_file, remote_content):
         # Store content
@@ -50,53 +56,75 @@ class StorageBackEnd():
     def files_upload(self, new_local_content, remote_file_hash):
         """Overwrites file in the remote"""
         # errors = [None, 'connection-error', 'api-error']
-        # Make folder if it does not exist
-        dirname = "%s/%s" % (
-            self.fake_remote_folder,
-            os.path.dirname(remote_file_hash)
-        )
-        if not os.path.isdir(dirname):
-            os.makedirs(dirname)
-        self._remote_write(remote_file_hash, new_local_content)
-        error = None
+        if self.online:
+            # Make folder if it does not exist
+            dirname = "%s/%s" % (
+                self.fake_remote_folder,
+                os.path.dirname(remote_file_hash)
+            )
+            if not os.path.isdir(dirname):
+                os.makedirs(dirname)
+            self._remote_write(remote_file_hash, new_local_content)
+            error = None
+        else:
+            error = 'connection-error'
         return error
 
     def files_copy(self, remote_source, remote_target):
-        remote_content = self._remote_read(remote_source)
-        self._remote_write(remote_target, remote_content)
+        if self.online:
+            remote_content = self._remote_read(remote_source)
+            self._remote_write(remote_target, remote_content)
+            error = None
+        else:
+            error = 'connection-error'
 
     def files_delete(self, remote_source):
-        fake_remote_source = "%s/%s" % (
-            self.fake_remote_folder, remote_source
-        )
-        if os.path.isfile(fake_remote_source):
-            os.remove(fake_remote_source)
-        elif os.path.isdir(fake_remote_source):
-            os.rmdir(fake_remote_source)
-        return True
+        if self.online:
+            fake_remote_source = "%s/%s" % (
+                self.fake_remote_folder, remote_source
+            )
+            if os.path.isfile(fake_remote_source):
+                os.remove(fake_remote_source)
+            elif os.path.isdir(fake_remote_source):
+                os.rmdir(fake_remote_source)
+            error = True
+        else:
+            error = 'connection-error'
+        return error
 
     def is_file(self, remote_source):
         """ Returns true if remote_file is a file """
-        # stata = ['online', 'connection-error', 'api-error']
-        is_file = os.path.isfile("%s/%s" % (
-            self.fake_remote_folder,
-            remote_source
-        ))
-        return is_file, 'online'
+        if self.online:
+            # stata = ['online', 'connection-error', 'api-error']
+            is_file = os.path.isfile("%s/%s" % (
+                self.fake_remote_folder,
+                remote_source
+            ))
+            status = 'online'
+        else:
+            status = 'connection-error'
+        return is_file, status
 
     def file_download(self, remote_source):
         # stata = ['online', 'connection-error']
-        fake_remote_source = "%s/%s" % (
-            self.fake_remote_folder, remote_source
-        )
-        if os.path.isfile(fake_remote_source):
-            remote_content = self._remote_read(remote_source)
-            status = 'online'
+        if self.online:
+            fake_remote_source = "%s/%s" % (
+                self.fake_remote_folder, remote_source
+            )
+            if os.path.isfile(fake_remote_source):
+                remote_content = self._remote_read(remote_source)
+                status = 'online'
+            else:
+                remote_content = None
+                status = 'online'
         else:
             remote_content = None
-            status = 'online'
+            status = 'connection-error'
         return remote_content, status
 
     def list_folders(self, remote_folder):
         # errors = [None, 'connection-error', 'api-error']
-        return os.listdir(remote_folder), None
+        if self.online:
+            return os.listdir(remote_folder), None
+        else:
+            return 'connection-error', None

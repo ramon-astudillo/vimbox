@@ -37,26 +37,11 @@ def read_remote_content(remote_file):
     return text
 
 
-def reset_environment(original_config=None):
-    """
-    - Remove folder simulating storage in remote
-    - Remove folder in the local vimbox cache (THIS IS THE ACTUAL CACHE)
-    - keep original config to restore it later
-    """
-    fake_remote_storage = get_remote_path(UNIT_TEST_FOLDER)
-    local_storage = get_local_file(UNIT_TEST_FOLDER)
-    if os.path.isdir(fake_remote_storage):
-        shutil.rmtree(fake_remote_storage)
-    if os.path.isdir(local_storage):
-        shutil.rmtree(local_storage)
-    if original_config:
-        print("Restored config before tests")
-        write_config(CONFIG_FILE, original_config)
-    else:
-        return load_config()
-
-
 def test_main(config):
+
+    # Get initial config, set backend to fake
+    # FIXME: If this dies it will leave the backend set to fake
+    config['backend_name'] = 'fake'
 
     TMP_FILE = '%splain' % UNIT_TEST_FOLDER
     TMP_CONTENT = 'This is some text'
@@ -65,10 +50,6 @@ def test_main(config):
     # Files in this computer
     local_file = get_local_file(TMP_FILE, config=config)
     remote_file = get_remote_path(TMP_FILE)
-
-    # Get initial config, set backend to fake
-    # FIXME: If this dies it will leave the backend set to fake
-    config['backend_name'] = 'fake'
 
     # NORMAL FILE
     read_config = load_config()
@@ -165,6 +146,24 @@ def test_main(config):
 
     # TODO: Move encrypted files.
 
+
+def reset_environment(original_config=None):
+    """
+    - Remove folder simulating storage in remote
+    - Remove folder in the local vimbox cache (THIS IS THE ACTUAL CACHE)
+    - keep original config to restore it later
+    """
+    fake_remote_storage = get_remote_path(UNIT_TEST_FOLDER)
+    local_storage = get_local_file(UNIT_TEST_FOLDER)
+    if os.path.isdir(fake_remote_storage):
+        shutil.rmtree(fake_remote_storage)
+    if os.path.isdir(local_storage):
+        shutil.rmtree(local_storage)
+    if original_config:
+        print("Restored config before tests")
+        write_config(CONFIG_FILE, original_config)
+    else:
+        return load_config()
 
 
 if __name__ == '__main__':
