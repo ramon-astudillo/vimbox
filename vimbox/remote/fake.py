@@ -77,6 +77,7 @@ class StorageBackEnd():
             error = None
         else:
             error = 'connection-error'
+        return error
 
     def files_delete(self, remote_source):
         if self.online:
@@ -102,6 +103,7 @@ class StorageBackEnd():
             ))
             status = 'online'
         else:
+            is_file = False
             status = 'connection-error'
         return is_file, status
 
@@ -127,4 +129,4 @@ class StorageBackEnd():
         if self.online:
             return os.listdir(remote_folder), None
         else:
-            return 'connection-error', None
+            return None, 'connection-error'
