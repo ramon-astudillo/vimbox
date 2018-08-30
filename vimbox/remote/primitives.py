@@ -324,8 +324,8 @@ class VimboxClient():
             remote_source = remote_source[:-1]
         if remote_target[-1] == '/':
             remote_target = remote_target[:-1]
-        sucess = self.client.files_copy(remote_source, remote_target)
-        if sucess:
+        status = self.client.files_copy(remote_source, remote_target)
+        if status != 'connection-error':
             print(
                 "%12s %s %s" % (
                     yellow("copied"),
@@ -333,6 +333,8 @@ class VimboxClient():
                     remote_target
                 )
             )
+        else:
+            print("%12s did not copy!" % red("offline"))
 
     def remove(self, remote_file, recursive=False, password=None):
 
@@ -351,12 +353,8 @@ class VimboxClient():
 
         # Disallow deleting of folders.
         # TODO: Handle hashing in encrypted files here
-        if not recursive and not self.is_file(remote_file)[0]:
-            result, error = self.client.list_folders(remote_file)
-            if error:
-                print("Could not find %s" % remote_file)
-                exit(1)
-
+        is_file, _, status = self.is_file(remote_file)
+        if not recursive and not is_file and status != 'connection-error':
             if result.entries != []:
                 print("Can only delete empty folders")
                 exit(1)
@@ -374,11 +372,11 @@ class VimboxClient():
             # Remove backslash
             # TODO: This is input sanity check should go in the client
             # dependent part
-            sucess = self.client.files_delete(remote_file[:-1])
+            status = self.client.files_delete(remote_file[:-1])
         else:
-            sucess = self.client.files_delete(remote_file)
+            status = self.client.files_delete(remote_file)
 
-        if sucess:
+        if status != 'connection-error':
             print("%12s %s" % (yellow("removed"), original_name))
 
             # Remove local copy
@@ -391,16 +389,8 @@ class VimboxClient():
 
             # TODO: Use unregister file
             self.unregister_file(remote_file)
-
-#            # Unregister if it is a folder
-#            if remote_file[-1] == '/' and remote_file in self.config['cache']:
-#                self.config['cache'].remove(remote_file)
-#                local.write_config(local.CONFIG_FILE, self.config)
-#
-#            # If encrypted remove from path_hashes
-#            if remote_file in self.config['path_hashes']:
-#                del self.config['path_hashes'][remote_file]
-#                local.write_config(local.CONFIG_FILE, self.config)
+        else:     
+            print("%12s did not remove!  %s" % (red("offline"), original_name))
 
     def edit(self, remote_file, remove_local=None, diff_mode=False,
              force_creation=False, register_folder=True, password=None,
@@ -448,6 +438,9 @@ class VimboxClient():
         elif force_creation and content['local'] and content['remote'] is None:
             print("\nRecovered local version from %s\n" % remote_file)
 
+        # Encryption makes no sense offline
+        if 
+
         # Needed variable names
         local_file = self.get_local_file(remote_file)
 
@@ -489,10 +482,13 @@ class VimboxClient():
 
         # Pull again if recovered offline status
         if fetch_status == 'connection-error':
-            content, fetch_status, password = self.pull(
+            content2, fetch_status, password = self.pull(
                 remote_file,
                 force_creation,
             )
+            if fetch_status != 'connection-error':
+                content = content2
+                content['edited'] = content['remote']
 
         # TODO: Need hardening against offline model and edit colision
         if content['edited'] != content['remote']:
