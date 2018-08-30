@@ -41,6 +41,51 @@ def test_main(config):
     # FIXME: If this dies it will leave the backend set to fake
     config['backend_name'] = 'fake-offline'
 
+    TMP_FILE = '%splain' % UNIT_TEST_FOLDER
+    TMP_CONTENT = 'This is some text'
+    TMP_FILE2 = '%splain2' % UNIT_TEST_FOLDER
+
+    # Files in this computer
+    local_file = get_local_file(TMP_FILE, config=config)
+    remote_file = get_remote_path(TMP_FILE)
+
+    # NORMAL FILE
+    read_config = load_config()
+    # Creation
+    main(['-f', TMP_FILE, TMP_CONTENT], config=config)
+    # Check a local copy was created (if intended)
+    assert os.path.isfile(local_file), \
+        "Creation of local file %s failed" % local_file
+    # Check if the folder was added to the cache
+    read_config = load_config()
+    dirname = "%s/" % os.path.dirname(TMP_FILE)
+    assert dirname in read_config['cache'], "Register in cache failed"
+
+    # Move file
+
+    # This tests both copy and remove
+    main(['mv', TMP_FILE, TMP_FILE2], config=config)
+    # Check local file was not removed
+    assert os.path.isfile(local_file), \
+        "local file %s can not be removed while offline" % local_file
+    local_file2 = get_local_file(TMP_FILE2, config=config)
+    assert not os.path.isfile(local_file2), \
+        "local file %s can not be created by copy while offline" % local_file
+
+    # ENCRYPTED FILE CREATION
+    FAKE_FILE_ENCRYPTED = '/14s52fr34G2R3tH42341/encrypted'
+    FAKE_SECRET_CONTENT = "This is some encrypted text"
+    PASSWORD = 'dummy'
+    #
+    main(
+        ['-e', FAKE_FILE_ENCRYPTED, FAKE_SECRET_CONTENT],
+        config=config,
+        password=PASSWORD
+    )
+    # Creating ecrypted files while offline makes no sense
+
+
+
 
 def reset_environment(original_config=None):
     """
