@@ -30,12 +30,19 @@
 
 * Fix undeleted local files conflict when creating folders of same name
 
-* Fix virtualenv not storing the files inside it
+- [ ] Fix virtualenv not storing the files inside it
 
 * Update autocomplete from vimbox after new register (instead of `source`)
 
 * Input pipes `cat mylog | vimbox pipe -f /logs/mylog`
     - needs Programatic edit operations
+
+* Put comments on yamls config fields automatically
+
+- [ ] Support optional encryption `vim -x` with `vimbox -x`
+    - Should imply using the auto-encryption token
+- [ ] Auto encryption token on vimbox creation
+    - Should be used if password left empty when decrypting
 
 * Other backends e.g. `vimbox /evernote/notes/`
     - `dropbox paper` has an API, unclear how flexible
@@ -44,8 +51,11 @@
 
 - [ ] Programatic edit operations
 
-- [ ] Abstract backend client into a class (with dropbox as a particular case)
-    - Add unit-test fake backend
+### v0.3.1
+
+- [ ] Add unit-test fake backend
+- [x] Abstract backend client into a class (with dropbox as a particular case)
+- [x] `vimbox -f /path/to/file "some text"` for file initialization
 
 ### v0.3.0
 
