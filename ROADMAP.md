@@ -24,18 +24,20 @@
 * Input pipes `cat mylog | vimbox pipe -f /logs/mylog`
     - needs Programatic edit operations
 
-- [ ] Support optional encryption `vim -x` with `vimbox -x`
+- [ ] Support local encryption `vim -x` with `vimbox -x`
     - Should imply using the auto-encryption token
 
 - [ ] Auto encryption token on vimbox creation
     - Should be used if password left empty when decrypting
 
 * Other backends e.g. `vimbox /evernote/notes/`
-    - `dropbox paper` has an API, unclear how flexible
-    - `CloudBlaze` is an alternative to dropbox
-    - `evernote` seems accessible
+    - `dropbox paper` 
+    - `CloudBlaze` 
+    - `evernote` 
 
 - [ ] Programatic edit operations
+
+- [ ] dropbox backend integration test
 
 ### v0.3.1
 

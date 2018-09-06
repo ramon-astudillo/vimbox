@@ -109,13 +109,10 @@ def reset_environment(original_config=None):
 
 if __name__ == '__main__':
 
-    original_config = reset_environment()
-    test_main(copy.deepcopy(original_config))
-    reset_environment(original_config)
-
     try:
-
-        pass
+        original_config = reset_environment()
+        test_main(copy.deepcopy(original_config))
+        reset_environment(original_config)
 
     except Exception as exception:
         # Ensure we restore the original config

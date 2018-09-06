@@ -35,7 +35,7 @@ class VimboxClient():
 
         # Get reference to remote client
         if self.config['backend_name'] == 'dropbox':
-            from vimbox.remote.dropbox_api import (
+            from vimbox.remote.dropbox_backend import (
                 install_backend,
                 StorageBackEnd
             )
@@ -45,7 +45,7 @@ class VimboxClient():
             self.client = StorageBackEnd(self.config['DROPBOX_TOKEN'])
 
         elif self.config['backend_name'] in ['fake', 'fake-offline']:
-            from vimbox.remote.fake import (
+            from vimbox.remote.fake_backend import (
                 install_backend,
                 StorageBackEnd
             )
