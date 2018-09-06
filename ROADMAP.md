@@ -18,7 +18,7 @@
 - [ ] Fix virtualenv not storing the files inside it
 
 - [ ] Update autocomplete from vimbox after new register (instead of `source`)
-    - [ ] update function with submodule
+    - [x] update function with submodule
     - [ ] update command
 
 * Input pipes `cat mylog | vimbox pipe -f /logs/mylog`
@@ -26,6 +26,7 @@
 
 - [ ] Support optional encryption `vim -x` with `vimbox -x`
     - Should imply using the auto-encryption token
+
 - [ ] Auto encryption token on vimbox creation
     - Should be used if password left empty when decrypting
 
@@ -38,9 +39,10 @@
 
 ### v0.3.1
 
-- [ ] Add unit-test fake backend
-- [x] Abstract backend client into a class (with dropbox as a particular case)
+- [x] Add unit-test fake backend
+- [x] Refactor backend client into a class with dropbox as a particular case
 - [x] `vimbox -f /path/to/file "some text"` for file initialization
+- [x] Add bash source function (no comand yet uses it)
 
 ### v0.3.0
 

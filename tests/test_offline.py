@@ -77,14 +77,15 @@ def test_main(config):
     FAKE_SECRET_CONTENT = "This is some encrypted text"
     PASSWORD = 'dummy'
     #
+    # Creating ecrypted files while offline makes no sense
     main(
         ['-e', FAKE_FILE_ENCRYPTED, FAKE_SECRET_CONTENT],
         config=config,
         password=PASSWORD
     )
-    # Creating ecrypted files while offline makes no sense
-
-
+    local_encrypted = get_local_file(FAKE_FILE_ENCRYPTED, config=config)
+    assert not os.path.isfile(local_file2), \
+        "Should not create local file while offline if encrypted" 
 
 
 def reset_environment(original_config=None):

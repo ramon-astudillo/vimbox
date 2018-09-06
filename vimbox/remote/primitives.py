@@ -439,7 +439,9 @@ class VimboxClient():
             print("\nRecovered local version from %s\n" % remote_file)
 
         # Encryption makes no sense offline
-        if 
+        if fetch_status == 'connection-error' and password is not None:
+            print("Creation of back-end encrypted files has no sense offline")
+            exit(1)
 
         # Needed variable names
         local_file = self.get_local_file(remote_file)
