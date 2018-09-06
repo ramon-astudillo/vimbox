@@ -381,7 +381,7 @@ class VimboxClient():
                 os.remove(local_file)
             print("%s did not exist in remote!" % original_name)
 
-        if status != 'connection-error':
+        elif status != 'connection-error':
             print("%12s %s" % (yellow("removed"), original_name))
 
             # Remove local copy
@@ -395,7 +395,9 @@ class VimboxClient():
             # TODO: Use unregister file
             self.unregister_file(remote_file)
         else:     
-            print("%12s did not remove!  %s" % (red("offline"), original_name))
+            print(
+                "%12s did not remove!  %s" % (red("offline"), original_name)
+            )
 
     def edit(self, remote_file, remove_local=None, diff_mode=False,
              force_creation=False, register_folder=True, password=None,
