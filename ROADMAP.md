@@ -2,21 +2,9 @@
 
 ### Desired Features
 
-* Info that the user can screw-up (cache, hashes) should not be on config
+* Put comments on yamls config fields automatically
 
-* Add `find` semantics i.e. `vimbox /folder1/folder2/*` regexp will look
-  downwards on the tree and return the matches if there is many, open directly
-  if there is one
-
-* Increased privacy: encrypt/decrypt inside `vim` using `vim -x`
-    - differentiate editor-encryption from normal encryption
-    - `vimbox -x` (`password is not None` no longer will be a good flag)
-
-* Back-end side encryption with stored key on client side
-    - how to handle already encrypted files (two hash tables?)
-    - `vimbox -k`
-
-* Import for virtualenv `vimbox setup --merge-config ~/.vimbox/config.yml`
+* Add `vimbox find` 
 
 * Set editors used in config
 
@@ -24,20 +12,17 @@
 
 * `vimbox mkdir /cosa/`. Right now this is achieved by creating a file inside
 
-* Fix can not create encripted files at top level
-
-* Fix viewing files but not editing them does not trigger delete locally
-
-* Fix undeleted local files conflict when creating folders of same name
-
+- [ ] Fix can not create encripted files at top level in dropbox
+- [ ] Fix viewing files but not editing them does not trigger delete locally
+- [ ] Fix undeleted local files conflict when creating folders of same name
 - [ ] Fix virtualenv not storing the files inside it
 
-* Update autocomplete from vimbox after new register (instead of `source`)
+- [ ] Update autocomplete from vimbox after new register (instead of `source`)
+    - [ ] update function with submodule
+    - [ ] update command
 
 * Input pipes `cat mylog | vimbox pipe -f /logs/mylog`
     - needs Programatic edit operations
-
-* Put comments on yamls config fields automatically
 
 - [ ] Support optional encryption `vim -x` with `vimbox -x`
     - Should imply using the auto-encryption token
