@@ -39,7 +39,6 @@ class StorageBackEnd():
         fake_remote_file = "%s/%s" % (
             self.fake_remote_folder, remote_file
         )
-        #with codecs.open(fake_remote_file, 'w', 'utf-8') as fid:
         with open(fake_remote_file, 'w') as fid:
             fid.write(remote_content)
 
@@ -48,7 +47,6 @@ class StorageBackEnd():
         fake_remote_file = "%s/%s" % (
             self.fake_remote_folder, remote_file
         )
-        #with codecs.open(fake_remote_file, 'r', 'utf-8') as fid:
         with open(fake_remote_file, 'r') as fid:
             remote_content = fid.read()
         return remote_content
@@ -84,11 +82,19 @@ class StorageBackEnd():
             fake_remote_source = "%s/%s" % (
                 self.fake_remote_folder, remote_source
             )
+            something_exists = False
             if os.path.isfile(fake_remote_source):
                 os.remove(fake_remote_source)
+                something_exists = True 
             elif os.path.isdir(fake_remote_source):
                 os.rmdir(fake_remote_source)
-            error = True
+                something_exists = True 
+
+            if something_exists:
+                error = 'online' 
+            else:
+                # Unexisting file returns api-error 
+                error = 'api-error' 
         else:
             error = 'connection-error'
         return error
@@ -97,11 +103,15 @@ class StorageBackEnd():
         """ Returns true if remote_file is a file """
         if self.online:
             # stata = ['online', 'connection-error', 'api-error']
-            is_file = os.path.isfile("%s/%s" % (
+            fake_remote_file = "%s/%s" % (
                 self.fake_remote_folder,
                 remote_source
-            ))
-            status = 'online'
+            )
+            is_file = os.path.isfile(fake_remote_file)
+            if is_file:
+                status = 'online'
+            else:    
+                status = 'api-error'
         else:
             is_file = False
             status = 'connection-error'

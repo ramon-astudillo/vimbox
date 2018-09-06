@@ -352,12 +352,10 @@ class VimboxClient():
             exit(1)
 
         # Disallow deleting of folders.
-        # TODO: Handle hashing in encrypted files here
         is_file, _, status = self.is_file(remote_file)
-        if not recursive and not is_file and status != 'connection-error':
-            if result.entries != []:
-                print("Can only delete empty folders")
-                exit(1)
+        if not recursive and not is_file and status == 'online':
+            print("Can only delete empty folders")
+            exit(1)
 
         # Hash name if necessary
         if remote_file in self.config['path_hashes'].values():
@@ -375,6 +373,13 @@ class VimboxClient():
             status = self.client.files_delete(remote_file[:-1])
         else:
             status = self.client.files_delete(remote_file)
+
+        if status == 'api-error':
+            # Remove local copy
+            local_file = self.get_local_file(remote_file)
+            if os.path.isfile(local_file):
+                os.remove(local_file)
+            print("%s did not exist in remote!" % original_name)
 
         if status != 'connection-error':
             print("%12s %s" % (yellow("removed"), original_name))
@@ -583,7 +588,7 @@ class VimboxClient():
     def is_file(self, remote_file):
 
         is_file, status = self.client.is_file(remote_file)
-        if not is_file and status == 'online':
+        if not is_file and status == 'api-error':
             # I file not found, try hashed version
             remote_file = crypto.get_path_hash(remote_file)
             is_file, status = self.client.is_file(remote_file)

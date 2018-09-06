@@ -108,7 +108,15 @@ class StorageBackEnd():
         return self.dropbox_client.files_copy_v2(remote_source, remote_target)
 
     def files_delete(self, remote_source):
-        return self.dropbox_client.files_delete_v2(remote_source)
+        try:
+            return_value = self.dropbox_client.files_delete_v2(remote_source)
+            status = 'online'
+        except ConnectionError:
+            # This can be missleading
+            status = 'connection-error'
+        except ApiError as exception:
+            status = 'api-error'
+        return status 
 
     def is_file(self, remote_file):
         """ Returns true if remote_file is a file """

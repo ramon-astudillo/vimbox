@@ -67,6 +67,9 @@ def test_main(config):
     dirname = "%s/" % os.path.dirname(TMP_FILE)
     assert dirname in read_config['cache'], "Register in cache failed"
 
+    # Remove non existing file should not die
+    main(['rm', TMP_FILE + '_not_real'], config=config)
+
     # Non-empty folder removal should fail
     failed = False
     try:
