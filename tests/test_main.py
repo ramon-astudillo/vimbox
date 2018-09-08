@@ -31,7 +31,6 @@ def get_remote_path(remote_file):
 
 def read_remote_content(remote_file):
     true_path = get_remote_path(remote_file)
-    #with codecs.open(true_path, 'r', 'utf-8') as fid:
     with open(true_path, 'r') as fid:
         text = fid.read()
     return text
@@ -71,6 +70,7 @@ def test_main(config):
     main(['rm', TMP_FILE + '_not_real'], config=config)
 
     # Non-empty folder removal should fail
+    # NOTE: This protection is at VimboxClient level
     failed = False
     try:
         main(['rm', '-R', dirname], config=config)
@@ -92,10 +92,6 @@ def test_main(config):
     # Check new file was created
     remote_file2 = get_remote_path(TMP_FILE2)
     assert os.path.isfile(remote_file2), "File creation failed"
-    # Check local file was created
-    local_file2 = get_local_file(TMP_FILE2, config=config)
-    assert not os.path.isfile(get_local_file(local_file2)), \
-        "Removal of local file %s failed" % local_file2
 
     # Empty folder removal
     main(['rm', TMP_FILE2], config=config)
@@ -113,7 +109,7 @@ def test_main(config):
     FAKE_FILE_ENCRYPTED = '/14s52fr34G2R3tH42341/encrypted'
     FAKE_SECRET_CONTENT = "This is some encrypted text"
 
-    # TODO: Unregister folders when deleting last file 
+    # TODO: Unregister folders when deleting last file
 
     # ENCRYPTED FILE CREATION
     PASSWORD = 'dummy'
