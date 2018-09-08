@@ -105,6 +105,10 @@ def local_install_check():
 
 def load_config():
 
+    if not os.path.isfile(CONFIG_FILE):
+        print("\nNo config found use vimbox setup\n")    
+        exit(1)
+
     # Create vimbox config
     config = read_config(CONFIG_FILE)
     # Check current defaults are present (version missmatch)
