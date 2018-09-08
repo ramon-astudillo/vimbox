@@ -15,12 +15,12 @@ class StorageBackEnd():
 
     def __init__(self, online=True):
         self.fake_remote_folder = os.path.realpath(
-            "/%s/../../tests/.fake_remote/" % os.path.dirname(__file__)
+            "%s/../../tests/.fake_remote/" % os.path.dirname(__file__)
         )
         # Create storage folder if it does not exit
         if not os.path.isdir(self.fake_remote_folder):
             os.makedirs(self.fake_remote_folder)
-        self.online = online   
+        self.online = online
 
     def get_user_account(self):
         """Provide info on users current account"""
@@ -32,7 +32,7 @@ class StorageBackEnd():
             user = None
             # errors = [None, 'connection-error', 'api-error']
             error = 'connection-error'
-        return user, error 
+        return user, error
 
     def _remote_write(self, remote_file, remote_content):
         # Store content
@@ -85,16 +85,16 @@ class StorageBackEnd():
             something_exists = False
             if os.path.isfile(fake_remote_source):
                 os.remove(fake_remote_source)
-                something_exists = True 
+                something_exists = True
             elif os.path.isdir(fake_remote_source):
                 os.rmdir(fake_remote_source)
-                something_exists = True 
+                something_exists = True
 
             if something_exists:
-                error = 'online' 
+                error = 'online'
             else:
-                # Unexisting file returns api-error 
-                error = 'api-error' 
+                # Unexisting file returns api-error
+                error = 'api-error'
         else:
             error = 'connection-error'
         return error
@@ -110,7 +110,7 @@ class StorageBackEnd():
             is_file = os.path.isfile(fake_remote_file)
             if is_file:
                 status = 'online'
-            else:    
+            else:
                 status = 'api-error'
         else:
             is_file = False
