@@ -52,7 +52,7 @@ class VimboxClient():
             if self.config is None:
                 install_backend(local.CONFIG_FILE, local.DEFAULT_CONFIG)
             if self.config['backend_name'] == 'fake-offline':
-                online = False 
+                online = False
             else:
                 online = True
             self.client = StorageBackEnd(online=online)
@@ -394,7 +394,7 @@ class VimboxClient():
 
             # TODO: Use unregister file
             self.unregister_file(remote_file)
-        else:     
+        else:
             print(
                 "%12s did not remove!  %s" % (red("offline"), original_name)
             )
