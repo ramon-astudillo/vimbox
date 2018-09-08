@@ -179,4 +179,4 @@ if __name__ == '__main__':
         reset_environment(original_config)
         # Reraise error
         t, v, tb = sys.exc_info()
-        raise t, v, tb
+        raise(t, v, tb)
