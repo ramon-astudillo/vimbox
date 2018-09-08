@@ -116,7 +116,7 @@ class StorageBackEnd():
             status = 'connection-error'
         except ApiError as exception:
             status = 'api-error'
-        return status 
+        return status
 
     def is_file(self, remote_file):
         """ Returns true if remote_file is a file """
@@ -170,7 +170,7 @@ class StorageBackEnd():
 
             # Get user info to validate account
             result = self.dropbox_client.files_list_folder(remote_folder)
-            error = None
+            error = 'online'
 
         except ConnectionError:
 
