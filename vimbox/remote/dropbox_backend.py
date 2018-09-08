@@ -9,7 +9,7 @@ from requests.exceptions import ConnectionError
 from vimbox import local
 
 
-def install_backend(self, config_file, default_config):
+def install_backend(config_file, default_config):
 
     if os.path.isfile(config_file):
         config = local.read_config(config_file)
@@ -26,13 +26,19 @@ def install_backend(self, config_file, default_config):
             "2) Select either App folder or Full Dropbox\n"
             "3) Name is irrelevant but vimbox may help you remember\n"
         )
-        dropbox_token = input(
-            "Press \"generate acess token\" to get one and paste it here: "
-        )
-        dropbox_client = dropbox.Dropbox(dropbox_token)
+
+        if sys.version_info[0] > 2:
+            dropbox_token = input(
+                "Press \"generate acess token\" to get one and paste it here: "
+            )
+        else:
+            dropbox_token = raw_input(
+                "Press \"generate acess token\" to get one and paste it here: "
+            )
 
         # Validate token by connecting to dropbox
-        user_acount, error = get_user_account(dropbox_client)
+        client = StorageBackEnd(dropbox_token)
+        user_acount, error = client.get_user_account()
         if user_acount is None:
             print("Could not connect to dropbox %s" % error)
             exit(1)
