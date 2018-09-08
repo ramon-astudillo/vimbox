@@ -2,6 +2,7 @@ import os
 import copy
 import sys
 import shutil
+import vimbox
 from vimbox.__main__ import main
 from vimbox.crypto import get_path_hash
 from vimbox.local import (
@@ -21,8 +22,9 @@ def read_file(file_path):
         return fid.read()
 
 
-FAKE_REMOTE_STORAGE = "%s/.fake_remote/" % \
-    os.path.realpath(os.path.dirname(__file__))
+FAKE_REMOTE_STORAGE = os.path.realpath(
+    "/%s/../tests/.fake_remote/" % os.path.dirname(vimbox.__file__)
+)
 
 
 def get_remote_path(remote_file):
@@ -166,6 +168,7 @@ def reset_environment(original_config=None):
 
 
 if __name__ == '__main__':
+
     try:
         original_config = reset_environment()
         test_main(copy.deepcopy(original_config))
