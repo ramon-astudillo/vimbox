@@ -41,7 +41,9 @@ def install():
         print("Created %s" % local.ROOT_FOLDER)
 
     # Configure back-end
-    primitives.install_backend()
+    # Right now only dropbox
+    from vimbox.remote.dropbox_backend import install_backend
+    install_backend(local.CONFIG_FILE, local.DEFAULT_CONFIG)
 
     # Modify bashrc
     local.modify_bashrc(virtualenv)
