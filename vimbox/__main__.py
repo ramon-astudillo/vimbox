@@ -84,12 +84,13 @@ def argument_handling(args):
             force_creation = True
             encrypt = True
         elif option[0] == '/':
-            assert not remote_file, "Only one file path can be edited at a time"
+            assert not remote_file, \
+                "Only one file path can be edited at a time"
             # Dropbox path
             remote_file = option
         elif force_creation and remote_file:
-            # If there is an extra argument not matching the previous and we are
-            # in creation mode, admit this is as initial text
+            # If there is an extra argument not matching the previous and we
+            # are in creation mode, admit this is as initial text
             initial_text = option
         else:
             vimbox_help()
