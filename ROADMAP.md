@@ -10,6 +10,8 @@
 
 * Move encripted files
 
+* Fix `pomot edit` still syncs everything
+
 * `vimbox mkdir /cosa/`. Right now this is achieved by creating a file inside
 
 - [ ] Fix can not create encripted files at top level in dropbox
