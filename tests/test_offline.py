@@ -117,5 +117,8 @@ if __name__ == '__main__':
         # Ensure we restore the original config
         reset_environment(original_config)
         # Reraise error
-        t, v, tb = sys.exc_info()
-        raise t, v, tb
+        if sys.version_info[0] > 2:
+            raise exception.with_traceback(sys.exc_info()[2])
+        else:
+            t, v, tb = sys.exc_info()
+            raise(t, v, tb)
