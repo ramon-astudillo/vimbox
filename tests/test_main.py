@@ -33,8 +33,17 @@ def get_remote_path(remote_file):
 
 def read_remote_content(remote_file):
     true_path = get_remote_path(remote_file)
-    with open(true_path, 'r') as fid:
+    with open(true_path, 'rb') as fid:
         text = fid.read()
+
+    # Python3
+    if text and sys.version_info[0] > 2:
+        try:
+            text = text.decode("utf-8")
+        except UnicodeDecodeError:
+            # Encrypted content
+            pass    
+
     return text
 
 
@@ -168,7 +177,6 @@ def reset_environment(original_config=None):
 
 
 if __name__ == '__main__':
-
     try:
         original_config = reset_environment()
         test_main(copy.deepcopy(original_config))
@@ -178,5 +186,8 @@ if __name__ == '__main__':
         # Ensure we restore the original config
         reset_environment(original_config)
         # Reraise error
-        t, v, tb = sys.exc_info()
-        raise(t, v, tb)
+        if sys.version_info[0] > 2:
+            raise exception.with_traceback(sys.exc_info()[2])
+        else:
+            t, v, tb = sys.exc_info()
+            raise(t, v, tb)
