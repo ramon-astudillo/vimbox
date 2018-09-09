@@ -25,24 +25,26 @@
 
 * Input pipes `cat mylog | vimbox pipe -f /logs/mylog`
     - needs Programatic edit operations
+* Programatic edit operations
 
 - [ ] Support local encryption `vim -x` with `vimbox -x`
     - Should imply using the auto-encryption token
-
 - [ ] Auto encryption token on vimbox creation
     - Should be used if password left empty when decrypting
+- [ ] Replace deprecated pycrypto by pycryptodome, see
+    - see https://github.com/dlitz/pycrypto/issues/173 
+    - see https://github.com/Legrandin/pycryptodome
 
 * Other backends e.g. `vimbox /evernote/notes/`
     - `dropbox paper` 
     - `CloudBlaze` 
     - `evernote` 
 
-- [ ] Programatic edit operations
 
-- [ ] dropbox backend integration test
+### Future v0.3.1
 
-### v0.3.1
-
+- [ ] Fix Python3 compatibility 
+- [x] Add dropbox backend integration-test
 - [x] Add unit-test fake backend
 - [x] Refactor backend client into a class with dropbox as a particular case
 - [x] `vimbox -f /path/to/file "some text"` for file initialization
