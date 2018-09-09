@@ -1,4 +1,5 @@
 import os
+import sys
 import codecs
 from vimbox import local
 
@@ -39,7 +40,7 @@ class StorageBackEnd():
         fake_remote_file = "%s/%s" % (
             self.fake_remote_folder, remote_file
         )
-        with open(fake_remote_file, 'w') as fid:
+        with open(fake_remote_file, 'wb') as fid:
             fid.write(remote_content)
 
     def _remote_read(self, remote_file):
@@ -47,7 +48,7 @@ class StorageBackEnd():
         fake_remote_file = "%s/%s" % (
             self.fake_remote_folder, remote_file
         )
-        with open(fake_remote_file, 'r') as fid:
+        with open(fake_remote_file, 'rb') as fid:
             remote_content = fid.read()
         return remote_content
 
