@@ -58,6 +58,9 @@ def test_main(config):
 
     client.get_user_account()
     # Create
+    if sys.version_info[0] > 2:
+        # Encoding for Python3
+        TMP_CONTENT = str.encode(TMP_CONTENT)
     client.files_upload(TMP_CONTENT, TMP_FILE)
 
     # Check existance file
@@ -73,6 +76,9 @@ def test_main(config):
     # Check content
     remote_content, status = client.file_download(TMP_FILE)
     assert status == 'online', "Status not online on file_download"
+    if sys.version_info[0] > 2:
+        # Encoding for Python3
+        remote_content = str.encode(remote_content)
     assert TMP_CONTENT == remote_content, "Retrieval of remote content failed"
 
     # List folders does not die
