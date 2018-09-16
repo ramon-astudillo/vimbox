@@ -165,6 +165,8 @@ def main(args=None, config=None, password=None):
         # Folders cached in this computer (latter minus commans e.g. ls)
         for cached_file in sorted(local.get_cache()):
             print(cached_file)
+        # update cache
+        local.update_cache()
 
     elif args[0] == 'config':
 

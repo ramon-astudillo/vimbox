@@ -2,6 +2,11 @@
 
 ### Desired Features
 
+* New entry point `bim <local path>` stores backups in backend
+  - Remote path is concatenation of hashes for (user, machine, file name) and
+    (full path)  
+  - Path should be decryptable with key  
+
 * Put comments on yamls config fields automatically
 
 * Add `vimbox find` 
@@ -14,36 +19,39 @@
 
 * `vimbox mkdir /cosa/`. Right now this is achieved by creating a file inside
 
-- [ ] Fix can not create encripted files at top level in dropbox
-- [ ] Fix viewing files but not editing them does not trigger delete locally
-- [ ] Fix undeleted local files conflict when creating folders of same name
-- [ ] Fix virtualenv not storing the files inside it
-
-- [ ] Update autocomplete from vimbox after new register (instead of `source`)
-    - [x] update function with submodule
-    - [ ] update command
-
-* Input pipes `cat mylog | vimbox pipe -f /logs/mylog`
-    - needs Programatic edit operations
-* Programatic edit operations
-
-- [ ] Support local encryption `vim -x` with `vimbox -x`
-    - Should imply using the auto-encryption token
-- [ ] Auto encryption token on vimbox creation
-    - Should be used if password left empty when decrypting
-- [ ] Replace deprecated pycrypto by pycryptodome, see
-    - see https://github.com/dlitz/pycrypto/issues/173 
-    - see https://github.com/Legrandin/pycryptodome
+* separate entry point `vimbox-cache `for `complete` call to ensure speed and
+  stability
 
 * Other backends e.g. `vimbox /evernote/notes/`
     - `dropbox paper` 
     - `CloudBlaze` 
     - `evernote` 
 
+* Input pipes `cat mylog | vimbox pipe -f /logs/mylog`
+    - needs Programatic edit operations
+* Programatic edit operations
+
+- [ ] Fix can not create encripted files at top level in dropbox
+- [ ] Fix viewing files but not editing them does not trigger delete locally
+- [ ] Fix virtualenv not storing the files inside it
+- [ ] Fix undeleted local files conflict when creating folders of same name
+
+- [ ] Update autocomplete from vimbox after new register (instead of `source`)
+    - [x] update function with submodule
+    - [ ] update command
+
+- [ ] Replace deprecated pycrypto by pycryptodome, see
+    - see https://github.com/dlitz/pycrypto/issues/173 
+    - see https://github.com/Legrandin/pycryptodome
+- [ ] Support local encryption `vim -x` with `vimbox -x`
+    - Should imply using the auto-encryption token
+
+- [ ] Auto encryption token on vimbox creation
+    - Should be used if password left empty when decrypting
 
 ### Future v0.3.1
 
-- [ ] Fix Python3 compatibility 
+- [x] Fix Python3 compatibility 
 - [x] Add dropbox backend integration-test
 - [x] Add unit-test fake backend
 - [x] Refactor backend client into a class with dropbox as a particular case

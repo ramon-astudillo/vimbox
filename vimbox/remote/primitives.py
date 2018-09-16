@@ -371,6 +371,8 @@ class VimboxClient():
             # TODO: This is input sanity check should go in the client
             # dependent part
             status = self.client.files_delete(remote_file[:-1])
+            # update cache
+            local.update_cache()
         else:
             status = self.client.files_delete(remote_file)
 

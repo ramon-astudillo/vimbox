@@ -38,20 +38,19 @@ MERGETOOL = 'vimdiff'
 red = diogenes.style(font_color='light red')
 
 
-def source_bashrc():
+def update_cache():
 
-    if hasattr(sys, 'real_prefix'):
-        bashrc = "%s/bin/activate" % sys.prefix
-    else:
-        bashrc = "%s/.bashrc" % os.environ['HOME']
-
-    subprocess.Popen(
-            "%s %s" % ('source', bashrc),
+    complete = get_complete_arguments()[::-1]
+    the_call = 'complete -W \"%s\" \'vimbox\'' % (' '.join(complete))
+    process = subprocess.Popen(
+            [the_call],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             shell=True
     )
-    print("%s %s" % ('source', bashrc))
+    print(the_call)
+    print(process.stdout.read())
+    print("Updated cache (%d folders + commands)" % len(complete))
 
 
 def modify_bashrc(virtualenv):
@@ -106,7 +105,7 @@ def local_install_check():
 def load_config():
 
     if not os.path.isfile(CONFIG_FILE):
-        print("\nNo config found use vimbox setup\n")    
+        print("\nNo config found use vimbox setup\n")
         exit(1)
 
     # Create vimbox config
@@ -194,7 +193,7 @@ def unregister_file(remote_file, config):
     # Unregister file hash
     if remote_file in config['path_hashes'].keys():
         print(
-        "Removed from hash list %s" % config['path_hashes'][remote_file]
+            "Removed from hash list %s" % config['path_hashes'][remote_file]
         )
         del config['path_hashes'][remote_file]
         rewrite_config = True
