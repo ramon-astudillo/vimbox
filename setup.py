@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 from pip.req import parse_requirements
 import pip.download
 
-VERSION='0.3.0'
+VERSION='0.3.1'
 
 # Check if we are on a virtual environment
 # https://stackoverflow.com/questions/1871549/determine-if-python-is-running-inside-virtualenv

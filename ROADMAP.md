@@ -51,7 +51,7 @@
 - [ ] Auto encryption token on vimbox creation
     - Should be used if password left empty when decrypting
 
-### Future v0.3.1
+### v0.3.1
 
 - [x] Fix Python3 compatibility 
 - [x] Add dropbox backend integration-test
