@@ -48,8 +48,8 @@ def update_cache():
             stderr=subprocess.STDOUT,
             shell=True
     )
-    print(the_call)
-    print(process.stdout.read())
+    # print(the_call)
+    # print(process.stdout.read())
     print("Updated cache (%d folders + commands)" % len(complete))
 
 

@@ -88,7 +88,7 @@ class VimboxClient():
                 # Encoding for Python3
                 new_local_content = str.encode(new_local_content)
         # Overwrite remote
-        error = self.client.files_upload(
+        self.client.files_upload(
             new_local_content,
             remote_file_hash,
         )
@@ -372,7 +372,7 @@ class VimboxClient():
             # dependent part
             status = self.client.files_delete(remote_file[:-1])
             # update cache
-            local.update_cache()
+            # local.update_cache()
         else:
             status = self.client.files_delete(remote_file)
 
@@ -391,7 +391,6 @@ class VimboxClient():
             if os.path.isfile(local_file):
                 os.remove(local_file)
             elif os.path.isdir(local_file):
-                #shutil.rmtree(local_file)
                 os.rmdir(local_file)
 
             # TODO: Use unregister file
