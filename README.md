@@ -23,9 +23,9 @@ than with their client, namely
 
 * Code is thought to replace `vim` and `vimdiff` by other editors
 
-* Code is thought to add backends other than `dropbox` (`dropbox paper` is in sight)
+* Code is thought to add backends other than `dropbox` 
 
-* Works in OSX and Linux, uses dropbox v2 API (`python 2`!).
+* Works in OSX and Linux, uses dropbox v2 API (`python 2` and `3` supported).
 
 # Examples
 
