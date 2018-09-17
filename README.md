@@ -67,10 +67,9 @@ the `pycripto` module.
 
 # Install
 
-Clone the repo and install it
+Install from github with pip
 
-    git clone git@gitlab.com:ramon-astudillo/vimbox.git
-    sudo pip install vimbox/
+    sudo pip install git+https://github.com/ramon-astudillo/vimbox.git
 
 Configure the back-end by calling the program for the first time.
 
@@ -91,19 +90,9 @@ and use following configuration
 
 * Put a name. This is irrelevant, but `vimbox-<your name>` may help you remember
 
-After this is done you will see a control pannel for the app. Use the
-`Generated access token` botton to get an acess token that you can paste into
+After this is done you will see a control panel for the app. Use the
+`Generated access token` button to get an aces token that you can paste into
 the install prompt.
-
-# Upgrade
-
-If you want to update to the latest version
-
-    cd vimbox
-    git pull origin master
-    sudo pip install . --upgrade
-
-For development, you can work on a virtual environment
 
 # Install Details
 
@@ -123,6 +112,8 @@ To develop the easiest is to use a virtual environment. Vimbox will detect this
 and store the `.vimbox` config folder in the same folder where the install is
 carried out. As an example
 
+    git clone git@github.com:ramon-astudillo/vimbox.git
+    cd vimbox
     virtualenv venv
     source venv/bin/activate
     pip install -r requirements.txt
