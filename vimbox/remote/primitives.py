@@ -440,10 +440,7 @@ class VimboxClient():
             password=password
         )
 
-        if force_creation and content['remote']:
-            print("\nFile exists, can not be created\n")
-            exit(1)
-        elif force_creation and content['local'] and content['remote'] is None:
+        if force_creation and content['local'] and content['remote'] is None:
             print("\nRecovered local version from %s\n" % remote_file)
 
         # Encryption makes no sense offline
