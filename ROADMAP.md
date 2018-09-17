@@ -1,6 +1,4 @@
-# Versions
-
-### Desired Features
+# Ideas
 
 * New entry point `bim <local path>` stores backups in backend
   - Remote path is concatenation of hashes for (user, machine, file name) and
@@ -8,6 +6,10 @@
   - Path should be decryptable with key  
 
 * Put comments on yamls config fields automatically
+
+# Versions
+
+### Desired Features
 
 * Add `vimbox find` 
 
@@ -50,6 +52,9 @@
 
 - [ ] Auto encryption token on vimbox creation
     - Should be used if password left empty when decrypting
+
+- [ ] Fix creating files with same name as folders (api-error not indicative
+      enough)
 
 ### v0.3.1
 
