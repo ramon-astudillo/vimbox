@@ -24,6 +24,15 @@
 * separate entry point `vimbox-cache `for `complete` call to ensure speed and
   stability
 
+* Simple use in other Python code 
+    - config auto completion?
+
+```
+from vimbox.remote.primitives import VimboxClient
+client = VimboxClient(dropbox_token='some-alphanumeric-sequence')
+client.move()
+```
+
 * Other backends e.g. `vimbox /evernote/notes/`
     - `dropbox paper` 
     - `CloudBlaze` 

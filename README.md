@@ -19,7 +19,7 @@ than with their client, namely
 
 * Comes with the expected `vimbox ls` (`rm` `cp` `mv`, `cat`)
 
-* Importable methods to use in other modules `from vimbox.remote import edit, move`.
+* Importable methods to use in other modules `from vimbox.remote.primitives import VimboxClient`.
 
 * Code is thought to replace `vim` and `vimdiff` by other editors
 
