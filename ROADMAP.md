@@ -42,7 +42,7 @@ client.move()
     - needs Programatic edit operations
 * Programatic edit operations
 
-* Automerges: append or insert
+* automerge: append or insert can be done with no human intervention
 
 - [ ] Fix can not create encripted files at top level in dropbox
 - [ ] Fix viewing files but not editing them does not trigger delete locally

@@ -166,7 +166,7 @@ def main(args=None, config=None, password=None):
         for cached_file in sorted(local.get_cache()):
             print(cached_file)
         # update cache
-        local.update_cache()
+        # local.update_cache()
 
     elif args[0] == 'config':
 
