@@ -15,8 +15,6 @@
 
 * Set editors used in config
 
-* Move encripted files
-
 * Fix `pomot edit` still syncs everything
 
 * `vimbox mkdir /cosa/`. Right now this is achieved by creating a file inside
@@ -38,32 +36,42 @@ client.move()
     - `CloudBlaze` 
     - `evernote` 
 
-* Input pipes `cat mylog | vimbox pipe -f /logs/mylog`
-    - needs Programatic edit operations
-* Programatic edit operations
-
-* automerge: append or insert can be done with no human intervention
-
-- [ ] Fix can not create encripted files at top level in dropbox
-- [ ] Fix viewing files but not editing them does not trigger delete locally
-- [ ] Fix virtualenv not storing the files inside it
-- [ ] Fix undeleted local files conflict when creating folders of same name
-
-- [ ] Update autocomplete from vimbox after new register (instead of `source`)
-    - [x] update function with submodule
-    - [ ] update command
-
-- [ ] Replace deprecated pycrypto by pycryptodome, see
+* Replace deprecated pycrypto by pycryptodome, see
     - see https://github.com/dlitz/pycrypto/issues/173 
     - see https://github.com/Legrandin/pycryptodome
+
+* Input pipes `cat mylog | vimbox pipe -f /logs/mylog`
+    - needs Programatic edit operations
+
+* Programatic edit operations
+
+* Update autocomplete from vimbox after new register (instead of `source`)
+    - [x] update function with submodule
+    * update command
+
+- [ ] automerge: append or insert can be done with no human intervention
+    - For append
+        - len(modified) > len(original)
+        - modified[:len(original)] == original
+    - For insert
+        - len(modified) > len(original)
+        - Linear search over len(modified) + len(original)
+
+- [ ] Fix viewing files but not editing them does not trigger delete locally
+- [ ] Fix virtualenv not storing the files inside it
+
+- [ ] Fix creating files with same name as folders 
+    - api-error not indicative enough
+
 - [ ] Support local encryption `vim -x` with `vimbox -x`
     - Should imply using the auto-encryption token
-
-- [ ] Auto encryption token on vimbox creation
+- [ ] auto-encryption token created on vimbox setup 
     - Should be used if password left empty when decrypting
-
-- [ ] Fix creating files with same name as folders (api-error not indicative
-      enough)
+- [ ] Upgrade handling of encrypted files
+    - [ ] Move encripted files
+    - [ ] Fix collision of hashed and unhashed names when moving files
+    - [ ] Fix can not create encripted files at top level in dropbox
+    - hash only file name, rather than path?
 
 ### v0.3.1
 
