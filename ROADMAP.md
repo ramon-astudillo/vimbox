@@ -49,29 +49,36 @@ client.move()
     - [x] update function with submodule
     * update command
 
-- [ ] automerge: append or insert can be done with no human intervention
-    - For append
-        - len(modified) > len(original)
-        - modified[:len(original)] == original
-    - For insert
-        - len(modified) > len(original)
-        - Linear search over len(modified) + len(original)
-
 - [ ] Fix viewing files but not editing them does not trigger delete locally
 - [ ] Fix virtualenv not storing the files inside it
 
 - [ ] Fix creating files with same name as folders 
     - api-error not indicative enough
 
-- [ ] Support local encryption `vim -x` with `vimbox -x`
+- [ ] local encryption: `vim -x` with `vimbox -x`
     - Should imply using the auto-encryption token
-- [ ] auto-encryption token created on vimbox setup 
+- [ ] auto-encryption token:
+    - created on vimbox setup 
     - Should be used if password left empty when decrypting
 - [ ] Upgrade handling of encrypted files
-    - [ ] Move encripted files
+    - [ ] Move encrypted files
     - [ ] Fix collision of hashed and unhashed names when moving files
-    - [ ] Fix can not create encripted files at top level in dropbox
+    - [ ] Fix can not create encrypted files at top level in dropbox
     - hash only file name, rather than path?
+
+- [ ] automerge: optionally append or insert can be done automatically
+    - For append/prepend
+        - len(modified) > len(original)
+        - EOF tokenization
+        - modified[:len(original)] == original
+        - modified[-len(original):] == original
+    - For insert
+        - EOF tokenization
+        - len(modified) > len(original)
+        - Linear search over len(modified) + len(original)
+    - Custom line merge    
+        - custom equal operator `(A) Cosa` same as `(B) Cosa` or `Cosa` 
+        - this treats original and edites by separate, may be limiting
 
 ### v0.3.1
 
