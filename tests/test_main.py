@@ -42,9 +42,24 @@ def read_remote_content(remote_file):
             text = text.decode("utf-8")
         except UnicodeDecodeError:
             # Encrypted content
-            pass    
+            pass
 
     return text
+
+
+def write_remote_content(remote_file, remote_content):
+    true_path = get_remote_path(remote_file)
+
+    # Python3
+    if sys.version_info[0] > 2:
+        try:
+            remote_content = remote_content.encode("utf-8")
+        except UnicodeDecodeError:
+            # Encrypted content
+            pass
+
+    with open(true_path, 'wb') as fid:
+        fid.write(remote_content)
 
 
 def test_main(config):
@@ -156,6 +171,43 @@ def test_main(config):
 
     # TODO: Move encrypted files.
 
+    # AUTOMERGE: Append/Prepend
+    TMP_FILE3 = '%soriginal' % UNIT_TEST_FOLDER
+    main(['-f', TMP_FILE3, TMP_CONTENT], config=config)
+    # Simulate append remote edition
+    written_content = read_remote_content(TMP_FILE3)
+    write_remote_content(TMP_FILE3, TMP_CONTENT + "\nAppended line")
+    # Edit should merge files
+    from vimbox.remote.primitives import VimboxClient
+    client = VimboxClient()
+    client.edit(TMP_FILE3, automerge={'append', 'prepend'}, diff_mode=True)
+    # Simulate prepend remote edition
+    written_content = read_remote_content(TMP_FILE3)
+    write_remote_content(TMP_FILE3,  "Prepended line\n" + written_content)
+    # Edit should merge files
+    client.edit(TMP_FILE3, automerge={'append', 'prepend'}, diff_mode=True)
+
+    # AUTOMERGE: Insert
+    # Simulate insert in remote edition
+    written_sentences = read_remote_content(TMP_FILE3).split('\n')
+    written_sentences.insert(1, 'Inserted 1')
+    written_sentences.insert(2, 'Inserted 2')
+    written_sentences.insert(4, 'Inserted 3')
+    write_remote_content(TMP_FILE3,  "\n".join(written_sentences))
+    # Edit should merge files
+    client.edit(TMP_FILE3, automerge=['insert'], diff_mode=True)
+
+    # AUTOMERGE: Valid line modification
+    written_sentences = read_remote_content(TMP_FILE3).split('\n')
+    written_sentences[3] = '<ignore_me> ' + written_sentences[3] + ' <me too>'
+    write_remote_content(TMP_FILE3,  "\n".join(written_sentences))
+    # Edit should merge files
+    client.edit(
+        TMP_FILE3,
+        automerge={'ignore_edit': '^<ignore_me> | <me too>'},
+        diff_mode=True
+    )
+
 
 def reset_environment(original_config=None):
     """
@@ -177,6 +229,12 @@ def reset_environment(original_config=None):
 
 
 if __name__ == '__main__':
+
+    original_config = reset_environment()
+    test_main(copy.deepcopy(original_config))
+    reset_environment(original_config)
+    exit(1)
+
     try:
         original_config = reset_environment()
         test_main(copy.deepcopy(original_config))

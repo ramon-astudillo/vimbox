@@ -5,6 +5,7 @@ Handles back-end errors in a unified way
 """
 import os
 import sys
+import re
 # import shutil
 import getpass
 #
@@ -136,7 +137,8 @@ class VimboxClient():
 
         return remote_content, status, password
 
-    def pull(self, remote_file, force_creation, password=None):
+    def pull(self, remote_file, force_creation, password=None, 
+             automerge=None):
 
         # Fetch local content for this file
         local_file, local_content = self.get_local_content(remote_file)
@@ -173,13 +175,81 @@ class VimboxClient():
         elif local_content is not None and local_content != remote_content:
 
             # Content conflict, call local.mergetool
-            old_local_file = "%s.local" % local_file
-            local.write_file(old_local_file, local_content)
-            local.write_file(local_file, remote_content)
-            local.mergetool(old_local_file, local_file)
-            merged_content = local.read_file(local_file)
-            # Clean up extra temporary file
-            os.remove(old_local_file)
+            merged_strategy = None 
+
+            # If automerge selected try one or more strategies
+            if automerge:
+
+                remote_lines = remote_content.split('\n')
+                local_lines = local_content.split('\n')
+                num_lines_remote = len(remote_lines)
+                num_lines_local = len(local_lines)
+                # Appended text
+                if (
+                    ('append' in automerge or 'insert' in automerge) and
+                    remote_lines[:num_lines_local] == local_lines
+                ):
+                    merged_strategy = 'append'
+                    merged_content = remote_content
+                    local.write_file(local_file, merged_content)
+
+                # Prepended text 
+                if (
+                    merged_strategy is None and
+                    ('prepend' in automerge or 'insert' in automerge) and
+                    remote_lines[-num_lines_local:] == local_lines
+                ):
+                    merged_strategy = 'prepend'
+                    merged_content = remote_content
+                    local.write_file(local_file, merged_content)
+
+                if merged_strategy is None and 'insert' in automerge:
+                    local_cursor = 0
+                    remote_cursor = 0
+                    while (
+                        local_cursor < num_lines_local and
+                        num_lines_remote - remote_cursor >
+                        num_lines_local - local_cursor
+                    ):
+                        if (
+                            local_lines[local_cursor] ==
+                            remote_lines[remote_cursor]
+                        ):
+                            remote_cursor += 1
+                            local_cursor += 1
+                        else:
+                            remote_cursor += 1
+                    if local_cursor == num_lines_local - 1:
+                        merged_strategy = 'insert'
+                        merged_content = remote_content
+                        local.write_file(local_file, merged_content)
+
+                if merged_strategy is None and 'ignore_edit' in automerge:
+
+                    filt_pattern = re.compile(automerge['ignore_edit'])
+                    filtered_remote_lines = map(
+                        lambda x: filt_pattern.sub('', x),
+                        remote_lines
+                    )
+                    filtered_local_lines = map(
+                        lambda x: filt_pattern.sub('', x),
+                        local_lines
+                    )
+                    if filtered_remote_lines == filtered_local_lines:
+                        merged_strategy = 'ignored edit'
+                        merged_content = remote_content
+                        local.write_file(local_file, merged_content)
+
+            if merged_strategy is None:
+                old_local_file = "%s.local" % local_file
+                local.write_file(old_local_file, local_content)
+                local.write_file(local_file, remote_content)
+                local.mergetool(old_local_file, local_file)
+                merged_content = local.read_file(local_file)
+                # Clean up extra temporary file
+                os.remove(old_local_file)
+            else:
+                print("merged by %s" % merged_strategy)
 
         else:
 
@@ -402,7 +472,7 @@ class VimboxClient():
 
     def edit(self, remote_file, remove_local=None, diff_mode=False,
              force_creation=False, register_folder=True, password=None,
-             initial_text=None):
+             initial_text=None, automerge=None):
         """
         Edit or create existing file
 
@@ -437,7 +507,8 @@ class VimboxClient():
         content, fetch_status, password = self.pull(
             remote_file,
             force_creation,
-            password=password
+            password=password,
+            automerge=automerge
         )
 
         if force_creation and content['local'] and content['remote'] is None:
