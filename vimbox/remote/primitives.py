@@ -24,6 +24,83 @@ def get_path_components(path):
     return tuple(filter(None, path.split('/')))
 
 
+def auto_merge(local_content, remote_content, automerge):
+
+    # Work with separate lines
+    remote_lines = remote_content.split('\n')
+    local_lines = local_content.split('\n')
+    num_lines_remote = len(remote_lines)
+    num_lines_local = len(local_lines)
+
+    merge_strategy = None
+
+    # Remote appended text
+    if (
+        ('append' in automerge or 'insert' in automerge) and
+        remote_lines[:num_lines_local] == local_lines
+    ):
+        merge_strategy = 'append'
+        merged_content = remote_content
+
+    # Remote appended text to one line
+    if (
+        ('line-append' in automerge) and
+        num_lines_remote == num_lines_remote == 1 and
+        remote_lines[0][:len(local_lines[0])] == local_lines[0]
+    ):
+        merge_strategy = 'line-append'
+        merged_content = remote_content
+
+    # Remote prepended text
+    if (
+        merge_strategy is None and
+        ('prepend' in automerge or 'insert' in automerge) and
+        remote_lines[-num_lines_local:] == local_lines
+    ):
+        merge_strategy = 'prepend'
+        merged_content = remote_content
+
+    # Remote inserted text
+    if merge_strategy is None and 'insert' in automerge:
+        local_cursor = 0
+        remote_cursor = 0
+        while (
+            local_cursor < num_lines_local and
+            num_lines_remote - remote_cursor >
+            num_lines_local - local_cursor
+        ):
+            if (
+                local_lines[local_cursor] ==
+                remote_lines[remote_cursor]
+            ):
+                remote_cursor += 1
+                local_cursor += 1
+            else:
+                remote_cursor += 1
+        if local_cursor == num_lines_local - 1:
+            merge_strategy = 'insert'
+            merged_content = remote_content
+
+    # Remote and local differ in admissinble way 
+    # FIXME: This also automerges changes from local!
+    if merge_strategy is None and 'ignore_edit' in automerge:
+
+        filt_pattern = re.compile(automerge['ignore_edit'])
+        filtered_remote_lines = map(
+            lambda x: filt_pattern.sub('', x),
+            remote_lines
+        )
+        filtered_local_lines = map(
+            lambda x: filt_pattern.sub('', x),
+            local_lines
+        )
+        if filtered_remote_lines == filtered_local_lines:
+            merge_strategy = 'ignored edit'
+            merged_content = remote_content
+
+    return merged_content, merge_strategy
+
+
 class VimboxClient():
 
     def __init__(self, config=None):
@@ -137,7 +214,7 @@ class VimboxClient():
 
         return remote_content, status, password
 
-    def pull(self, remote_file, force_creation, password=None, 
+    def pull(self, remote_file, force_creation, password=None,
              automerge=None):
 
         # Fetch local content for this file
@@ -174,73 +251,15 @@ class VimboxClient():
 
         elif local_content is not None and local_content != remote_content:
 
-            # Content conflict, call local.mergetool
-            merged_strategy = None 
-
             # If automerge selected try one or more strategies
             if automerge:
+                merged_content, merge_strategy = auto_merge(
+                    local_content,
+                    remote_content,
+                    automerge
+                )
 
-                remote_lines = remote_content.split('\n')
-                local_lines = local_content.split('\n')
-                num_lines_remote = len(remote_lines)
-                num_lines_local = len(local_lines)
-                # Appended text
-                if (
-                    ('append' in automerge or 'insert' in automerge) and
-                    remote_lines[:num_lines_local] == local_lines
-                ):
-                    merged_strategy = 'append'
-                    merged_content = remote_content
-                    local.write_file(local_file, merged_content)
-
-                # Prepended text 
-                if (
-                    merged_strategy is None and
-                    ('prepend' in automerge or 'insert' in automerge) and
-                    remote_lines[-num_lines_local:] == local_lines
-                ):
-                    merged_strategy = 'prepend'
-                    merged_content = remote_content
-                    local.write_file(local_file, merged_content)
-
-                if merged_strategy is None and 'insert' in automerge:
-                    local_cursor = 0
-                    remote_cursor = 0
-                    while (
-                        local_cursor < num_lines_local and
-                        num_lines_remote - remote_cursor >
-                        num_lines_local - local_cursor
-                    ):
-                        if (
-                            local_lines[local_cursor] ==
-                            remote_lines[remote_cursor]
-                        ):
-                            remote_cursor += 1
-                            local_cursor += 1
-                        else:
-                            remote_cursor += 1
-                    if local_cursor == num_lines_local - 1:
-                        merged_strategy = 'insert'
-                        merged_content = remote_content
-                        local.write_file(local_file, merged_content)
-
-                if merged_strategy is None and 'ignore_edit' in automerge:
-
-                    filt_pattern = re.compile(automerge['ignore_edit'])
-                    filtered_remote_lines = map(
-                        lambda x: filt_pattern.sub('', x),
-                        remote_lines
-                    )
-                    filtered_local_lines = map(
-                        lambda x: filt_pattern.sub('', x),
-                        local_lines
-                    )
-                    if filtered_remote_lines == filtered_local_lines:
-                        merged_strategy = 'ignored edit'
-                        merged_content = remote_content
-                        local.write_file(local_file, merged_content)
-
-            if merged_strategy is None:
+            if merge_strategy is None:
                 old_local_file = "%s.local" % local_file
                 local.write_file(old_local_file, local_content)
                 local.write_file(local_file, remote_content)
@@ -249,7 +268,8 @@ class VimboxClient():
                 # Clean up extra temporary file
                 os.remove(old_local_file)
             else:
-                print("merged by %s" % merged_strategy)
+                local.write_file(local_file, merged_content)
+                print("merged by %s" % merge_strategy)
 
         else:
 
