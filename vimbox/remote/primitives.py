@@ -32,10 +32,12 @@ def auto_merge(local_content, remote_content, automerge):
     num_lines_remote = len(remote_lines)
     num_lines_local = len(local_lines)
 
+    merged_content = None
     merge_strategy = None
 
     # Remote appended text
     if (
+        merge_strategy is None and
         ('append' in automerge or 'insert' in automerge) and
         remote_lines[:num_lines_local] == local_lines
     ):
@@ -44,6 +46,7 @@ def auto_merge(local_content, remote_content, automerge):
 
     # Remote appended text to one line
     if (
+        merge_strategy is None and
         ('line-append' in automerge) and
         num_lines_remote == num_lines_remote == 1 and
         remote_lines[0][:len(local_lines[0])] == local_lines[0]
@@ -64,28 +67,33 @@ def auto_merge(local_content, remote_content, automerge):
     if merge_strategy is None and 'insert' in automerge:
         local_cursor = 0
         remote_cursor = 0
-        while (
-            local_cursor < num_lines_local and
-            num_lines_remote - remote_cursor >
-            num_lines_local - local_cursor
-        ):
+        reminder_remote = num_lines_remote
+        reminder_local = num_lines_local
+        while True:
             if (
-                local_lines[local_cursor] ==
-                remote_lines[remote_cursor]
+                num_lines_local - local_cursor <= 1 or
+                num_lines_remote - remote_cursor <=
+                    num_lines_local - local_cursor
             ):
+                # exit if entire local consumed or not enough remote lines to
+                # match local
+                break
+            if local_lines[local_cursor] == remote_lines[remote_cursor]:
                 remote_cursor += 1
                 local_cursor += 1
             else:
                 remote_cursor += 1
+            reminder_remote = num_lines_remote - remote_cursor
+            reminder_local = num_lines_local - local_cursor
         if local_cursor == num_lines_local - 1:
             merge_strategy = 'insert'
             merged_content = remote_content
 
     # Remote and local differ in admissinble way 
     # FIXME: This also automerges changes from local!
-    if merge_strategy is None and 'ignore_edit' in automerge:
+    if merge_strategy is None and 'ignore-edit' in automerge:
 
-        filt_pattern = re.compile(automerge['ignore_edit'])
+        filt_pattern = re.compile(automerge['ignore-edit'])
         filtered_remote_lines = map(
             lambda x: filt_pattern.sub('', x),
             remote_lines
@@ -95,7 +103,7 @@ def auto_merge(local_content, remote_content, automerge):
             local_lines
         )
         if filtered_remote_lines == filtered_local_lines:
-            merge_strategy = 'ignored edit'
+            merge_strategy = 'ignore-edit'
             merged_content = remote_content
 
     return merged_content, merge_strategy

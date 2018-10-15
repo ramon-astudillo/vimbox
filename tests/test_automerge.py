@@ -2,6 +2,8 @@ import os
 import copy
 import sys
 import shutil
+from vimbox.remote.primitives import auto_merge
+
 import vimbox
 from vimbox.__main__ import main
 from vimbox.crypto import get_path_hash
@@ -64,49 +66,68 @@ def write_remote_content(remote_file, remote_content):
 
 def test_main(config):
 
-    # Get initial config, set backend to fake
-    # FIXME: If this dies it will leave the backend set to fake
-    config['backend_name'] = 'fake'
+    # AUTOMERGE: Append
+    local_content = 'This is some text'
+    remote_content = local_content + "\nAppended line"
+    merged_content, merge_strategy = auto_merge(
+        local_content,
+        remote_content,
+        {'append', 'prepend'}
+    )
+    assert merge_strategy == 'append', "Automerge appended line failed"
+    assert merged_content == remote_content, "Automerge appended line failed"
 
-    TMP_FILE = '%splain' % UNIT_TEST_FOLDER
-    TMP_CONTENT = 'This is some text'
+    # AUTOMERGE: Append-line
+    local_content = 'This is some text'
+    remote_content = local_content + "Appended line"
+    merged_content, merge_strategy = auto_merge(
+        local_content,
+        remote_content,
+        {'line-append'}
+    )
+    assert merge_strategy == 'line-append', "Automerge appended line failed"
+    assert merged_content == remote_content, "Automerge appended line failed"
 
-    # AUTOMERGE: Append/Prepend
-    TMP_FILE = '%soriginal' % UNIT_TEST_FOLDER
-    main(['-f', TMP_FILE, TMP_CONTENT], config=config)
-    # Simulate append remote edition
-    written_content = read_remote_content(TMP_FILE)
-    write_remote_content(TMP_FILE, TMP_CONTENT + "\nAppended line")
-    # Edit should merge files
-    from vimbox.remote.primitives import VimboxClient
-    client = VimboxClient()
-    client.edit(TMP_FILE, automerge={'append', 'prepend'}, diff_mode=True)
-    # Simulate prepend remote edition
-    written_content = read_remote_content(TMP_FILE)
-    write_remote_content(TMP_FILE,  "Prepended line\n" + written_content)
-    # Edit should merge files
-    client.edit(TMP_FILE, automerge={'append', 'prepend'}, diff_mode=True)
+    # AUTOMERGE: Prepend 
+    local_content = 'This is some text'
+    remote_content = 'Prepended text\n' + local_content
+    merged_content, merge_strategy = auto_merge(
+        local_content,
+        remote_content,
+        {'append', 'prepend'}
+    )
+    assert merge_strategy == 'prepend', "Automerge prepended line failed"
+    assert merged_content == remote_content, "Automerge prepend line failed"
 
     # AUTOMERGE: Insert
-    # Simulate insert in remote edition
-    written_sentences = read_remote_content(TMP_FILE).split('\n')
-    written_sentences.insert(1, 'Inserted 1')
-    written_sentences.insert(2, 'Inserted 2')
-    written_sentences.insert(4, 'Inserted 3')
-    write_remote_content(TMP_FILE,  "\n".join(written_sentences))
-    # Edit should merge files
-    client.edit(TMP_FILE, automerge=['insert'], diff_mode=True)
+    local_lines = ['This is one sentence', 'This is another']
+    remote_lines= list(local_lines)
+    remote_lines.insert(1, 'Inserted 1')
+    remote_lines.insert(2, 'Inserted 2')
+    remote_lines.insert(4, 'Inserted 3')
+    local_content = "\n".join(local_lines)
+    remote_content = "\n".join(remote_lines)
+    merged_content, merge_strategy = auto_merge(
+        local_content,
+        remote_content,
+        {'insert'}
+    )
+    assert merge_strategy == 'insert', "Automerge prepended line failed"
+    assert merged_content == remote_content, "Automerge insert line failed"
 
     # AUTOMERGE: Valid line modification
-    written_sentences = read_remote_content(TMP_FILE).split('\n')
-    written_sentences[3] = '<ignore_me> ' + written_sentences[3] + ' <me too>'
-    write_remote_content(TMP_FILE,  "\n".join(written_sentences))
-    # Edit should merge files
-    client.edit(
-        TMP_FILE,
-        automerge={'ignore_edit': '^<ignore_me> | <me too>'},
-        diff_mode=True
+    local_lines = ['This is one sentence', 'This is another']
+    remote_lines= list(local_lines)
+    remote_lines[1] = '<ignore_me> ' + remote_lines[1] + ' <me too>'
+    local_content = "\n".join(local_lines)
+    remote_content = "\n".join(remote_lines)
+    merged_content, merge_strategy = auto_merge(
+        local_content,
+        remote_content,
+        {'ignore-edit': '^<ignore_me> | <me too>'}
     )
+    assert merge_strategy == 'ignore-edit', "Automerge ignore-edit failed"
+    assert merged_content == remote_content, "Automerge ignore-edit failed"
 
 
 def reset_environment(original_config=None):
