@@ -35,6 +35,19 @@ def auto_merge(local_content, remote_content, automerge):
     merged_content = None
     merge_strategy = None
 
+    # Remote and local differ in admissinble way
+    # FIXME: This also automerges changes from local!
+    if merge_strategy is None and 'ignore-edit' in automerge:
+        filt_pattern = re.compile(automerge['ignore-edit'])
+        remote_lines = map(
+            lambda x: filt_pattern.sub('', x),
+            remote_lines
+        )
+        local_lines = map(
+            lambda x: filt_pattern.sub('', x),
+            local_lines
+        )
+
     # Remote appended text
     if (
         merge_strategy is None and
@@ -87,23 +100,6 @@ def auto_merge(local_content, remote_content, automerge):
             reminder_local = num_lines_local - local_cursor
         if local_cursor == num_lines_local - 1:
             merge_strategy = 'insert'
-            merged_content = remote_content
-
-    # Remote and local differ in admissinble way 
-    # FIXME: This also automerges changes from local!
-    if merge_strategy is None and 'ignore-edit' in automerge:
-
-        filt_pattern = re.compile(automerge['ignore-edit'])
-        filtered_remote_lines = map(
-            lambda x: filt_pattern.sub('', x),
-            remote_lines
-        )
-        filtered_local_lines = map(
-            lambda x: filt_pattern.sub('', x),
-            local_lines
-        )
-        if filtered_remote_lines == filtered_local_lines:
-            merge_strategy = 'ignore-edit'
             merged_content = remote_content
 
     return merged_content, merge_strategy
@@ -260,6 +256,7 @@ class VimboxClient():
         elif local_content is not None and local_content != remote_content:
 
             # If automerge selected try one or more strategies
+            merge_strategy = None
             if automerge:
                 merged_content, merge_strategy = auto_merge(
                     local_content,

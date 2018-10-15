@@ -88,7 +88,7 @@ def test_main(config):
     assert merge_strategy == 'line-append', "Automerge appended line failed"
     assert merged_content == remote_content, "Automerge appended line failed"
 
-    # AUTOMERGE: Prepend 
+    # AUTOMERGE: Prepend
     local_content = 'This is some text'
     remote_content = 'Prepended text\n' + local_content
     merged_content, merge_strategy = auto_merge(
