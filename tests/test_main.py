@@ -169,45 +169,6 @@ def test_main(config):
     assert hash_entry not in read_config['path_hashes'].items(), \
         "Removal of path hash failed"
 
-    # TODO: Move encrypted files.
-
-    # AUTOMERGE: Append/Prepend
-    TMP_FILE3 = '%soriginal' % UNIT_TEST_FOLDER
-    main(['-f', TMP_FILE3, TMP_CONTENT], config=config)
-    # Simulate append remote edition
-    written_content = read_remote_content(TMP_FILE3)
-    write_remote_content(TMP_FILE3, TMP_CONTENT + "\nAppended line")
-    # Edit should merge files
-    from vimbox.remote.primitives import VimboxClient
-    client = VimboxClient()
-    client.edit(TMP_FILE3, automerge={'append', 'prepend'}, diff_mode=True)
-    # Simulate prepend remote edition
-    written_content = read_remote_content(TMP_FILE3)
-    write_remote_content(TMP_FILE3,  "Prepended line\n" + written_content)
-    # Edit should merge files
-    client.edit(TMP_FILE3, automerge={'append', 'prepend'}, diff_mode=True)
-
-    # AUTOMERGE: Insert
-    # Simulate insert in remote edition
-    written_sentences = read_remote_content(TMP_FILE3).split('\n')
-    written_sentences.insert(1, 'Inserted 1')
-    written_sentences.insert(2, 'Inserted 2')
-    written_sentences.insert(4, 'Inserted 3')
-    write_remote_content(TMP_FILE3,  "\n".join(written_sentences))
-    # Edit should merge files
-    client.edit(TMP_FILE3, automerge=['insert'], diff_mode=True)
-
-    # AUTOMERGE: Valid line modification
-    written_sentences = read_remote_content(TMP_FILE3).split('\n')
-    written_sentences[3] = '<ignore_me> ' + written_sentences[3] + ' <me too>'
-    write_remote_content(TMP_FILE3,  "\n".join(written_sentences))
-    # Edit should merge files
-    client.edit(
-        TMP_FILE3,
-        automerge={'ignore_edit': '^<ignore_me> | <me too>'},
-        diff_mode=True
-    )
-
 
 def reset_environment(original_config=None):
     """
