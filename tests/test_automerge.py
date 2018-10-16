@@ -76,10 +76,11 @@ def test_main(config):
     )
     assert merge_strategy == 'append', "Automerge appended line failed"
     assert merged_content == remote_content, "Automerge appended line failed"
+    print("Automerge append OK")
 
     # AUTOMERGE: Append-line
     local_content = 'This is some text'
-    remote_content = local_content + "Appended line"
+    remote_content = local_content + "Appended to line"
     merged_content, merge_strategy = auto_merge(
         local_content,
         remote_content,
@@ -87,6 +88,7 @@ def test_main(config):
     )
     assert merge_strategy == 'line-append', "Automerge appended line failed"
     assert merged_content == remote_content, "Automerge appended line failed"
+    print("Automerge line append OK")
 
     # AUTOMERGE: Prepend
     local_content = 'This is some text'
@@ -96,8 +98,21 @@ def test_main(config):
         remote_content,
         {'append', 'prepend'}
     )
-    assert merge_strategy == 'prepend', "Automerge prepended line failed"
+    assert merge_strategy == 'prepend', "Automerge prepended failed"
+    assert merged_content == remote_content, "Automerge prepend failed"
+    print("Automerge prepend OK")
+
+    # AUTOMERGE: Prepend
+    local_content = 'This is some text'
+    remote_content = 'Prepended to line' + local_content
+    merged_content, merge_strategy = auto_merge(
+        local_content,
+        remote_content,
+        {'line-prepend'}
+    )
+    assert merge_strategy == 'line-prepend', "Automerge prepended line failed"
     assert merged_content == remote_content, "Automerge prepend line failed"
+    print("Automerge line prepend OK")
 
     # AUTOMERGE: Insert
     local_lines = ['This is one sentence', 'This is another']
@@ -114,20 +129,22 @@ def test_main(config):
     )
     assert merge_strategy == 'insert', "Automerge prepended line failed"
     assert merged_content == remote_content, "Automerge insert line failed"
+    print("Automerge insert OK")
 
-    # AUTOMERGE: Valid line modification
-    local_lines = ['This is one sentence', 'This is another']
-    remote_lines= list(local_lines)
-    remote_lines[1] = '<ignore_me> ' + remote_lines[1] + ' <me too>'
-    local_content = "\n".join(local_lines)
-    remote_content = "\n".join(remote_lines)
-    merged_content, merge_strategy = auto_merge(
-        local_content,
-        remote_content,
-        {'ignore-edit': '^<ignore_me> | <me too>'}
-    )
-    assert merge_strategy == 'ignore-edit', "Automerge ignore-edit failed"
-    assert merged_content == remote_content, "Automerge ignore-edit failed"
+#    # AUTOMERGE: Valid line modification
+#    local_lines = ['This is one sentence', 'This is another']
+#    remote_lines= list(local_lines)
+#    remote_lines[1] = '<ignore_me> ' + remote_lines[1] + ' <me too>'
+#    local_content = "\n".join(local_lines)
+#    remote_content = "\n".join(remote_lines)
+#    merged_content, merge_strategy = auto_merge(
+#        local_content,
+#        remote_content,
+#        {'ignore-edit': '^<ignore_me> | <me too>'}
+#    )
+#    assert merge_strategy == 'ignore-edit', "Automerge ignore-edit failed"
+#    assert merged_content == remote_content, "Automerge ignore-edit failed"
+#    print("Automerge insert OK")
 
 
 def reset_environment(original_config=None):

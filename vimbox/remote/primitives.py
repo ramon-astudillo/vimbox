@@ -24,83 +24,114 @@ def get_path_components(path):
     return tuple(filter(None, path.split('/')))
 
 
-def auto_merge(local_content, remote_content, automerge):
+def auto_merge(reference_content, modified_content, automerge):
+
+    # Ensure allowed automerge rules
+    valid_rules = {
+        'append',        #  Append an line at the end of the reference
+        'prepend',       #  Prepend an line at the  beginning of the reference  
+        'insert',        #  Insert one or more line in the reference 
+        'line-append',    #  Append text to a line of the ref
+        'line-prepend',  #  Prepend text to a line of the ref
+        #'ignore-edit',   #  Admissible line edit
+    }
+    if isinstance(automerge, dict):
+        rules = set(automerge)
+    else:
+        rules = automerge
+    for rule in rules:
+        assert rule in valid_rules, "Unknown rule %s" % rule
 
     # Work with separate lines
-    remote_lines = remote_content.split('\n')
-    local_lines = local_content.split('\n')
-    num_lines_remote = len(remote_lines)
-    num_lines_local = len(local_lines)
+    reference_lines = reference_content.split('\n')
+    modified_lines = modified_content.split('\n')
+    num_lines_modified = len(modified_lines)
+    num_lines_reference = len(reference_lines)
 
-    merged_content = None
-    merge_strategy = None
-
-    # Remote and local differ in admissinble way
-    # FIXME: This also automerges changes from local!
-    if merge_strategy is None and 'ignore-edit' in automerge:
-        filt_pattern = re.compile(automerge['ignore-edit'])
-        remote_lines = map(
-            lambda x: filt_pattern.sub('', x),
-            remote_lines
-        )
-        local_lines = map(
-            lambda x: filt_pattern.sub('', x),
-            local_lines
-        )
-
-    # Remote appended text
+    # Quick exits
     if (
-        merge_strategy is None and
-        ('append' in automerge or 'insert' in automerge) and
-        remote_lines[:num_lines_local] == local_lines
+        'append' in automerge and
+        modified_lines[:num_lines_reference] == reference_lines
     ):
-        merge_strategy = 'append'
-        merged_content = remote_content
-
-    # Remote appended text to one line
+        return modified_content, 'append'
     if (
-        merge_strategy is None and
-        ('line-append' in automerge) and
-        num_lines_remote == num_lines_remote == 1 and
-        remote_lines[0][:len(local_lines[0])] == local_lines[0]
+        'prepend' in automerge and
+        modified_lines[-num_lines_reference:] == reference_lines
     ):
-        merge_strategy = 'line-append'
-        merged_content = remote_content
+        return modified_content, 'prepend'
 
-    # Remote prepended text
-    if (
-        merge_strategy is None and
-        ('prepend' in automerge or 'insert' in automerge) and
-        remote_lines[-num_lines_local:] == local_lines
+    # Simplified closed edit distance. We only admit insertions and controlled
+    # line edits so its linear over 
+    # max(num_lines_reference, num_lines_modified - num_lines_reference) 
+    merge_strategy = set()
+    modified_cursor = 0
+    reference_cursor = 0
+    valid_modification = False
+    while (
+        num_lines_modified - modified_cursor >=
+            num_lines_reference - reference_cursor
     ):
-        merge_strategy = 'prepend'
-        merged_content = remote_content
+        # Get current lines
+        modified_line = modified_lines[modified_cursor]
+        reference_line = reference_lines[reference_cursor]
+        num_char_ref = len(reference_line)
 
-    # Remote inserted text
-    if merge_strategy is None and 'insert' in automerge:
-        local_cursor = 0
-        remote_cursor = 0
-        reminder_remote = num_lines_remote
-        reminder_local = num_lines_local
-        while True:
-            if (
-                num_lines_local - local_cursor <= 1 or
-                num_lines_remote - remote_cursor <=
-                    num_lines_local - local_cursor
-            ):
-                # exit if entire local consumed or not enough remote lines to
-                # match local
-                break
-            if local_lines[local_cursor] == remote_lines[remote_cursor]:
-                remote_cursor += 1
-                local_cursor += 1
-            else:
-                remote_cursor += 1
-            reminder_remote = num_lines_remote - remote_cursor
-            reminder_local = num_lines_local - local_cursor
-        if local_cursor == num_lines_local - 1:
-            merge_strategy = 'insert'
-            merged_content = remote_content
+        # Try to align modified with reference, advance over modified otherwise
+        if modified_line == reference_line:
+            # Matches
+            modified_cursor += 1
+            reference_cursor += 1
+        elif (
+            'line-prepend' in automerge and
+            modified_line[-num_char_ref:] == reference_line
+        ):
+            # Matches prepending to this line of modified 
+            merge_strategy |= set(['line-prepend'])
+            modified_cursor += 1
+            reference_cursor += 1
+        elif (
+            'line-append' in automerge and
+            modified_line[:num_char_ref] == reference_line
+        ):
+            # Matches appending to this line of modified 
+            merge_strategy |= set(['line-append'])
+            modified_cursor += 1
+            reference_cursor += 1
+        elif 'prepend' in automerge and modified_cursor == 0:
+            # Line prepended to modified
+            merge_strategy |= set(['prepend'])
+            modified_cursor += 1
+        elif 'append' in automerge and modified_cursor == num_lines_local - 1:
+            # Line appended to modified
+            merge_strategy |= set(['append'])
+            modified_cursor += 1
+        elif 'insert' in automerge:
+            # Line inserted in modified
+            merge_strategy |= set(['insert'])
+            modified_cursor += 1
+        else:
+            # No valid modification, exit
+            merge_strategy |= set([None])
+            break
+
+        # If we consumed all the reference it's a valid modification 
+        if reference_cursor == num_lines_reference:
+            valid_modification = True
+            # If we did not consume modified, this is also a append
+            if modified_cursor < num_lines_modified - 1:
+                merge_strategy |= set(['append'])
+            break
+
+    if valid_modification:
+        if len(merge_strategy) == 1:
+            merge_strategy = list(merge_strategy)[0]
+        else:
+            import ipdb;ipdb.set_trace(context=30)
+            pass
+        merged_content = modified_content
+    else:
+        merge_strategy = None
+        merged_content = None
 
     return merged_content, merge_strategy
 
@@ -219,7 +250,7 @@ class VimboxClient():
         return remote_content, status, password
 
     def pull(self, remote_file, force_creation, password=None,
-             automerge=None):
+             automerge=None, amerge_ref_is_local=False):
 
         # Fetch local content for this file
         local_file, local_content = self.get_local_content(remote_file)
@@ -261,7 +292,8 @@ class VimboxClient():
                 merged_content, merge_strategy = auto_merge(
                     local_content,
                     remote_content,
-                    automerge
+                    automerge,
+                    amerge_ref_is_local
                 )
 
             if merge_strategy is None:
@@ -497,17 +529,20 @@ class VimboxClient():
 
     def edit(self, remote_file, remove_local=None, diff_mode=False,
              force_creation=False, register_folder=True, password=None,
-             initial_text=None, automerge=None):
+             initial_text=None, automerge=None, amerge_ref_is_local=False):
         """
         Edit or create existing file
 
         Edits will happen on a local copy that will be uploded when finished.
 
-        remove_local     After sucesful push remove local content
-        diff_mode        Only pull and push, no editing
-        force_creation   Mandatory for new file on remote
-        register_folder  Store file path in local cache
-        password         Optional encryption/decription on client side
+        remove_local        After sucesful push remove local content
+        diff_mode           Only pull and push, no editing
+        force_creation      Mandatory for new file on remote
+        register_folder     Store file path in local cache
+        password            Optional encryption/decription on client side
+        automerge_rules     Allowed way to automerge
+        amerge_ref_is_local If valid automerge use local as reference (default
+                            is remote)
         """
 
         # Checks
@@ -533,7 +568,8 @@ class VimboxClient():
             remote_file,
             force_creation,
             password=password,
-            automerge=automerge
+            automerge=automerge,
+            amerge_ref_is_local=amerge_ref_is_local
         )
 
         if force_creation and content['local'] and content['remote'] is None:
