@@ -29,8 +29,8 @@ def auto_merge(reference_content, modified_content, automerge):
     # Ensure allowed automerge rules
     valid_rules = {
         'append',        #  Append an line at the end of the reference
-        'prepend',       #  Prepend an line at the  beginning of the reference  
-        'insert',        #  Insert one or more line in the reference 
+        'prepend',       #  Prepend an line at the  beginning of the reference
+        'insert',        #  Insert one or more line in the reference
         'line-append',    #  Append text to a line of the ref
         'line-prepend',  #  Prepend text to a line of the ref
         #'ignore-edit',   #  Admissible line edit
@@ -61,8 +61,8 @@ def auto_merge(reference_content, modified_content, automerge):
         return modified_content, 'prepend'
 
     # Simplified closed edit distance. We only admit insertions and controlled
-    # line edits so its linear over 
-    # max(num_lines_reference, num_lines_modified - num_lines_reference) 
+    # line edits so its linear over
+    # max(num_lines_reference, num_lines_modified - num_lines_reference)
     merge_strategy = set()
     modified_cursor = 0
     reference_cursor = 0
@@ -85,7 +85,7 @@ def auto_merge(reference_content, modified_content, automerge):
             'line-prepend' in automerge and
             modified_line[-num_char_ref:] == reference_line
         ):
-            # Matches prepending to this line of modified 
+            # Matches prepending to this line of modified
             merge_strategy |= set(['line-prepend'])
             modified_cursor += 1
             reference_cursor += 1
@@ -93,7 +93,7 @@ def auto_merge(reference_content, modified_content, automerge):
             'line-append' in automerge and
             modified_line[:num_char_ref] == reference_line
         ):
-            # Matches appending to this line of modified 
+            # Matches appending to this line of modified
             merge_strategy |= set(['line-append'])
             modified_cursor += 1
             reference_cursor += 1
@@ -114,7 +114,7 @@ def auto_merge(reference_content, modified_content, automerge):
             merge_strategy |= set([None])
             break
 
-        # If we consumed all the reference it's a valid modification 
+        # If we consumed all the reference it's a valid modification
         if reference_cursor == num_lines_reference:
             valid_modification = True
             # If we did not consume modified, this is also a append
@@ -289,12 +289,21 @@ class VimboxClient():
             # If automerge selected try one or more strategies
             merge_strategy = None
             if automerge:
-                merged_content, merge_strategy = auto_merge(
-                    local_content,
-                    remote_content,
-                    automerge,
-                    amerge_ref_is_local
-                )
+                # Select reference. Automerge will try to keep the information
+                # in it according to the rules. If it fails manual merge will
+                # fire.
+                if amerge_ref_is_local:
+                    merged_content, merge_strategy = auto_merge(
+                        local_content,
+                        remote_content,
+                        automerge,
+                    )
+                else:
+                    merged_content, merge_strategy = auto_merge(
+                        remote_content,
+                        local_content,
+                        automerge,
+                    )
 
             if merge_strategy is None:
                 old_local_file = "%s.local" % local_file
