@@ -24,23 +24,25 @@ def get_path_components(path):
     return tuple(filter(None, path.split('/')))
 
 
-def auto_merge(reference_content, modified_content, automerge):
+def auto_merge(reference_content, modified_content, automerge_rules):
 
     # Ensure allowed automerge rules
     valid_rules = {
-        'append',        #  Append an line at the end of the reference
-        'prepend',       #  Prepend an line at the  beginning of the reference
-        'insert',        #  Insert one or more line in the reference
-        'line-append',    #  Append text to a line of the ref
-        'line-prepend',  #  Prepend text to a line of the ref
-        #'ignore-edit',   #  Admissible line edit
+        'append',        # Append an line at the end of the reference
+        'prepend',       # Prepend an line at the  beginning of the reference
+        'insert',        # Insert one or more line in the reference
+        'line-append',   # Append text to a line of the ref
+        'line-prepend',  # Prepend text to a line of the ref
+        'ignore-edit',   # Admissible line edit
     }
-    if isinstance(automerge, dict):
-        rules = set(automerge)
+    if isinstance(automerge_rules, dict):
+        rules = set(automerge_rules)
     else:
-        rules = automerge
+        rules = automerge_rules
     for rule in rules:
         assert rule in valid_rules, "Unknown rule %s" % rule
+    if 'ignore-edit' in automerge_rules:
+        non_editable = re.compile(automerge_rules['ignore-edit'])
 
     # Work with separate lines
     reference_lines = reference_content.split('\n')
@@ -50,12 +52,12 @@ def auto_merge(reference_content, modified_content, automerge):
 
     # Quick exits
     if (
-        'append' in automerge and
+        'append' in automerge_rules and
         modified_lines[:num_lines_reference] == reference_lines
     ):
         return modified_content, 'append'
     if (
-        'prepend' in automerge and
+        'prepend' in automerge_rules and
         modified_lines[-num_lines_reference:] == reference_lines
     ):
         return modified_content, 'prepend'
@@ -82,30 +84,43 @@ def auto_merge(reference_content, modified_content, automerge):
             modified_cursor += 1
             reference_cursor += 1
         elif (
-            'line-prepend' in automerge and
+            'line-prepend' in automerge_rules and
             modified_line[-num_char_ref:] == reference_line
         ):
             # Matches prepending to this line of modified
             merge_strategy |= set(['line-prepend'])
             modified_cursor += 1
             reference_cursor += 1
+        elif 'ignore-edit' in automerge_rules and (
+                non_editable.match(reference_line) and
+                non_editable.match(modified_line) and
+                non_editable.match(reference_line).groups() ==
+                    non_editable.match(modified_line).groups()
+            ):
+            # Matches in the parts specified by the regexp
+            merge_strategy |= set(['ignore-edit'])
+            modified_cursor += 1
+            reference_cursor += 1
         elif (
-            'line-append' in automerge and
+            'line-append' in automerge_rules and
             modified_line[:num_char_ref] == reference_line
         ):
             # Matches appending to this line of modified
             merge_strategy |= set(['line-append'])
             modified_cursor += 1
             reference_cursor += 1
-        elif 'prepend' in automerge and modified_cursor == 0:
+        elif 'prepend' in automerge_rules and modified_cursor == 0:
             # Line prepended to modified
             merge_strategy |= set(['prepend'])
             modified_cursor += 1
-        elif 'append' in automerge and modified_cursor == num_lines_local - 1:
+        elif (
+            'append' in automerge_rules and
+            modified_cursor == num_lines_local - 1
+        ):
             # Line appended to modified
             merge_strategy |= set(['append'])
             modified_cursor += 1
-        elif 'insert' in automerge:
+        elif 'insert' in automerge_rules:
             # Line inserted in modified
             merge_strategy |= set(['insert'])
             modified_cursor += 1
@@ -123,11 +138,7 @@ def auto_merge(reference_content, modified_content, automerge):
             break
 
     if valid_modification:
-        if len(merge_strategy) == 1:
-            merge_strategy = list(merge_strategy)[0]
-        else:
-            import ipdb;ipdb.set_trace(context=30)
-            pass
+        merge_strategy = "+".join(merge_strategy)
         merged_content = modified_content
     else:
         merge_strategy = None
@@ -250,7 +261,7 @@ class VimboxClient():
         return remote_content, status, password
 
     def pull(self, remote_file, force_creation, password=None,
-             automerge=None, amerge_ref_is_local=False):
+             automerge_rules=None, amerge_ref_is_local=False):
 
         # Fetch local content for this file
         local_file, local_content = self.get_local_content(remote_file)
@@ -288,7 +299,7 @@ class VimboxClient():
 
             # If automerge selected try one or more strategies
             merge_strategy = None
-            if automerge:
+            if automerge_rules:
                 # Select reference. Automerge will try to keep the information
                 # in it according to the rules. If it fails manual merge will
                 # fire.
@@ -296,13 +307,13 @@ class VimboxClient():
                     merged_content, merge_strategy = auto_merge(
                         local_content,
                         remote_content,
-                        automerge,
+                        automerge_rules,
                     )
                 else:
                     merged_content, merge_strategy = auto_merge(
                         remote_content,
                         local_content,
-                        automerge,
+                        automerge_rules,
                     )
 
             if merge_strategy is None:
@@ -538,7 +549,7 @@ class VimboxClient():
 
     def edit(self, remote_file, remove_local=None, diff_mode=False,
              force_creation=False, register_folder=True, password=None,
-             initial_text=None, automerge=None, amerge_ref_is_local=False):
+             initial_text=None, automerge_rules=None, amerge_ref_is_local=False):
         """
         Edit or create existing file
 
@@ -577,7 +588,7 @@ class VimboxClient():
             remote_file,
             force_creation,
             password=password,
-            automerge=automerge,
+            automerge_rules=automerge_rules,
             amerge_ref_is_local=amerge_ref_is_local
         )
 
