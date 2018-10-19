@@ -15,12 +15,13 @@
 
 * Set editors used in config
 
-* Fix `pomot edit` still syncs everything
-
-* `vimbox mkdir /cosa/`. Right now this is achieved by creating a file inside
-
 * separate entry point `vimbox-cache `for `complete` call to ensure speed and
   stability
+
+* Input pipes `cat mylog | vimbox pipe -f /logs/mylog`
+    - needs Programatic edit operations
+
+* Programatic edit operations
 
 * Simple use in other Python code 
     - config auto completion?
@@ -32,28 +33,21 @@ client.move()
 ```
 
 * Other backends e.g. `vimbox /evernote/notes/`
-    - `dropbox paper` 
+    - `Google Drive`, see https://developers.google.com/drive/api/v3/quickstart/python
+    - `dropbox paper`, see https://www.dropbox.com/developers/documentation/http/documentation#paper 
     - `CloudBlaze` 
-    - `evernote` 
 
 * Replace deprecated pycrypto by pycryptodome, see
     - see https://github.com/dlitz/pycrypto/issues/173 
     - see https://github.com/Legrandin/pycryptodome
 
-* Input pipes `cat mylog | vimbox pipe -f /logs/mylog`
-    - needs Programatic edit operations
+* MD5 hashing does not count as encryption 
 
-* Programatic edit operations
+* Wildcards in commands `vimbox mv /notes/* /old_notes/`
 
 * Update autocomplete from vimbox after new register (instead of `source`)
     - [x] update function with submodule
     * update command
-
-- [ ] Fix viewing files but not editing them does not trigger delete locally
-- [ ] Fix virtualenv not storing the files inside it
-
-- [ ] Fix creating files with same name as folders 
-    - api-error not indicative enough
 
 - [ ] local encryption: `vim -x` with `vimbox -x`
     - Should imply using the auto-encryption token
@@ -66,19 +60,30 @@ client.move()
     - [ ] Fix can not create encrypted files at top level in dropbox
     - hash only file name, rather than path?
 
-- [ ] automerge: optionally append or insert can be done automatically
-    - For append/prepend
-        - len(modified) > len(original)
-        - EOF tokenization
-        - modified[:len(original)] == original
-        - modified[-len(original):] == original
-    - For insert
-        - EOF tokenization
-        - len(modified) > len(original)
-        - Linear search over len(modified) + len(original)
-    - Custom line merge    
-        - custom equal operator `(A) Cosa` same as `(B) Cosa` or `Cosa` 
-        - this treats original and edites by separate, may be limiting
+- [ ] Fix viewing files but not editing them does not trigger delete locally
+- [ ] Fix creating files with same name as folders 
+    - api-error not indicative enough
+
+- [ ] Upgrade folder primitives
+    - [ ] Add `vimbox mkdir`
+    - [ ] Fix and Re-allow `vimbox mv with folders` 
+        - [ ] Fix `vimbox mv /one/folder /other/` not disallowed
+        - also local removal will die since it is not empty
+        - add specific unit tests
+
+* Refactor `edit` as injecting an edit operation on a sync
+
+### Ongoing v0.3.2
+
+- [ ] display folders in different color (blue?) in `vimbox ls`
+
+- [x] automerge: optionally append or insert can be done automatically. Set 
+    one document as reference, disallow losing info by following primitives
+    - append/prepend to ref
+    - append/prepend to lines of ref
+    - insert to ref
+    - Custom line merge (this MAY remove info from ref)   
+        - custom equal operator `(A) Cosa` same as `(B) Cosa` 
 
 ### v0.3.1
 
