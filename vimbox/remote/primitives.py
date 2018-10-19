@@ -18,6 +18,7 @@ from vimbox import diogenes
 red = diogenes.style(font_color='light red')
 yellow = diogenes.style(font_color='yellow')
 green = diogenes.style(font_color='light green')
+blue = diogenes.style(font_color='light blue')
 
 
 def get_path_components(path):
@@ -407,6 +408,8 @@ class VimboxClient():
                 path_hashes = self.config['path_hashes']
                 if key in path_hashes:
                     file_folder = red(os.path.basename(path_hashes[key]))
+                if key[-1] == '/':
+                    file_folder = blue(file_folder)
                 new_display_folders.append(file_folder)
             display_string = "".join(
                 ["%s\n" % folder for folder in sorted(new_display_folders)]
@@ -648,7 +651,7 @@ class VimboxClient():
         if edits:
             local_file = self.get_local_file(remote_file)
             content['edited'] = edits(local_file, content)
-        elif remove_local:
+        else:
             # Why this?
             content['edited'] = content['merged']
 
@@ -738,6 +741,7 @@ class VimboxClient():
 
         elif content['merged'] != content['local']:
             # We overwrote local with remote
+            local_file = self.get_local_file(remote_file)
             local.local_edit(local_file, content['merged'], no_edit=True)
             print("%12s %s" % (yellow("pulled"), remote_file))
             if register_folder:
@@ -748,6 +752,8 @@ class VimboxClient():
             print("%12s %s" % (green("in-sync"), remote_file))
             if register_folder:
                 self.register_file(remote_file, password is not None)
+
+        return content['local'] == content['remote']
 
     def is_file(self, remote_file):
 

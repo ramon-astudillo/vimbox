@@ -71,12 +71,10 @@ client.move()
         - also local removal will die since it is not empty
         - add specific unit tests
 
-* Refactor `edit` as injecting an edit operation on a sync
-
 ### Ongoing v0.3.2
 
-- [ ] display folders in different color (blue?) in `vimbox ls`
-
+- [x] Refactor `edit` as injecting an edit operation on a sync
+- [x] display folders in different color (blue?) in `vimbox ls`
 - [x] automerge: optionally append or insert can be done automatically. Set 
     one document as reference, disallow losing info by following primitives
     - append/prepend to ref
