@@ -565,40 +565,26 @@ class VimboxClient():
                             is remote)
         """
 
-#        if initial_text:
-#            assert not content['remote'], "Can not overwrite remote"
-#            assert not content['local'], "Local content exists"
-#            content['edited'] = initial_text
-#            # Write to local file as well
-#            local.write_file(local_file, content['edited'])
+        if initial_text:
 
-#        # Needed variable names
-#        local_file = self.get_local_file(remote_file)
-#
-#        # Initialize backend
-#        if remove_local is None:
-#            remove_local = self.config['remove_local']
-#
-#        # Call editor on merged code if solicited
-#        # TODO: Programatic edit operations here
-#        if initial_text:
-#            assert not content['remote'], "Can not overwrite remote"
-#            assert not content['local'], "Local content exists"
-#            content['edited'] = initial_text
-#            # Write to local file as well
-#            local.write_file(local_file, content['edited'])
-#
-#        elif diff_mode:
-#
-#        else:
-#            # Edit with edit tool and retieve content
-#            content['edited'] = local.local_edit(
-#                local_file,
-#                content['merged']
-#            )
+            # Write empty file with given text
+            def manual_edit(local_file, content):
+                assert not content['remote'], "Can not overwrite remote"
+                assert not content['local'], "Local content exists"
+                return local.local_edit(
+                    local_file,
+                    initial_text,
+                    no_edit=True
+                )
 
-        def manual_edit(merged_content, local_content, remote_content):
-            pass
+        else:
+
+            # Prompt user for edit
+            def manual_edit(local_file, content):
+                return local.local_edit(
+                    local_file,
+                    content['merged']
+                )
 
         self.sync(
             remote_file,
@@ -606,22 +592,20 @@ class VimboxClient():
             force_creation=force_creation,
             register_folder=register_folder,
             password=password,
-            initial_text=initial_text,
             automerge_rules=automerge_rules,
             amerge_ref_is_local=amerge_ref_is_local,
             edits=manual_edit
         )
 
     def sync(self, remote_file, remove_local=None, force_creation=False,
-             register_folder=True, password=None, initial_text=None,
-             automerge_rules=None, amerge_ref_is_local=False, edits=None):
+             register_folder=True, password=None, automerge_rules=None,
+             amerge_ref_is_local=False, edits=None):
         """
-        Edit or create existing file
+        Syncronize remote and local content with optional edit
 
         Edits will happen on a local copy that will be uploded when finished.
 
         remove_local        After sucesful push remove local content
-        diff_mode           Only pull and push, no editing
         force_creation      Mandatory for new file on remote
         register_folder     Store file path in local cache
         password            Optional encryption/decription on client side
@@ -630,18 +614,18 @@ class VimboxClient():
                             is remote)
         """
 
-        # Checks
+        # Sanity checks
         if remote_file[-1] == '/':
             print("Can not edit folders")
             exit(1)
-
-        # Trying to create a registered file
-        if (
+        elif (
             remote_file in self.config['path_hashes'].values() and
             force_creation
         ):
             print('\nCan not re-encrypt a registered file.\n')
             exit(1)
+        if remove_local is None:
+            remove_local = self.config['remove_local']
 
         # Fetch remote content, merge if neccesary with local.mergetool
         # local_content, remote_content, merged_content
@@ -653,22 +637,21 @@ class VimboxClient():
             amerge_ref_is_local=amerge_ref_is_local
         )
 
-        if force_creation and content['local'] and content['remote'] is None:
-            print("\nRecovered local version from %s\n" % remote_file)
-
+        # Sanity checks
         if fetch_status == 'connection-error' and password is not None:
             print("Creation of back-end encrypted files has no sense offline")
             exit(1)
+        elif force_creation and content['local'] and content['remote'] is None:
+            print("\nRecovered local version from %s\n" % remote_file)
 
+        # Apply edit if needed
         if edits:
-            content['edited'] = edits(
-                content['merged'],
-                content['local'],
-                content['remote']
-            )
+            local_file = self.get_local_file(remote_file)
+            content['edited'] = edits(local_file, content)
         elif remove_local:
             # Why this?
             content['edited'] = content['merged']
+
         # update local and remote
 
         # Abort if file being created but no changes
@@ -696,6 +679,7 @@ class VimboxClient():
         # Update remote
         if content['edited'] != content['remote']:
 
+            # Try to push into remote
             if fetch_status != 'connection-error':
                 error = self._push(
                     content['edited'],
@@ -705,133 +689,64 @@ class VimboxClient():
             else:
                 error = 'connection-error'
 
+            # Inform the user
             if error is None:
-
-                # We pushed sucessfully 
+                # We pushed sucessfully
                 print("%12s %s" % (yellow("pushed"), remote_file))
-
-                # Register file in cache
-                if register_folder:
-                    # TODO: Right now we only register the folder
-                    # NOTE: We try this anyway because of independen hash
-                    # resgistration
-                    self.register_file(remote_file, password is not None)
-
-                # Remove local copy if solicited, otherwise update it with new
-                # content  
-                if remove_local and os.path.isfile(local_file):
-                    # Remove local file if solicited
-                    os.remove(local_file)
-                    print("%12s %s" % (red("cleaned"), local_file))
-
-                elif content['local'] != content['merged']:
-                    content['edited'] = local.local_edit(
-                        local_file,
-                        content['merged'],
-                        no_edit=True
-                    )
-
             elif error == 'connection-error':
-
-                # We are offline. This is a plausible state. Just keep local
-                # copy TODO: Course of action if remove_local = True
+                # Offline
                 print("%12s %s" % (red("offline"), remote_file))
-
-                # We do still register the file in cache
-                if register_folder:
-                    # TODO: Right now we only register the folder
-                    # NOTE: We try this anyaway because of independen hash
-                    # resgistration
-                    self.register_file(remote_file, password is not None)
-
-                # We can not remove the file as we are offline so we prompt
-                # user. We update local otherwise.
-                if remove_local and os.path.isfile(local_file):
-                    if content['merged'] != content['remote']:
-                        _ = input(
-                            "We are offline but I have to remove local files."
-                            " Will open the file once more for you to dave "
-                            "stuff, then it will be nuked. (press any key "
-                            "when ready)"
-                        )
-                        content['edited'] = local.local_edit(
-                            local_file,
-                            content['merged']
-                        )
-                    # Remove local file if solicited
-                    os.remove(local_file)
-                    print("%12s %s" % (red("cleaned"), local_file))
-
-                elif content['local'] != content['merged']:
-                    content['edited'] = local.local_edit(
-                        local_file,
-                        content['merged'],
-                        no_edit=True
-                    )
-
             elif error == 'api-error':
-
                 # This is not a normal state. Probably bug on our side or API
                 # change/bug on the backend.
                 print("%12s %s" % (red("api-error"), remote_file))
                 print("API error (something bad happened)")
-                print("keeping local copy")
-
-                # We can not remove the file as we are offline so we prompt
-                # user. We update local otherwise.
-                if remove_local and os.path.isfile(local_file):
-                    if content['merged'] != content['remote']:
-                        _ = input(
-                            "We are offline but I have to remove local files."
-                            " Will open the file once more for you to dave "
-                            "stuff, then it will be nuked. (press any key "
-                            "when ready)"
-                        )
-                        content['edited'] = local.local_edit(
-                            local_file,
-                            content['merged']
-                        )
-                    # Remove local file if solicited
-                    os.remove(local_file)
-                    print("%12s %s" % (red("cleaned"), local_file))
-
-                elif content['local'] != content['merged']:
-                    content['edited'] = local.local_edit(
-                        local_file,
-                        content['merged'],
-                        no_edit=True
-                    )
-
             else:
-
-                # This can only be a bug on our side
+                # This is most certainly a bug on our side
                 raise Exception("Unknown _push error %s" % error)
+
+            # Update local after updating remote
+
+            # Register file in cache
+            if register_folder and error != 'api-error':
+                self.register_file(remote_file, password is not None)
+
+            # Remove local copy if solicited, otherwise update it with new
+            # content
+            local_file = self.get_local_file(remote_file)
+            if remove_local and os.path.isfile(local_file):
+                if (
+                    content['merged'] != content['remote'] and
+                    error is not None
+                ):
+                    # If we could not update the remote but we are forced to
+                    # remove the file we must prompt user first
+                    _ = input(
+                        "We are offline but I have to remove local files."
+                        " Will open the file once more for you to dave "
+                        "stuff, then it will be nuked. (press any key "
+                        "when ready)"
+                    )
+                    local.local_edit(local_file, content['merged'])
+                # Remove local file if solicited
+                os.remove(local_file)
+                print("%12s %s" % (red("cleaned"), local_file))
+
+            elif content['local'] != content['merged']:
+                # If local content was changed we need to update
+                local.local_edit(local_file, content['merged'], no_edit=True)
 
         elif content['merged'] != content['local']:
             # We overwrote local with remote
-            content['edited'] = local.local_edit(
-                local_file,
-                content['merged'],
-                no_edit=True
-            )
+            local.local_edit(local_file, content['merged'], no_edit=True)
             print("%12s %s" % (yellow("pulled"), remote_file))
-
-            # Register file in cache
             if register_folder:
-                # TODO: Right now we only register the folder
-                # NOTE: We try this anyaway because of independen hash
-                # resgistration
                 self.register_file(remote_file, password is not None)
 
         else:
             # No changes needed on either side
             print("%12s %s" % (green("in-sync"), remote_file))
-
-            # Register file in cache
             if register_folder:
-                # TODO: Right now we only register the folder
-                # NOTE: We try this anyway because of independen hash
-                # resgistration
                 self.register_file(remote_file, password is not None)
 
     def is_file(self, remote_file):
