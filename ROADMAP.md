@@ -60,7 +60,6 @@ client.move()
     - [ ] Fix can not create encrypted files at top level in dropbox
     - hash only file name, rather than path?
 
-- [ ] Fix viewing files but not editing them does not trigger delete locally
 - [ ] Fix creating files with same name as folders 
     - api-error not indicative enough
 
@@ -73,7 +72,9 @@ client.move()
 
 ### Ongoing v0.3.2
 
-- [x] Refactor `edit` as injecting an edit operation on a sync
+- [x] Fix viewing files but not editing them does not trigger delete locally
+- [x] Refactor `edit` as injecting an edit operation on a `sync` 
+    - This deprecates `edit(diff_mode=True)` in favour of `sync`
 - [x] display folders in different color (blue?) in `vimbox ls`
 - [x] automerge: optionally append or insert can be done automatically. Set 
     one document as reference, disallow losing info by following primitives

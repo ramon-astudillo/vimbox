@@ -477,14 +477,14 @@ class VimboxClient():
         status = self.client.files_copy(remote_source, remote_target)
         if status != 'connection-error':
             print(
-                "%12s %s %s" % (
+                "%-12s %s %s" % (
                     yellow("copied"),
                     remote_source,
                     remote_target
                 )
             )
         else:
-            print("%12s did not copy!" % red("offline"))
+            print("%-12s did not copy!" % red("offline"))
 
     def remove(self, remote_file, recursive=False, password=None):
 
@@ -534,7 +534,7 @@ class VimboxClient():
             print("%s did not exist in remote!" % original_name)
 
         elif status != 'connection-error':
-            print("%12s %s" % (yellow("removed"), original_name))
+            print("%-12s %s" % (yellow("removed"), original_name))
 
             # Remove local copy
             local_file = self.get_local_file(remote_file)
@@ -547,7 +547,7 @@ class VimboxClient():
             self.unregister_file(remote_file)
         else:
             print(
-                "%12s did not remove!  %s" % (red("offline"), original_name)
+                "%-12s did not remove!  %s" % (red("offline"), original_name)
             )
 
 
@@ -695,14 +695,14 @@ class VimboxClient():
             # Inform the user
             if error is None:
                 # We pushed sucessfully
-                print("%12s %s" % (yellow("pushed"), remote_file))
+                print("%-12s %s" % (yellow("pushed"), remote_file))
             elif error == 'connection-error':
                 # Offline
-                print("%12s %s" % (red("offline"), remote_file))
+                print("%-12s %s" % (red("offline"), remote_file))
             elif error == 'api-error':
                 # This is not a normal state. Probably bug on our side or API
                 # change/bug on the backend.
-                print("%12s %s" % (red("api-error"), remote_file))
+                print("%-12s %s" % (red("api-error"), remote_file))
                 print("API error (something bad happened)")
             else:
                 # This is most certainly a bug on our side
@@ -733,23 +733,26 @@ class VimboxClient():
                     local.local_edit(local_file, content['merged'])
                 # Remove local file if solicited
                 os.remove(local_file)
-                print("%12s %s" % (red("cleaned"), local_file))
+                print("%-12s %s" % (red("cleaned"), local_file))
 
             elif content['local'] != content['merged']:
                 # If local content was changed we need to update
                 local.local_edit(local_file, content['merged'], no_edit=True)
 
-        elif content['merged'] != content['local']:
+        elif content['merged'] != content['local'] and not remove_local:
             # We overwrote local with remote
             local_file = self.get_local_file(remote_file)
             local.local_edit(local_file, content['merged'], no_edit=True)
-            print("%12s %s" % (yellow("pulled"), remote_file))
+            print("%-12s %s" % (yellow("pulled"), remote_file))
             if register_folder:
                 self.register_file(remote_file, password is not None)
 
         else:
             # No changes needed on either side
-            print("%12s %s" % (green("in-sync"), remote_file))
+            print("%-12s %s" % (green("in-sync"), remote_file))
+            if remove_local and os.path.isfile(local_file):
+                os.remove(local_file)
+                print("%-12s %s" % (red("cleaned"), local_file))
             if register_folder:
                 self.register_file(remote_file, password is not None)
 
