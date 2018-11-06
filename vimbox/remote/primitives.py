@@ -658,10 +658,15 @@ class VimboxClient():
         # update local and remote
 
         # Abort if file being created but no changes
-        if content['edited'] is None and fetch_status != 'connection-error':
+        if (
+            content['edited'] is None and 
+            content['remote'] is not None and 
+            fetch_status != 'connection-error'
+        ):
             # For debug purposes
             print(
-                "Invalid state: edited local_file non existing but remote does"
+                "\nInvalid state: edited local_file non existing but remote"
+                " does\n"
             )
             # File creation aborted
             exit(1)
