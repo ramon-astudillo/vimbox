@@ -48,8 +48,6 @@ def update_cache():
             stderr=subprocess.STDOUT,
             shell=True
     )
-    # print(the_call)
-    # print(process.stdout.read())
     print("Updated cache (%d folders + commands)" % len(complete))
 
 
@@ -239,21 +237,22 @@ def read_file(file_path):
         return fid_local.read()
 
 
-def mergetool(old_local_file, local_file):
+def mergetool(old_local_file, local_file, verbose=False):
     # Show content conflict with vimdiff
-    print(" ".join([MERGETOOL, '%s %s' % (old_local_file, local_file)]))
+    if verbose:
+        print(" ".join([MERGETOOL, '%s %s' % (old_local_file, local_file)]))
     subprocess.call([MERGETOOL, old_local_file, local_file])
 
 
-def edittool(local_file):
+def edittool(local_file, verbose=False):
     # call your editor
-    print(" ".join([EDITTOOL, '%s' % local_file]))
+    if verbose:
+        print(" ".join([EDITTOOL, '%s' % local_file]))
     subprocess.call([EDITTOOL, '%s' % local_file])
     # TODO: Check for abnormal termination
 
 
 def local_edit(local_file, local_content, no_edit=False):
-    # TODO: Merge this and the above
     if local_content is not None:
         # local_content is None if we start from scratch
         write_file(local_file, local_content)
