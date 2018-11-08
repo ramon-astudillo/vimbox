@@ -401,18 +401,38 @@ class VimboxClient():
                 self.config['cache'] = sorted(self.config['cache'])
                 local.write_config(local.CONFIG_FILE, self.config)
 
-            # Display encrypted files in red
+            # Replace encrypted files
+            entry_types = []
             new_display_folders = []
-            for file_folder in display_folders:
-                key = "%s%s" % (remote_folder, file_folder)
-                path_hashes = self.config['path_hashes']
-                if key in path_hashes:
-                    file_folder = red(os.path.basename(path_hashes[key]))
-                if key[-1] == '/':
+            for entry in display_folders:
+                key = "%s%s" % (remote_folder, entry)
+                if key in self.config['path_hashes']:
+                    entry_types.append('encrypted')
+                    new_display_folders.append(
+                        os.path.basename(self.config['path_hashes'][key])
+                    )
+                elif entry[-1] == '/':
+                    entry_types.append('folder')
+                    new_display_folders.append(entry)
+                else:
+                    entry_types.append(None)
+                    new_display_folders.append(entry)
+            display_folders = new_display_folders
+
+            # Display entries sorted and with colors 
+            new_display_folders = []
+            indices = sorted(
+                range(len(display_folders)),
+                key=display_folders.__getitem__
+            )
+            for file_folder, entry_type in zip(display_folders, entry_types):
+                if entry_type == 'encrypted':
+                    file_folder = red(file_folder)
+                elif entry_type == 'folder':
                     file_folder = blue(file_folder)
                 new_display_folders.append(file_folder)
             display_string = "".join(
-                ["%s\n" % folder for folder in sorted(new_display_folders)]
+                ["%s\n" % new_display_folders[index] for index in indices]
             )
 
             # Add file to cache

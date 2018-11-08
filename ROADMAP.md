@@ -41,13 +41,19 @@ client.move()
     - see https://github.com/dlitz/pycrypto/issues/173 
     - see https://github.com/Legrandin/pycryptodome
 
-* MD5 hashing does not count as encryption 
+* MD5 hashing does not count as encryption, use SHA-1 from hashlib
 
 * Wildcards in commands `vimbox mv /notes/* /old_notes/`
 
 * Update autocomplete from vimbox after new register (instead of `source`)
     - [x] update function with submodule
     * update command
+
+* Proper argparse
+    - Really missing `vimbox -O` but does not seem easy
+    - also pass to `click`?, need to check all functionalities retained
+
+* Add `vimbox local` to get local path of files
 
 - [ ] local encryption: `vim -x` with `vimbox -x`
     - Should imply using the auto-encryption token
@@ -63,6 +69,9 @@ client.move()
 - [ ] Fix creating files with same name as folders 
     - api-error not indicative enough
 
+- [ ] Nicer error handling
+    - Move but target exists throws not nice error
+
 - [ ] Upgrade folder primitives
     - [ ] Add `vimbox mkdir`
     - [ ] Fix and Re-allow `vimbox mv with folders` 
@@ -70,8 +79,11 @@ client.move()
         - also local removal will die since it is not empty
         - add specific unit tests
 
+- [ ] Fix local not updated after edits
+
 ### Ongoing v0.3.2
 
+- [x] Fix display of encrypted files not in order when listing
 - [x] Fix viewing files but not editing them does not trigger delete locally
 - [x] Refactor `edit` as injecting an edit operation on a `sync` 
     - This deprecates `edit(diff_mode=True)` in favour of `sync`
