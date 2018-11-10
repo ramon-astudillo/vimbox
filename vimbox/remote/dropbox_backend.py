@@ -62,6 +62,7 @@ class StorageBackEnd():
 
     def get_user_account(self):
         """Provide info on users current account"""
+        # TODO: Abstract out this try except in all methods into a wrapper
         try:
 
             # Get user info to validate account
@@ -110,8 +111,32 @@ class StorageBackEnd():
 
         return error
 
+    def make_directory(self, remote_target):
+        try:
+            return_value = self.dropbox_client.files_create_folder_v2(
+                remote_target
+            )
+            status = 'online'
+        except ConnectionError:
+            # This can be missleading
+            status = 'connection-error'
+        except ApiError as exception:
+            status = 'api-error'
+        return status
+
     def files_copy(self, remote_source, remote_target):
-        return self.dropbox_client.files_copy_v2(remote_source, remote_target)
+        try:
+            return_value = self.dropbox_client.files_copy_v2(
+                remote_source,
+                remote_target
+            )
+            status = 'online'
+        except ConnectionError:
+            # This can be missleading
+            status = 'connection-error'
+        except ApiError as exception:
+            status = 'api-error'
+        return status
 
     def files_delete(self, remote_source):
         try:
@@ -124,23 +149,54 @@ class StorageBackEnd():
             status = 'api-error'
         return status
 
-    def is_file(self, remote_file):
-        """ Returns true if remote_file is a file """
+#    def is_file(self, remote_file):
+#        """ Returns true if remote_file is a file """
+#
+#        # Note that with no connection we wont be able to know if the file
+#        # exists
+#        try:
+#            result = self.dropbox_client.files_alpha_get_metadata(remote_file)
+#            if type(result).__name__ == 'FolderMetadata':
+#                import ipdb;ipdb.set_trace(context=30)
+#                file_exists = False 
+#            else:
+#                file_exists = True
+#            status = 'online'
+#        except ConnectionError:
+#            # This can be missleading
+#            status = 'connection-error'
+#            file_exists = False
+#        except ApiError as exception:
+#            status = 'api-error'
+#            file_exists = False
+#
+#        return file_exists and hasattr(result, 'content_hash'), status
 
-        # Note that with no connection we wont be able to know if the file exists
+    def file_type(self, remote_source):
+
+        # Note that with no connection we wont be able to know if the file
+        # exists
         try:
-            result = self.dropbox_client.files_alpha_get_metadata(remote_file)
-            file_exists = True
+            result = self.dropbox_client.files_alpha_get_metadata(
+                remote_source
+            )
+            if hasattr(result, 'content_hash'):
+                file_type = 'file' 
+            else:
+                file_type = 'dir' 
             status = 'online'
         except ConnectionError:
             # This can be missleading
             status = 'connection-error'
             file_exists = False
         except ApiError as exception:
-            status = 'api-error'
-            file_exists = False
+            file_type = None 
+            if type(exception.error._value).__name__ == 'LookupError':
+                status = 'online'
+            else:
+                status = 'api-error'
 
-        return file_exists and hasattr(result, 'content_hash'), status
+        return file_type, status
 
     def file_download(self, remote_file):
 

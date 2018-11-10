@@ -184,6 +184,15 @@ def main(args=None, config=None, password=None):
         else:
             vimbox_help()
 
+    elif args[0] == 'mkdir':
+
+        # Copy file to file or folder
+        client = primitives.VimboxClient(config=config)
+        if len(args) == 2:
+            client.make_directory(args[1])
+        else:
+            vimbox_help()
+
     elif args[0] == 'cp':
 
         # Copy file to file or folder
@@ -216,9 +225,6 @@ def main(args=None, config=None, password=None):
         # Move file to file or folder
         client = primitives.VimboxClient(config=config)
         if len(args) == 3:
-            if args[1][-1] == '/':
-                print("\nFolder moving disallowed for now\n")
-                exit(1)
             client.copy(args[1], args[2])
             client.remove(args[1])
         else:

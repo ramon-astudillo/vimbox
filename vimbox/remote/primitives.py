@@ -456,6 +456,12 @@ class VimboxClient():
         # Print
         print("\n%s\n" % display_string.rstrip())
 
+    def make_directory(self, remote_target):
+        if remote_target[-1] != '/':
+            print("\nFolder paths must end in / \n")
+            exit(1)
+        return self.client.make_directory(remote_target[:-1])
+
     def copy(self, remote_source, remote_target):
 
         # Map `cp /path/to/file /path2/` to `cp /path/to/file /path/file`
@@ -506,25 +512,37 @@ class VimboxClient():
         else:
             print("%-12s did not copy!" % red("offline"))
 
-    def remove(self, remote_file, recursive=False, password=None):
-
+    def is_removable(self, remote_file):
+        """Check if file/folder is removable"""
         # Disallow deleting of encrypted files that have unknown name. Also
         # consider the unfrequent file is registered but user uses hash name
-        if (
-            remote_file not in self.config['path_hashes'] and
-            crypto.is_encrypted_path(remote_file)
-        ):
-                print("Can not delete uncached encrypted files")
-                exit(1)
-
-        if recursive and remote_file[-1] != '/':
-            print("rm -R only make sense with folders (missing /)")
-            exit(1)
 
         # Disallow deleting of folders.
-        is_file, _, status = self.is_file(remote_file)
-        if not recursive and not is_file and status == 'online':
-            print("Can only delete empty folders")
+        file_type, is_encrypted, status = self.file_type(remote_file)
+        if status != 'online':
+            is_rem = False
+            reason = 'We are offline'
+        elif file_type == 'dir':    
+            # FOLDERS
+            import ipdb;ipdb.set_trace(context=30)
+            pass
+        elif (
+            remote_file not in self.config['path_hashes'] and is_encrypted
+        ):
+            is_rem = False
+            reason = "Can not delete uncached encrypted files"
+        else:
+            is_rem = True
+            reason = None
+
+        return is_rem, reason
+
+    def remove(self, remote_file, recursive=False, password=None):
+
+        # Extra check for deletable files/folders
+        is_rem, reason = self.is_removable(remote_file)
+        if not is_rem:
+            print("\nCan not remove. %s\n" % reason)
             exit(1)
 
         # Hash name if necessary
@@ -570,6 +588,14 @@ class VimboxClient():
                 "%-12s did not remove!  %s" % (red("offline"), original_name)
             )
 
+    def move(self, remote_source, remote_target):
+        """Copy and remove"""
+        is_rem, reason = self.is_removable(remote_source)
+        if not is_rem:
+            print("\nCan not move (remove) due to %s\n" % reason)
+            exit(1)
+        self.copy(remote_source, remote_target)
+        self.remove(remote_source)
 
     def edit(self, remote_file, remove_local=None, force_creation=False,
              register_folder=True, password=None, initial_text=None,
@@ -783,18 +809,36 @@ class VimboxClient():
 
         return content['local'] == content['remote']
 
-    def is_file(self, remote_file):
+#    def is_file(self, remote_file):
+#
+#        # TODO: Avoid ambiguous api-error
+#        is_file, status = self.client.is_file(remote_file)
+#        if not is_file and status == 'api-error':
+#            # I file not found, try hashed version
+#            remote_file = crypto.get_path_hash(remote_file)
+#            is_file, status = self.client.is_file(remote_file)
+#            is_encripted = is_file
+#        else:
+#            is_encripted = False
+#
+#        return is_file, is_encripted, status
 
-        is_file, status = self.client.is_file(remote_file)
-        if not is_file and status == 'api-error':
-            # I file not found, try hashed version
+    def file_type(self, remote_file):
+
+        file_type, status = self.client.file_type(remote_file)
+        if file_type == None and status == 'online':
+            # I file not found, try hashed name version 
             remote_file = crypto.get_path_hash(remote_file)
-            is_file, status = self.client.is_file(remote_file)
-            is_encripted = is_file
-        else:
+            file_type, status = self.client.file_type(remote_file)
+            is_encripted = False 
+            if file_type:
+                is_encripted = True 
+        elif file_type == 'file':
             is_encripted = False
+        else:
+            is_encripted = None 
 
-        return is_file, is_encripted, status
+        return file_type, is_encripted, status
 
     # LOCAL METHODS
 

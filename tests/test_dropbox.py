@@ -1,4 +1,3 @@
-import os
 import copy
 import sys
 from vimbox.__main__ import main
@@ -29,6 +28,8 @@ def test_main(config):
     TMP_FILE = '%splain' % UNIT_TEST_FOLDER
     TMP_CONTENT = 'This is some text'
     TMP_FILE2 = '%splain2' % UNIT_TEST_FOLDER
+    TMP_FOLDER =  '%stest_folder/' % UNIT_TEST_FOLDER 
+    TMP_FOLDER2 =  '%stest_folder2/' % UNIT_TEST_FOLDER 
 
     client = StorageBackEnd(config['DROPBOX_TOKEN'])
 
@@ -40,14 +41,9 @@ def test_main(config):
     client.files_upload(TMP_CONTENT, TMP_FILE)
 
     # Check existance file
-    is_file, status = client.is_file(TMP_FILE)
-    assert status == 'online', "Status not online on is_file"
-    assert is_file, "Dropbox file creation failed"
-
-    # Check existance folder
-    is_file, status = client.is_file(UNIT_TEST_FOLDER[:-1])
-    assert status == 'online', "Status not online on is_file"
-    assert not is_file, "Dropbox can not see folder in remote"
+    file_type, status = client.file_type(TMP_FILE)
+    assert status == 'online', "Status not online on file_type"
+    assert file_type == 'file' , "Dropbox file creation failed"
 
     # Check content
     remote_content, status = client.file_download(TMP_FILE)
@@ -66,16 +62,26 @@ def test_main(config):
     client.files_delete(TMP_FILE)
 
     # Check non existance file
-    is_file, status = client.is_file(TMP_FILE)
-    assert status == 'api-error', "File removal failed"
+    file_type, status = client.file_type(TMP_FILE)
+    assert status == 'online' and file_type is None, "File removal failed"
+
+    # Make folder
+    client.make_directory(TMP_FOLDER[:-1])
+    file_type, status = client.file_type(TMP_FOLDER[:-1])
+    assert status == 'online' and file_type == 'dir', "Folder creation failed"
+
+    # Move folder
+    client.files_copy(TMP_FOLDER[:-1], TMP_FOLDER2[:-1])
+    file_type, status = client.file_type(TMP_FOLDER2[:-1])
+    assert status == 'online' and file_type == 'dir', "Folder creation failed"
+    client.files_delete(TMP_FOLDER[:-1])
+    file_type, status = client.file_type(TMP_FOLDER[:-1])
+    assert status == 'online' and file_type is None, "Folder removal failed"
 
     # Clean-up
     client.files_delete(UNIT_TEST_FOLDER[:-1])
-
-    # Check existance folder
-    is_file, status = client.is_file(UNIT_TEST_FOLDER[:-1])
-    assert status == 'api-error', "Folder removal failed"
-
+    file_type, status = client.file_type(UNIT_TEST_FOLDER[:-1])
+    assert status == 'online' and file_type is None, "Folder removal failed"
 
 
 if __name__ == '__main__':

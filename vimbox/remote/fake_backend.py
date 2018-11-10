@@ -52,6 +52,11 @@ class StorageBackEnd():
             remote_content = fid.read()
         return remote_content
 
+    def _remote_mkdir(self, remote_folder):
+        # Store content
+        fake_remote_file = "%s/%s" % (self.fake_remote_folder, remote_folder)
+        os.mkdir(fake_remote_file)
+
     def files_upload(self, new_local_content, remote_file_hash):
         """Overwrites file in the remote"""
         # errors = [None, 'connection-error', 'api-error']
@@ -64,6 +69,14 @@ class StorageBackEnd():
             if not os.path.isdir(dirname):
                 os.makedirs(dirname)
             self._remote_write(remote_file_hash, new_local_content)
+            error = None
+        else:
+            error = 'connection-error'
+        return error
+
+    def make_dir(self, remote_target):
+        if self.online:
+            self._remote_makedir(remote_target)
             error = None
         else:
             error = 'connection-error'
@@ -100,23 +113,44 @@ class StorageBackEnd():
             error = 'connection-error'
         return error
 
-    def is_file(self, remote_source):
+#    def is_file(self, remote_source):
+#        """ Returns true if remote_file is a file """
+#        if self.online:
+#            # stata = ['online', 'connection-error', 'api-error']
+#            fake_remote_file = "%s/%s" % (
+#                self.fake_remote_folder,
+#                remote_source
+#            )
+#            is_file = os.path.isfile(fake_remote_file)
+#            status = 'online'
+#            # FIXME: This is to mimic dropbox behaviour better avoid it
+#            #if is_file:
+#            #    status = 'online'
+#            #else:
+#            #    status = 'api-error'
+#        else:
+#            is_file = False
+#            status = 'connection-error'
+#        return is_file, status
+
+    def file_type(self, remote_source):
         """ Returns true if remote_file is a file """
         if self.online:
-            # stata = ['online', 'connection-error', 'api-error']
             fake_remote_file = "%s/%s" % (
                 self.fake_remote_folder,
                 remote_source
             )
-            is_file = os.path.isfile(fake_remote_file)
-            if is_file:
-                status = 'online'
+            if os.path.isfile(fake_remote_file):
+                file_type = 'file' 
+            elif os.path.isdir(fake_remote_file):
+                file_type = 'dir' 
             else:
-                status = 'api-error'
+                file_type = None
+            status = 'online'
         else:
-            is_file = False
+            file_type = None 
             status = 'connection-error'
-        return is_file, status
+        return file_type, status
 
     def file_download(self, remote_source):
         # stata = ['online', 'connection-error']

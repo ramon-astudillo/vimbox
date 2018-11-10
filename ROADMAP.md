@@ -41,7 +41,8 @@ client.move()
     - see https://github.com/dlitz/pycrypto/issues/173 
     - see https://github.com/Legrandin/pycryptodome
 
-* MD5 hashing does not count as encryption, use SHA-1 from hashlib
+
+* Uniform scheme to turn exceptions into `print + exit(1)`
 
 * Wildcards in commands `vimbox mv /notes/* /old_notes/`
 
@@ -55,6 +56,8 @@ client.move()
 
 * Add `vimbox local` to get local path of files
 
+* Proper unit tests with tox? unit-test2?
+
 - [ ] local encryption: `vim -x` with `vimbox -x`
     - Should imply using the auto-encryption token
 - [ ] auto-encryption token:
@@ -64,22 +67,25 @@ client.move()
     - [ ] Move encrypted files
     - [ ] Fix collision of hashed and unhashed names when moving files
     - [ ] Fix can not create encrypted files at top level in dropbox
-    - hash only file name, rather than path?
-
-- [ ] Fix creating files with same name as folders 
-    - api-error not indicative enough
+    - [ ] MD5 hashing does not count as encryption, use SHA-1 from hashlib
+    - [ ] hash only file name, rather than path
 
 - [ ] Nicer error handling
     - Move but target exists throws not nice error
 
+- [ ] Fix local not updated after edits
+
 - [ ] Upgrade folder primitives
-    - [ ] Add `vimbox mkdir`
+    - [x] Add `vimbox mkdir`
+    - [x] Replace ambiguous `is_file` by `file_type` in client and back-end
+      clients
+        - Avoid using `api-error` from Dropbox unless it is really unknown
     - [ ] Fix and Re-allow `vimbox mv with folders` 
         - [ ] Fix `vimbox mv /one/folder /other/` not disallowed
         - also local removal will die since it is not empty
         - add specific unit tests
-
-- [ ] Fix local not updated after edits
+    - [ ] Fix creating files with same name as folders 
+        - api-error not indicative enough
 
 ### Ongoing v0.3.2
 

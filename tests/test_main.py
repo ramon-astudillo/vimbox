@@ -21,6 +21,8 @@ def test_main(config):
     TMP_FILE = '%splain' % UNIT_TEST_FOLDER
     TMP_CONTENT = 'This is some text'
     TMP_FILE2 = '%splain2' % UNIT_TEST_FOLDER
+    TMP_FOLDER =  '%stest_folder/' % UNIT_TEST_FOLDER 
+    TMP_FOLDER2 =  '%stest_folder2/' % UNIT_TEST_FOLDER 
 
     # Files in this computer
     local_file = get_local_file(TMP_FILE, config=config)
@@ -55,7 +57,6 @@ def test_main(config):
     assert failed, "Failed to raise exception on deleting non empty folder"
 
     # Move file
-
     # This tests both copy and remove
     main(['mv', TMP_FILE, TMP_FILE2], config=config)
     # Original file was removed
@@ -68,6 +69,21 @@ def test_main(config):
     # Check new file was created
     remote_file2 = get_remote_path(TMP_FILE2)
     assert os.path.isfile(remote_file2), "File creation failed"
+
+    # Move folder
+    TMP_FOLDER = '%stest_folder/' % UNIT_TEST_FOLDER 
+    TMP_FOLDER2 = '%stest_folder2/' % UNIT_TEST_FOLDER 
+    main(['mv', TMP_FOLDER, TMP_FOLDER2], config=config)
+    # Original file was removed
+    # Check fake remote file was removed
+    assert not os.path.isdir(get_remote_path(TMP_FOLDER)), \
+        "Removal of remote file %s failed" % remote_file
+    # Check local file was removed
+    assert not os.path.isdir(get_local_file(TMP_FOLDER)), \
+        "Removal of local file %s failed" % local_file
+    # Check new file was created
+    assert os.path.isidir(get_remote_path(TMP_FOLDER2)), \
+        "File creation failed"
 
     # Empty folder removal
     main(['rm', TMP_FILE2], config=config)
@@ -121,6 +137,10 @@ def test_main(config):
 
 
 if __name__ == '__main__':
+
+    original_config = reset_environment()
+    test_main(copy.deepcopy(original_config))
+    reset_environment(original_config, sucess=True)
 
     try:
         original_config = reset_environment()
