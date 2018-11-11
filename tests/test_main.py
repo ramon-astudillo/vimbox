@@ -7,31 +7,31 @@ from vimbox.local import load_config, get_local_file
 from tools import (
     get_remote_path,
     read_remote_content,
+    start_environment,
     reset_environment,
-    UNIT_TEST_FOLDER
+    REMOTE_UNIT_TEST_FOLDER,
+    green
 )
 
 
-def test_main(config):
+def test_main():
 
-    # Get initial config, set backend to fake
-    # FIXME: If this dies it will leave the backend set to fake
-    config['backend_name'] = 'fake'
+    # NOTE: start_environment() has overloaded local.CONFIG_FILE
 
-    TMP_FILE = '%splain' % UNIT_TEST_FOLDER
+    TMP_FILE = '%splain' % REMOTE_UNIT_TEST_FOLDER
     TMP_CONTENT = 'This is some text'
-    TMP_FILE2 = '%splain2' % UNIT_TEST_FOLDER
-    TMP_FOLDER =  '%stest_folder/' % UNIT_TEST_FOLDER 
-    TMP_FOLDER2 =  '%stest_folder2/' % UNIT_TEST_FOLDER 
+    TMP_FILE2 = '%splain2' % REMOTE_UNIT_TEST_FOLDER
+    TMP_FOLDER =  '%stest_folder/' % REMOTE_UNIT_TEST_FOLDER 
+    TMP_FOLDER2 =  '%stest_folder2/' % REMOTE_UNIT_TEST_FOLDER 
 
     # Files in this computer
-    local_file = get_local_file(TMP_FILE, config=config)
+    local_file = get_local_file(TMP_FILE)
     remote_file = get_remote_path(TMP_FILE)
 
-    # NORMAL FILE
-    read_config = load_config()
+    # FILE CREATION
     # Creation
-    main(['-f', TMP_FILE, TMP_CONTENT], config=config)
+    # b vimbox/local.py:160
+    main(['-f', TMP_FILE, TMP_CONTENT])
     # Check file and content are in the remote
     assert os.path.isfile(remote_file), "File creation failed"
     written_content = read_remote_content(TMP_FILE)
@@ -40,25 +40,17 @@ def test_main(config):
     assert os.path.isfile(local_file), \
         "Creation of local file %s failed" % local_file
     # Check if the folder was added to the cache
-    read_config = load_config()
     dirname = "%s/" % os.path.dirname(TMP_FILE)
-    assert dirname in read_config['cache'], "Register in cache failed"
+    assert dirname in load_config()['cache'], "Register in cache failed"
+    print("File creation %s" % green("OK"))
 
-    # Remove non existing file should not die
-    main(['rm', TMP_FILE + '_not_real'], config=config)
+    # REMOVE NON EXISTING FILE 
+    main(['rm', TMP_FILE + '_not_real'])
+    print("Remove non-existing %s" % green("OK"))
 
-    # Non-empty folder removal should fail
-    # NOTE: This protection is at VimboxClient level
-    failed = False
-    try:
-        main(['rm', '-R', dirname], config=config)
-    except OSError:
-        failed = True
-    assert failed, "Failed to raise exception on deleting non empty folder"
-
-    # Move file
+    # MOVE FILE
     # This tests both copy and remove
-    main(['mv', TMP_FILE, TMP_FILE2], config=config)
+    main(['mv', TMP_FILE, TMP_FILE2])
     # Original file was removed
     # Check fake remote file was removed
     assert not os.path.isfile(remote_file), \
@@ -69,48 +61,45 @@ def test_main(config):
     # Check new file was created
     remote_file2 = get_remote_path(TMP_FILE2)
     assert os.path.isfile(remote_file2), "File creation failed"
+    print("Move file %s" % green("OK"))
 
-    # Move folder
-    TMP_FOLDER = '%stest_folder/' % UNIT_TEST_FOLDER 
-    TMP_FOLDER2 = '%stest_folder2/' % UNIT_TEST_FOLDER 
-    main(['mv', TMP_FOLDER, TMP_FOLDER2], config=config)
+    TMP_FOLDER = '%stest_folder/' % REMOTE_UNIT_TEST_FOLDER 
+    TMP_FOLDER2 = '%stest_folder2/' % REMOTE_UNIT_TEST_FOLDER 
+
+    # MOVE FOLDER
+    main(['mkdir', TMP_FOLDER])
+    main(['mv', TMP_FOLDER, TMP_FOLDER2])
     # Original file was removed
     # Check fake remote file was removed
     assert not os.path.isdir(get_remote_path(TMP_FOLDER)), \
         "Removal of remote file %s failed" % remote_file
     # Check local file was removed
-    assert not os.path.isdir(get_local_file(TMP_FOLDER)), \
+    assert not os.path.isdir(get_local_file( TMP_FOLDER)), \
         "Removal of local file %s failed" % local_file
     # Check new file was created
-    assert os.path.isidir(get_remote_path(TMP_FOLDER2)), \
+    assert os.path.isdir(get_remote_path(TMP_FOLDER2)), \
         "File creation failed"
+    print("Move folder %s" % green("OK"))
 
-    # Empty folder removal
-    main(['rm', TMP_FILE2], config=config)
-    main(['rm', '-R', dirname], config=config)
+    # REMOVE FOLDER 
+    main(['rm', '-R', TMP_FOLDER2])
     # Check fake remote folder was removed
-    remote_folder = get_remote_path(dirname)
+    remote_folder = get_remote_path(TMP_FOLDER2)
     assert not os.path.isdir(remote_folder), "Removal of remote folder failed"
     # Check local file was removed
-    local_folder = get_local_file(dirname, config=config)
+    local_folder = get_local_file(TMP_FOLDER2)
     assert not os.path.isdir(local_folder), "Removal of local folder failed"
     # Check the file was removed from the cache
     read_config = load_config()
-    assert dirname not in read_config['cache'], "Removal from cache failed"
+    assert TMP_FOLDER2 not in read_config['cache'], "Removal from cache failed"
+    print("Remove folder %s" % green("OK"))
 
-    FAKE_FILE_ENCRYPTED = '/14s52fr34G2R3tH42341/encrypted'
+    FAKE_FILE_ENCRYPTED = '%sencrypted' % TMP_FOLDER2
     FAKE_SECRET_CONTENT = "This is some encrypted text"
 
-    # TODO: Unregister folders when deleting last file
-
     # ENCRYPTED FILE CREATION
-    PASSWORD = 'dummy'
-    #
-    main(
-        ['-e', FAKE_FILE_ENCRYPTED, FAKE_SECRET_CONTENT],
-        config=config,
-        password=PASSWORD
-    )
+    # b vimbox/remote/primitives.py:606
+    main(['-e', FAKE_FILE_ENCRYPTED, FAKE_SECRET_CONTENT], password='dummy')
     # Check file and content are in the remote
     fake_file_encrypted_hash = get_path_hash(FAKE_FILE_ENCRYPTED)
     assert os.path.isfile(get_remote_path(fake_file_encrypted_hash)),\
@@ -120,32 +109,43 @@ def test_main(config):
         "File content is not enctypted!"
     # Check if the folder was added to the cache
     dirname = "%s/" % os.path.dirname(FAKE_FILE_ENCRYPTED)
-    read_config = load_config()
-    assert dirname in read_config['cache'], "Register in cache failed"
+    assert dirname in load_config()['cache'], "Register in cache failed"
     # Check if path hash was added to the list
     hash_entry = (fake_file_encrypted_hash, FAKE_FILE_ENCRYPTED)
-    assert hash_entry in read_config['path_hashes'].items(), \
+    assert hash_entry in load_config()['path_hashes'].items(), \
         "Register of path hash failed"
+    print("Encrypted file creation %s" % green("OK"))
 
-    # Encrypted file removal
-    main(['rm', FAKE_FILE_ENCRYPTED], config=config)
+    # MOVE FOLDER WITH ENCRYPTED FILES 
+    # This tests both copy and remove
+    # FIXME: HARDEN copy
+    main(['mv', TMP_FOLDER2, TMP_FOLDER])
+    # Original file was removed
+    # Check fake remote file was removed
+    assert not os.path.isdir(get_remote_path(TMP_FOLDER2)), \
+        "Removal of remote dir %s failed" % get_remote_path(TMP_FOLDER2)
+    # Check new dir was created
+    assert os.path.isdir(get_remote_path(TMP_FOLDER)), "Dir creation failed"
+    print("Move folder with encrypted files  %s" % green("OK"))
+    # Check has was updated
+
+    # ENCRYPTED FILE REMOVAL
+    FAKE_FILE_ENCRYPTED = '%sencrypted' % TMP_FOLDER
+    main(['rm', FAKE_FILE_ENCRYPTED])
     # Check if path hash was removed from the list
     hash_entry = (fake_file_encrypted_hash, FAKE_FILE_ENCRYPTED)
-    read_config = load_config()
-    assert hash_entry not in read_config['path_hashes'].items(), \
+    assert hash_entry not in load_config()['path_hashes'].items(), \
         "Removal of path hash failed"
+    print("Encrypted file removal %s" % green("OK"))
 
 
 if __name__ == '__main__':
 
-    original_config = reset_environment()
-    test_main(copy.deepcopy(original_config))
-    reset_environment(original_config, sucess=True)
-
     try:
-        original_config = reset_environment()
-        test_main(copy.deepcopy(original_config))
-        reset_environment(original_config, sucess=True)
+        start_environment(backend_name='fake')
+        test_main()
+        reset_environment(sucess=True)
+        exit()
 
     except Exception as exception:
         # Ensure we restore the original config

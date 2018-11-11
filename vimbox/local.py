@@ -100,14 +100,19 @@ def local_install_check():
         exit(1)
 
 
-def load_config():
+def load_config(config_path=None):
 
-    if not os.path.isfile(CONFIG_FILE):
+    # This is not the same as putting CONFIG_FILE in the arguments directly.
+    # Overloading CONFIG_FILE in unit tests wont work on the latter.
+    if not config_path:
+        config_path = CONFIG_FILE
+
+    if not os.path.isfile(config_path):
         print("\nNo config found use vimbox setup\n")
         exit(1)
 
     # Create vimbox config
-    config = read_config(CONFIG_FILE)
+    config = read_config(config_path)
     # Check current defaults are present (version missmatch)
     if set(config.keys()) < set(DEFAULT_CONFIG.keys()):
 
@@ -117,7 +122,7 @@ def load_config():
                 print("%s = %s" % (key, value))
                 config[key] = value
         # Update config
-        write_config(CONFIG_FILE, config)
+        write_config(config_path, config)
 
     elif set(config.keys()) > set(DEFAULT_CONFIG.keys()):
 
@@ -152,15 +157,18 @@ def register_file(remote_file, config, is_encripted):
     A file can be registered by its folder or it name directly
     """
 
-    # Folder path
-    remote_folder = '%s/' % os.path.dirname(remote_file)
+    if remote_file[-1] == '/':
+        remote_folder = remote_file
+    else:
+        # For files we register only the folder in the cache
+        remote_folder = '%s/' % os.path.dirname(remote_file)
     is_registered = False
     if remote_folder and remote_folder in config['cache']:
         is_registered = True
-    elif remote_file in config['cache']:
+    elif remote_folder in config['cache']:
         is_registered = True
 
-    # Register file
+    # Register folder from cache
     rewrite_config = False
     if not is_registered:
         config['cache'].append(remote_folder)
@@ -181,12 +189,17 @@ def register_file(remote_file, config, is_encripted):
 
 def unregister_file(remote_file, config):
 
-    # Unregister if it is a folder
+    if remote_file[-1] == '/':
+        remote_folder = remote_file
+    else:
+        # For files we register only the folder in the cache
+        remote_folder = '%s/' % os.path.dirname(remote_file)
+
     rewrite_config = False
-    if remote_file[-1] == '/' and remote_file in config['cache']:
-        config['cache'].remove(remote_file)
+    if remote_folder in config['cache']:
+        config['cache'].remove(remote_folder)
         rewrite_config = True
-        print("Removed from cache %s" % remote_file)
+        print("Removed from cache %s" % remote_folder)
 
     # Unregister file hash
     if remote_file in config['path_hashes'].keys():

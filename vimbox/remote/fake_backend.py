@@ -1,5 +1,6 @@
 import os
 import sys
+import shutil 
 import codecs
 from vimbox import local
 
@@ -52,10 +53,15 @@ class StorageBackEnd():
             remote_content = fid.read()
         return remote_content
 
-    def _remote_mkdir(self, remote_folder):
+    def _remote_makedir(self, remote_folder):
         # Store content
         fake_remote_file = "%s/%s" % (self.fake_remote_folder, remote_folder)
         os.mkdir(fake_remote_file)
+
+    def _remote_move_dirs(self, remote_source, remote_target):
+        fake_rem_source = "%s/%s" % (self.fake_remote_folder, remote_source)
+        fake_rem_target = "%s/%s" % (self.fake_remote_folder, remote_target)
+        os.rename(fake_rem_source, fake_rem_target)
 
     def files_upload(self, new_local_content, remote_file_hash):
         """Overwrites file in the remote"""
@@ -74,18 +80,23 @@ class StorageBackEnd():
             error = 'connection-error'
         return error
 
-    def make_dir(self, remote_target):
+    def make_directory(self, remote_target):
         if self.online:
             self._remote_makedir(remote_target)
-            error = None
+            status = 'online' 
         else:
-            error = 'connection-error'
-        return error
+            status = 'connection-status'
+        return status
 
     def files_copy(self, remote_source, remote_target):
         if self.online:
-            remote_content = self._remote_read(remote_source)
-            self._remote_write(remote_target, remote_content)
+            if os.path.isdir(
+                "%s/%s" % (self.fake_remote_folder, remote_source)
+            ):
+                self._remote_move_dirs(remote_source, remote_target)
+            else:
+                remote_content = self._remote_read(remote_source)
+                self._remote_write(remote_target, remote_content)
             error = None
         else:
             error = 'connection-error'
@@ -101,7 +112,7 @@ class StorageBackEnd():
                 os.remove(fake_remote_source)
                 something_exists = True
             elif os.path.isdir(fake_remote_source):
-                os.rmdir(fake_remote_source)
+                shutil.rmtree(fake_remote_source)
                 something_exists = True
 
             if something_exists:

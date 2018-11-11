@@ -11,7 +11,7 @@
 
 ### Desired Features
 
-* Add `vimbox find` 
+* Add `vimbox find` or `vimbox walk` generator
 
 * Set editors used in config
 
@@ -25,12 +25,7 @@
 
 * Simple use in other Python code 
     - config auto completion?
-
-```
-from vimbox.remote.primitives import VimboxClient
-client = VimboxClient(dropbox_token='some-alphanumeric-sequence')
-client.move()
-```
+    - `from vimbox import list, move, remove`
 
 * Other backends e.g. `vimbox /evernote/notes/`
     - `Google Drive`, see https://developers.google.com/drive/api/v3/quickstart/python
@@ -41,7 +36,6 @@ client.move()
     - see https://github.com/dlitz/pycrypto/issues/173 
     - see https://github.com/Legrandin/pycryptodome
 
-
 * Uniform scheme to turn exceptions into `print + exit(1)`
 
 * Wildcards in commands `vimbox mv /notes/* /old_notes/`
@@ -49,6 +43,7 @@ client.move()
 * Update autocomplete from vimbox after new register (instead of `source`)
     - [x] update function with submodule
     * update command
+    * create bash script to set complete
 
 * Proper argparse
     - Really missing `vimbox -O` but does not seem easy
@@ -56,44 +51,26 @@ client.move()
 
 * Add `vimbox local` to get local path of files
 
-* Proper unit tests with tox? unit-test2?
+* Proper unit tests with tox?, unit-test2?, pytest
 
 - [ ] local encryption: `vim -x` with `vimbox -x`
     - Should imply using the auto-encryption token
 - [ ] auto-encryption token:
     - created on vimbox setup 
     - Should be used if password left empty when decrypting
-- [ ] Upgrade handling of encrypted files
-    - [ ] Move encrypted files
-    - [ ] Fix collision of hashed and unhashed names when moving files
-    - [ ] Fix can not create encrypted files at top level in dropbox
-    - [ ] MD5 hashing does not count as encryption, use SHA-1 from hashlib
-    - [ ] hash only file name, rather than path
 
 - [ ] Nicer error handling
     - Move but target exists throws not nice error
 
 - [ ] Fix local not updated after edits
 
-- [ ] Upgrade folder primitives
-    - [x] Add `vimbox mkdir`
-    - [x] Replace ambiguous `is_file` by `file_type` in client and back-end
-      clients
-        - Avoid using `api-error` from Dropbox unless it is really unknown
-    - [ ] Fix and Re-allow `vimbox mv with folders` 
-        - [ ] Fix `vimbox mv /one/folder /other/` not disallowed
-        - also local removal will die since it is not empty
-        - add specific unit tests
-    - [ ] Fix creating files with same name as folders 
-        - api-error not indicative enough
-
-### Ongoing v0.3.2
+### Ongoing v0.4
 
 - [x] Fix display of encrypted files not in order when listing
+- [x] display folders in different color (blue?) in `vimbox ls`
 - [x] Fix viewing files but not editing them does not trigger delete locally
 - [x] Refactor `edit` as injecting an edit operation on a `sync` 
     - This deprecates `edit(diff_mode=True)` in favour of `sync`
-- [x] display folders in different color (blue?) in `vimbox ls`
 - [x] automerge: optionally append or insert can be done automatically. Set 
     one document as reference, disallow losing info by following primitives
     - append/prepend to ref
@@ -101,6 +78,25 @@ client.move()
     - insert to ref
     - Custom line merge (this MAY remove info from ref)   
         - custom equal operator `(A) Cosa` same as `(B) Cosa` 
+
+- [ ] Upgrade folder primitives
+    - [x] Add `vimbox mkdir`
+    - [x] Replace ambiguous `is_file` by `file_type` in client and back-end
+      clients
+        - Avoid using `api-error` from Dropbox unless it is really unknown
+    - [x] Fix and Re-allow `vimbox mv with folders` 
+        - [x] Fix `vimbox mv /one/folder /other/` not disallowed
+        - also local removal will die since it is not empty
+        - [x] add specific unit tests
+    - [x] remove use of api-error, not indicative enough
+    - [ ] Fix creating files with same name as folders 
+
+- [ ] Upgrade handling of encrypted files
+    - [x] Move encrypted files
+    - [ ] Fix collision of hashed and unhashed names when moving files
+    - [ ] Fix can not create encrypted files at top level in dropbox
+    - [ ] MD5 hashing does not count as encryption, use SHA-1 from hashlib
+    - [x] hash only file name, rather than path
 
 ### v0.3.1
 

@@ -148,15 +148,36 @@ def automerge(reference_content, modified_content, automerge_rules):
     return merged_content, merge_strategy
 
 
+def copy_hash(path_hashes, source_folder, target_folder):
+
+    # Do not allow to copy encrypted files or folder containing them
+    updated_hashes = False
+    for key in path_hashes.keys():
+        if path_hashes[key][:len(source_folder)] == source_folder:
+            if target_folder[-1] == '/':
+                new_key = target_folder + \
+                    key[len(source_folder):]
+                new_path = target_folder + \
+                    path_hashes[key][len(source_folder):]
+            else:
+                new_key = target_folder + '/' + \
+                    key[len(source_folder):]
+                new_path = target_folder + '/' + \
+                    path_hashes[key][len(source_folder):]
+            path_hashes.update({new_key: new_path})
+            print("Copied hash %s -> %s" % (path_hashes[key], new_path))
+            updated_hashes = True
+
+    return updated_hashes
+    
+
 class VimboxClient():
 
-    def __init__(self, config=None):
+    def __init__(self, config_path=local.CONFIG_FILE):
 
         # Load local config if not provided
-        if not config:
-            self.config = local.load_config()
-        else:
-            self.config = config
+        self.config_path = config_path
+        self.config = local.load_config(config_path)
 
         # Get reference to remote client
         if self.config['backend_name'] == 'dropbox':
@@ -166,7 +187,7 @@ class VimboxClient():
             )
             # Install if necessary
             if self.config.get('DROPBOX_TOKEN', None) is None:
-                install_backend(local.CONFIG_FILE, local.DEFAULT_CONFIG)
+                install_backend(self.config_path, local.DEFAULT_CONFIG)
             self.client = StorageBackEnd(self.config['DROPBOX_TOKEN'])
 
         elif self.config['backend_name'] in ['fake', 'fake-offline']:
@@ -175,7 +196,7 @@ class VimboxClient():
                 StorageBackEnd
             )
             if self.config is None:
-                install_backend(local.CONFIG_FILE, local.DEFAULT_CONFIG)
+                install_backend(self.config_path, local.DEFAULT_CONFIG)
             if self.config['backend_name'] == 'fake-offline':
                 online = False
             else:
@@ -399,7 +420,7 @@ class VimboxClient():
 
                 # Write cache
                 self.config['cache'] = sorted(self.config['cache'])
-                local.write_config(local.CONFIG_FILE, self.config)
+                local.write_config(self.config_path, self.config)
 
             # Replace encrypted files
             entry_types = []
@@ -438,7 +459,7 @@ class VimboxClient():
             # Add file to cache
             if remote_folder not in self.config['cache']:
                 self.config['cache'].append(remote_folder)
-                local.write_config(local.CONFIG_FILE, self.config)
+                local.write_config(self.config_path, self.config)
 
         elif error == 'api-error':
 
@@ -460,9 +481,19 @@ class VimboxClient():
         if remote_target[-1] != '/':
             print("\nFolder paths must end in / \n")
             exit(1)
-        return self.client.make_directory(remote_target[:-1])
+        status = self.client.make_directory(remote_target[:-1])
+        if status == 'online':
+            self.register_file(remote_target, False)
+        return status 
 
     def copy(self, remote_source, remote_target):
+        """
+        This should support:
+
+        cp /path/to/file /path/to/another/file
+        cp /path/to/file /path/to/folder/
+        cp /path/to/folder/ /path/to/another_folder/
+        """
 
         # Map `cp /path/to/file /path2/` to `cp /path/to/file /path/file`
         if remote_target[-1] == '/':
@@ -472,34 +503,20 @@ class VimboxClient():
                 print("source and target are the same")
                 exit(1)
 
-        # Do not allow to copy encrypted files or folder containing them
-        hashed_paths = set([
-            get_path_components(path)
-            for path in self.config['path_hashes'].values()
-        ])
-        hashed_remote_source = get_path_components(remote_source)
-        hashed_remote_target = get_path_components(remote_target)
-        # Add also partial paths
-        hashed_paths |= set([
-            path[:len(hashed_remote_source)] for path in hashed_paths
-        ])
-        hashed_paths |= set([
-            path[:len(hashed_remote_target)] for path in hashed_paths
-        ])
-        if (
-            hashed_remote_source in hashed_paths or
-            hashed_remote_target in hashed_paths or
-            crypto.is_encrypted_path(remote_source) or
-            crypto.is_encrypted_path(remote_target)
-        ):
-            print("\ncopy/move operations can not include encrypted files\n")
-            exit(1)
+        updated_hashes = copy_hash(
+            self.config['path_hashes'],
+            remote_source, 
+            remote_target
+        )
+        if updated_hashes:
+            local.write_config(self.config_path, self.config)
 
         # For folder we need to remove the ending back-slash
         if remote_source[-1] == '/':
             remote_source = remote_source[:-1]
         if remote_target[-1] == '/':
             remote_target = remote_target[:-1]
+
         status = self.client.files_copy(remote_source, remote_target)
         if status != 'connection-error':
             print(
@@ -523,11 +540,12 @@ class VimboxClient():
             is_rem = False
             reason = 'We are offline'
         elif file_type == 'dir':    
-            # FOLDERS
-            import ipdb;ipdb.set_trace(context=30)
+            is_rem = True
+            reason = None
             pass
         elif (
-            remote_file not in self.config['path_hashes'] and is_encrypted
+            remote_file not in self.config['path_hashes'].values() and 
+            is_encrypted
         ):
             is_rem = False
             reason = "Can not delete uncached encrypted files"
@@ -569,6 +587,7 @@ class VimboxClient():
             local_file = self.get_local_file(remote_file)
             if os.path.isfile(local_file):
                 os.remove(local_file)
+            self.unregister_file(remote_file)
             print("%s did not exist in remote!" % original_name)
 
         elif status != 'connection-error':
@@ -580,8 +599,6 @@ class VimboxClient():
                 os.remove(local_file)
             elif os.path.isdir(local_file):
                 os.rmdir(local_file)
-
-            # TODO: Use unregister file
             self.unregister_file(remote_file)
         else:
             print(
