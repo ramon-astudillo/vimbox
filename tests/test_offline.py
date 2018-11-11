@@ -3,26 +3,27 @@ import copy
 import sys
 from vimbox.__main__ import main
 from vimbox.local import load_config, get_local_file
-from tools import reset_environment, UNIT_TEST_FOLDER
+from tools import (
+    start_environment,
+    reset_environment,
+    REMOTE_UNIT_TEST_FOLDER,
+    green
+)
 
 
-def test_main(config):
+def test_main():
 
-    # Get initial config, set backend to fake
-    # FIXME: If this dies it will leave the backend set to fake
-    config['backend_name'] = 'fake-offline'
-
-    TMP_FILE = '%splain' % UNIT_TEST_FOLDER
+    TMP_FILE = '%splain' % REMOTE_UNIT_TEST_FOLDER
     TMP_CONTENT = 'This is some text'
-    TMP_FILE2 = '%splain2' % UNIT_TEST_FOLDER
+    TMP_FILE2 = '%splain2' % REMOTE_UNIT_TEST_FOLDER
 
     # Files in this computer
-    local_file = get_local_file(TMP_FILE, config=config)
+    local_file = get_local_file(TMP_FILE)
 
     # NORMAL FILE
     read_config = load_config()
     # Creation
-    main(['-f', TMP_FILE, TMP_CONTENT], config=config)
+    main(['-f', TMP_FILE, TMP_CONTENT])
     # Check a local copy was created (if intended)
     assert os.path.isfile(local_file), \
         "Creation of local file %s failed" % local_file
@@ -30,17 +31,18 @@ def test_main(config):
     read_config = load_config()
     dirname = "%s/" % os.path.dirname(TMP_FILE)
     assert dirname in read_config['cache'], "Register in cache failed"
+    print("Offline file creation %s" % green("OK"))
 
-    # Move file
-
+    # MOVE FILE
     # This tests both copy and remove
-    main(['mv', TMP_FILE, TMP_FILE2], config=config)
+    main(['mv', TMP_FILE, TMP_FILE2])
     # Check local file was not removed
     assert os.path.isfile(local_file), \
         "local file %s can not be removed while offline" % local_file
-    local_file2 = get_local_file(TMP_FILE2, config=config)
+    local_file2 = get_local_file(TMP_FILE2)
     assert not os.path.isfile(local_file2), \
         "local file %s can not be created by copy while offline" % local_file
+    print("Offline move file%s" % green("OK"))
 
     # ENCRYPTED FILE CREATION
     # TODO: This returns with exit which will skip restablishing of config
@@ -54,7 +56,7 @@ def test_main(config):
 #         config=config,
 #         password=PASSWORD
 #     )
-#     local_encrypted = get_local_file(FAKE_FILE_ENCRYPTED, config=config)
+#     local_encrypted = get_local_file(FAKE_FILE_ENCRYPTED)
 #     assert not os.path.isfile(local_file2), \
 #         "Should not create local file while offline if encrypted"
 
@@ -62,9 +64,9 @@ def test_main(config):
 if __name__ == '__main__':
 
     try:
-        original_config = reset_environment()
-        test_main(copy.deepcopy(original_config))
-        reset_environment(original_config, sucess=True)
+        start_environment(backend_name='fake-offline')
+        test_main()
+        reset_environment(sucess=True)
 
     except Exception as exception:
         # Ensure we restore the original config

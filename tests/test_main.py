@@ -145,7 +145,6 @@ if __name__ == '__main__':
         start_environment(backend_name='fake')
         test_main()
         reset_environment(sucess=True)
-        exit()
 
     except Exception as exception:
         # Ensure we restore the original config

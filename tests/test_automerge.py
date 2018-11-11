@@ -1,10 +1,10 @@
 import copy
 import sys
-from tools import reset_environment
+from tools import reset_environment, start_environment, green
 from vimbox.remote.primitives import automerge
 
 
-def test_main(config):
+def test_main():
 
     # AUTOMERGE: Append
     local_content = 'This is some text'
@@ -16,7 +16,7 @@ def test_main(config):
     )
     assert merge_strategy == 'append', "Automerge appended line failed"
     assert merged_content == remote_content, "Automerge appended line failed"
-    print("Automerge append OK")
+    print("Automerge append %s" % green("OK"))
 
     # AUTOMERGE: Append-line
     local_content = 'This is some text'
@@ -28,7 +28,7 @@ def test_main(config):
     )
     assert merge_strategy == 'line-append', "Automerge appended line failed"
     assert merged_content == remote_content, "Automerge appended line failed"
-    print("Automerge line append OK")
+    print("Automerge line append %s" % green("OK"))
 
     # AUTOMERGE: Prepend
     local_content = 'This is some text'
@@ -40,7 +40,7 @@ def test_main(config):
     )
     assert merge_strategy == 'prepend', "Automerge prepended failed"
     assert merged_content == remote_content, "Automerge prepend failed"
-    print("Automerge prepend OK")
+    print("Automerge prepend %s" % green("OK"))
 
     # AUTOMERGE: Prepend
     local_content = 'This is some text'
@@ -52,7 +52,7 @@ def test_main(config):
     )
     assert merge_strategy == 'line-prepend', "Automerge prepended line failed"
     assert merged_content == remote_content, "Automerge prepend line failed"
-    print("Automerge line prepend OK")
+    print("Automerge line prepend %s" % green("OK"))
 
     # AUTOMERGE: Insert
     local_lines = ['This is one sentence', 'This is another']
@@ -69,7 +69,7 @@ def test_main(config):
     )
     assert merge_strategy == 'insert', "Automerge prepended line failed"
     assert merged_content == remote_content, "Automerge insert line failed"
-    print("Automerge insert OK")
+    print("Automerge insert %s" % green("OK"))
 
     # AUTOMERGE: Valid line modification
     local_lines = ['this is one sentence', 'this is another']
@@ -83,7 +83,7 @@ def test_main(config):
     )
     assert merge_strategy == 'ignore-edit', "Automerge ignore-edit failed"
     assert merged_content == remote_content, "Automerge ignore-edit failed"
-    print("Automerge ignore-edit OK")
+    print("Automerge ignore-edit %s" % green("OK"))
 
     # AUTOMERGE: Multiple cases
     local_lines = ['this is one sentence', 'this is another']
@@ -106,19 +106,19 @@ def test_main(config):
     assert merge_strategy == 'ignore-edit+insert+line-prepend', \
         "Automerge ignore-edit failed"
     assert merged_content == remote_content, "Automerge ignore-edit failed"
-    print("Automerge ignore-edit OK")
+    print("Automerge ignore-edit %s" % green("OK"))
 
 
 if __name__ == '__main__':
 
     try:
-        original_config = reset_environment()
-        test_main(copy.deepcopy(original_config))
-        reset_environment(original_config, sucess=True)
+        start_environment(backend_name='fake')
+        test_main()
+        reset_environment(sucess=True)
 
     except Exception as exception:
         # Ensure we restore the original config
-        reset_environment(original_config)
+        reset_environment()
         # Reraise error
         if sys.version_info[0] > 2:
             raise exception.with_traceback(sys.exc_info()[2])
