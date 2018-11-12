@@ -148,7 +148,7 @@ if __name__ == '__main__':
 
     except Exception as exception:
         # Ensure we restore the original config
-        reset_environment(original_config)
+        reset_environment()
         # Reraise error
         if sys.version_info[0] > 2:
             raise exception.with_traceback(sys.exc_info()[2])

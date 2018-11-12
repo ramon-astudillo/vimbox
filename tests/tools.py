@@ -61,29 +61,37 @@ def start_environment(**config_delta):
 
     # Fake remote storage
     if config_delta.get('backend_name', None) == 'fake':
+        if os.path.isdir(FAKE_REMOTE_STORAGE):
+            shutil.rmtree(FAKE_REMOTE_STORAGE)
+        os.mkdir(FAKE_REMOTE_STORAGE)
+        print("Reset %s" % FAKE_REMOTE_STORAGE)
         fake_remote_storage = get_remote_path(REMOTE_UNIT_TEST_FOLDER)
         if os.path.isdir(fake_remote_storage):
             shutil.rmtree(fake_remote_storage)
-        # Create folders
         os.mkdir(fake_remote_storage)
         print("Reset %s" % fake_remote_storage)
 
+    # Overload some config fields if solicited
+    original_config = local.load_config()
+    local_folder = "%s/.unit_tests/" % original_config['local_root']
+    test_config = {
+        'DROPBOX_TOKEN': original_config['DROPBOX_TOKEN'],
+        'backend_name': original_config['backend_name'],
+        'cache': {},
+        'local_root': local_folder,
+        'remote_root': None,
+        'remove_local': False
+    }
+
     # Local storage
+    if os.path.isdir(local_folder):
+        shutil.rmtree(local_folder)
+        print("Reset %s" % local_folder)
     local_storage = local.get_local_file(REMOTE_UNIT_TEST_FOLDER)
     if os.path.isdir(local_storage):
         shutil.rmtree(local_storage)
         print("Reset %s" % local_storage)
 
-    # Overload some config fields if solicited
-    original_config = local.load_config()
-    test_config = {
-        'DROPBOX_TOKEN': original_config['DROPBOX_TOKEN'],
-        'backend_name': original_config['backend_name'],
-        'cache': {},
-        'local_root': original_config['local_root'],
-        'remote_root': None,
-        'remove_local': False
-    }
     if config_delta:
         for key, value in config_delta.items():
             test_config[key] = value

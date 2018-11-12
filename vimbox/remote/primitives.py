@@ -6,7 +6,7 @@ Handles back-end errors in a unified way
 import os
 import sys
 import re
-# import shutil
+import shutil
 import getpass
 #
 from vimbox import local
@@ -381,18 +381,18 @@ class VimboxClient():
             exit(1)
 
         # Try first remote
-        result, error = self.client.list_folders(remote_folder)
-        if result:
+        entries, is_files, error = self.client.list_folders(remote_folder)
+        if entries is not None:
 
             # Differentiate file and folders
             display_folders = []
-            for x in result.entries:
-                if hasattr(x, 'content_hash'):
+            for entry, is_file in zip(entries, is_files):
+                if is_file:
                     # File
-                    display_folders.append(x.name)
+                    display_folders.append(entry)
                 else:
                     # Folder
-                    display_folders.append("%s/" % x.name)
+                    display_folders.append("%s/" % entry)
             display_folders = sorted(display_folders)
 
             # Update to match folder
@@ -497,12 +497,16 @@ class VimboxClient():
 
         # Map `cp /path/to/file /path2/` to `cp /path/to/file /path/file`
         if remote_target[-1] == '/':
-            basename = os.path.basename(remote_source)
-            remote_target = "%s%s" % (remote_target, basename)
-            if remote_source == remote_target:
-                print("source and target are the same")
-                exit(1)
+            file_type, is_encripted, status = self.file_type(remote_target)
+            if file_type == 'dir':
+                if remote_source[-1] == '/':
+                    addendum = os.path.basename(remote_source[:-1])
+                    remote_target = remote_target + addendum + '/'
+                else:
+                    addendum = os.path.basename(remote_source)
+                    remote_target = remote_target + addendum
 
+        # Move paths in hash
         updated_hashes = copy_hash(
             self.config['path_hashes'],
             remote_source, 
@@ -519,6 +523,7 @@ class VimboxClient():
 
         status = self.client.files_copy(remote_source, remote_target)
         if status != 'connection-error':
+            self.register_file(remote_target, False)
             print(
                 "%-12s %s %s" % (
                     yellow("copied"),
@@ -583,10 +588,13 @@ class VimboxClient():
             status = self.client.files_delete(remote_file)
 
         if status == 'api-error':
+
             # Remove local copy
             local_file = self.get_local_file(remote_file)
             if os.path.isfile(local_file):
                 os.remove(local_file)
+            elif os.path.isdir(local_file):
+                shutil.rmtree(local_file)
             self.unregister_file(remote_file)
             print("%s did not exist in remote!" % original_name)
 
@@ -598,7 +606,7 @@ class VimboxClient():
             if os.path.isfile(local_file):
                 os.remove(local_file)
             elif os.path.isdir(local_file):
-                os.rmdir(local_file)
+                shutil.rmtree(local_file)
             self.unregister_file(remote_file)
         else:
             print(

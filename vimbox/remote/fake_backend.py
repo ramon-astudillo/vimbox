@@ -56,12 +56,12 @@ class StorageBackEnd():
     def _remote_makedir(self, remote_folder):
         # Store content
         fake_remote_file = "%s/%s" % (self.fake_remote_folder, remote_folder)
-        os.mkdir(fake_remote_file)
+        os.makedirs(fake_remote_file)
 
-    def _remote_move_dirs(self, remote_source, remote_target):
+    def _remote_copy_dirs(self, remote_source, remote_target):
         fake_rem_source = "%s/%s" % (self.fake_remote_folder, remote_source)
         fake_rem_target = "%s/%s" % (self.fake_remote_folder, remote_target)
-        os.rename(fake_rem_source, fake_rem_target)
+        shutil.copytree(fake_rem_source, fake_rem_target)
 
     def files_upload(self, new_local_content, remote_file_hash):
         """Overwrites file in the remote"""
@@ -93,7 +93,7 @@ class StorageBackEnd():
             if os.path.isdir(
                 "%s/%s" % (self.fake_remote_folder, remote_source)
             ):
-                self._remote_move_dirs(remote_source, remote_target)
+                self._remote_copy_dirs(remote_source, remote_target)
             else:
                 remote_content = self._remote_read(remote_source)
                 self._remote_write(remote_target, remote_content)
@@ -181,8 +181,15 @@ class StorageBackEnd():
         return remote_content, status
 
     def list_folders(self, remote_folder):
-        # errors = [None, 'connection-error', 'api-error']
+        fake_remote_source = "%s/%s" % (
+            self.fake_remote_folder, remote_folder
+        )
         if self.online:
-            return os.listdir(remote_folder), None
+            entries = os.listdir(fake_remote_source)
+            is_files = [
+                os.path.isfile("%s/%s" % (fake_remote_source, entry)) 
+                for entry in entries
+            ] 
+            return entries, is_files, 'online' 
         else:
-            return None, 'connection-error'
+            return None, None, 'connection-error'

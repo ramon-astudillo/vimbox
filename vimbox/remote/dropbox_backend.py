@@ -232,18 +232,24 @@ class StorageBackEnd():
 
             # Get user info to validate account
             result = self.dropbox_client.files_list_folder(remote_folder)
-            error = 'online'
+            status = 'online'
 
         except ConnectionError:
 
             # Dropbox unrechable
             result = None
-            error = 'connection-error'
+            status = 'connection-status'
 
         except ApiError:
 
-            # API error
+            # API status
             result = None
-            error = 'api-error'
+            status = 'api-status'
 
-        return result, error
+        if result:
+            entries = [x.name for x in result.entries]
+            is_file = [hasattr(x, 'content_hash') for x in result.entries]
+        else:
+            entries = None
+            is_file = None
+        return entries, is_file, status

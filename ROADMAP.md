@@ -31,6 +31,7 @@
     - `Google Drive`, see https://developers.google.com/drive/api/v3/quickstart/python
     - `dropbox paper`, see https://www.dropbox.com/developers/documentation/http/documentation#paper 
     - `CloudBlaze` 
+    - How to organize, protocols? `vimbox cp db:/notes/old gd:/notes/`
 
 * Replace deprecated pycrypto by pycryptodome, see
     - see https://github.com/dlitz/pycrypto/issues/173 
