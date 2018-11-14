@@ -105,7 +105,10 @@ def get_path_hash(path_str):
     else:
         # Python2
         h.update(basename)
-    return "%s/.%s" % (dirname, h.hexdigest())
+    if dirname != '/':    
+        return "%s/.%s" % (dirname, h.hexdigest())
+    else:
+        return "/.%s" % h.hexdigest()
 
 
 def is_encrypted_path(path_str):

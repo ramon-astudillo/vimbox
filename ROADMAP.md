@@ -19,13 +19,13 @@
   stability
 
 * Input pipes `cat mylog | vimbox pipe -f /logs/mylog`
-    - needs Programatic edit operations
+    - [x] needs Programatic edit operations
 
-* Programatic edit operations
+* `vimbox share` to get shareble URL (dropbox only)
 
 * Simple use in other Python code 
     - config auto completion?
-    - `from vimbox import list, move, remove`
+    - Alias in the base `from vimbox import list, move, remove`
 
 * Other backends e.g. `vimbox /evernote/notes/`
     - `Google Drive`, see https://developers.google.com/drive/api/v3/quickstart/python
@@ -43,16 +43,14 @@
 
 * Update autocomplete from vimbox after new register (instead of `source`)
     - [x] update function with submodule
-    * update command
-    * create bash script to set complete
+    - [ ] create bash script to set complete
 
-* Proper argparse
+- Refactor argument parsing with`click`
     - Really missing `vimbox -O` but does not seem easy
-    - also pass to `click`?, need to check all functionalities retained
 
 * Add `vimbox local` to get local path of files
 
-* Proper unit tests with tox?, unit-test2?, pytest
+* Proper unit tests with pytest
 
 - [ ] local encryption: `vim -x` with `vimbox -x`
     - Should imply using the auto-encryption token
@@ -63,7 +61,13 @@
 - [ ] Nicer error handling
     - Move but target exists throws not nice error
 
+* Rename `vimbox.remote.primitives` to `vimbox.remote.__init__`
+
+- [ ] Fix `remote_root` actually not implemented
+
 - [ ] Fix local not updated after edits
+
+- [ ] Remove use of exits at multiple depths implement ordered exit
 
 ### Ongoing v0.4
 
@@ -72,6 +76,8 @@
 - [x] Fix viewing files but not editing them does not trigger delete locally
 - [x] Refactor `edit` as injecting an edit operation on a `sync` 
     - This deprecates `edit(diff_mode=True)` in favour of `sync`
+- [x] Programatic edit operations. `edit` is now `sync` with `edit` argument
+  set. This argument is a function, see edit for examples.
 - [x] automerge: optionally append or insert can be done automatically. Set 
     one document as reference, disallow losing info by following primitives
     - append/prepend to ref
@@ -90,14 +96,19 @@
         - also local removal will die since it is not empty
         - [x] add specific unit tests
     - [x] remove use of api-error, not indicative enough
+    - [x] Fix root files start with slash
     - [ ] Fix creating files with same name as folders 
 
 - [ ] Upgrade handling of encrypted files
     - [x] Move encrypted files
     - [ ] Fix collision of hashed and unhashed names when moving files
-    - [ ] Fix can not create encrypted files at top level in dropbox
+    - [x] Fix can not create encrypted files at top level in dropbox
     - [ ] MD5 hashing does not count as encryption, use SHA-1 from hashlib
     - [x] hash only file name, rather than path
+    - [x] When creating file or folder, we could have an encrypted version
+
+- [ ] Remove uncontrolled use of ApiError. Should either die or recognize valid
+  api-error and coresponding state 
 
 ### v0.3.1
 

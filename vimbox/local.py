@@ -159,9 +159,12 @@ def register_file(remote_file, config, is_encripted):
 
     if remote_file[-1] == '/':
         remote_folder = remote_file
-    else:
+    elif os.path.dirname(remote_file) != '/':
         # For files we register only the folder in the cache
         remote_folder = '%s/' % os.path.dirname(remote_file)
+    else:
+        remote_folder = '/'
+
     is_registered = False
     if remote_folder and remote_folder in config['cache']:
         is_registered = True
@@ -170,7 +173,7 @@ def register_file(remote_file, config, is_encripted):
 
     # Register folder from cache
     rewrite_config = False
-    if not is_registered:
+    if not is_registered and list(set(remote_folder))[0] != '/':
         config['cache'].append(remote_folder)
         rewrite_config = True
         print("Added to cache %s" % remote_folder)
