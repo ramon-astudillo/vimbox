@@ -54,18 +54,15 @@ def password_prompt(remote_file, config):
 
     # Check if file in cache already
     if remote_file in config['path_hashes'].values():
-        print('\nCan not re-encrypt a registered file.\n')
-        exit()
+        primitives.VimboxClientError('\nCan not re-encrypt a registered file.\n')
 
     # Prompt for password
     password = getpass.getpass('Input file password: ')
     password2 = getpass.getpass('Repeat file password: ')
     if not password:
-        print("Passwords can not be empty!")
-        exit()
+        primitives.VimboxClientError("Passwords can not be empty!")
     if password != password2:
-        print("Passwords do not match!")
-        exit()
+        primitives.VimboxClientError("Passwords do not match!")
 
     return password
 
@@ -104,8 +101,7 @@ def argument_handling(args):
 
     # Quick exit: edit file is a folder
     if remote_file[-1] == '/' and encrypt:
-        print('\nOnly files can be encrypted\n')
-        exit()
+        primitives.VimboxClientError('\nOnly files can be encrypted\n')
 
     return remote_file, force_creation, encrypt, initial_text
 
@@ -121,7 +117,6 @@ def vimbox_help(command=None):
         print("")
     else:
         print("\nvimbox %-35s %s\n" % COMMAND_HELP[command])
-    exit()
 
 
 def main(args=None, config_path=None, password=None):
@@ -138,11 +133,14 @@ def main(args=None, config_path=None, password=None):
 
     if len(args) == 0:
         vimbox_help()
-        exit(1)
+        return
 
     # Sanity check: back-end is installed
     if args[0] not in ['setup', 'complete']:
-        local.local_install_check()
+        try:
+            local.local_install_check()
+        except primitives.VimboxClientError as exception:
+            print("\n%s\n" % exception.message)
 
     if args[0] == 'help':
 
@@ -168,8 +166,6 @@ def main(args=None, config_path=None, password=None):
         # Folders cached in this computer (latter minus commans e.g. ls)
         for cached_file in sorted(local.get_cache()):
             print(cached_file)
-        # update cache
-        # local.update_cache()
 
     elif args[0] == 'config':
 
@@ -181,9 +177,15 @@ def main(args=None, config_path=None, password=None):
         # List contents of folder
         client = primitives.VimboxClient(config_path=config_path)
         if len(args) == 1:
-            client.list_folders('')
+            try:
+                client.list_folders('')
+            except primitives.VimboxClientError as exception:
+                print("\n%s\n" % exception.message)
         elif len(args) == 2:
-            client.list_folders(args[1])
+            try:
+                client.list_folders(args[1])
+            except primitives.VimboxClientError as exception:
+                print("\n%s\n" % exception.message)
         else:
             vimbox_help()
 
@@ -191,35 +193,48 @@ def main(args=None, config_path=None, password=None):
 
         # Copy file to file or folder
         client = primitives.VimboxClient(config_path=config_path)
-        if len(args) == 2:
-            client.make_directory(args[1])
-        else:
+        if len(args) != 2:
             vimbox_help()
+        try:    
+            client.make_directory(args[1])
+        except primitives.VimboxClientError as exception:
+            print("\n%s\n" % exception.message)
 
     elif args[0] == 'cp':
 
         # Copy file to file or folder
         client = primitives.VimboxClient(config_path=config_path)
-        if len(args) == 3:
-            client.copy(args[1], args[2])
-        else:
+        if len(args) != 3:
             vimbox_help()
+        try:    
+            client.copy(args[1], args[2])
+        except primitives.VimboxClientError as exception:
+            print("\n%s\n" % exception.message)
 
     elif args[0] == 'cat':
 
         # Copy file to file or folder
         client = primitives.VimboxClient(config_path=config_path)
         for arg in args[1:]:
-            client.cat(arg)
+            try:
+                client.cat(arg)
+            except primitives.VimboxClientError as exception:
+                print("\n%s\n" % exception.message)
 
     elif args[0] == 'rm':
 
         # Remove file or folder
         client = primitives.VimboxClient(config_path=config_path)
         if len(args) == 2:
-            client.remove(args[1], recursive=False)
+            try:
+                client.remove(args[1], recursive=False)
+            except primitives.VimboxClientError as exception:
+                print("\n%s\n" % exception.message)
         elif len(args) == 3 and args[1] == '-R':
-            client.remove(args[2], recursive=True)
+            try:
+                client.remove(args[2], recursive=True)
+            except primitives.VimboxClientError as exception:
+                print("\n%s\n" % exception.message)
         else:
             vimbox_help()
 
@@ -227,10 +242,12 @@ def main(args=None, config_path=None, password=None):
 
         # Move file to file or folder
         client = primitives.VimboxClient(config_path=config_path)
-        if len(args) == 3:
-            client.move(args[1], args[2])
-        else:
+        if len(args) != 3:
             vimbox_help()
+        try:
+            client.move(args[1], args[2])
+        except primitives.VimboxClientError as exception:
+            print("\n%s\n" % exception.message)
 
     else:
 
@@ -253,15 +270,21 @@ def main(args=None, config_path=None, password=None):
 
             # Create new encrypted file or register existing one
             if encrypt and password is None:
-                password = password_prompt(remote_file, client.config)
+                try:
+                    password = password_prompt(remote_file, client.config)
+                except primitives.VimboxClientError as e:
+                    print("\n%s\n" % exception.message)
 
             # Call function
-            client.edit(
-                remote_file,
-                force_creation=force_creation,
-                password=password,
-                initial_text=initial_text
-            )
+            try:
+                client.edit(
+                    remote_file,
+                    force_creation=force_creation,
+                    password=password,
+                    initial_text=initial_text
+                )
+            except primitives.VimboxClientError as exception:
+                print("\n%s\n" % exception.message)
 
 if __name__ == "__main__":
     main()

@@ -20,6 +20,8 @@ yellow = diogenes.style(font_color='yellow')
 green = diogenes.style(font_color='light green')
 blue = diogenes.style(font_color='light blue')
 
+class VimboxClientError(Exception):
+    pass
 
 def get_path_components(path):
     return tuple(filter(None, path.split('/')))
@@ -169,7 +171,7 @@ def copy_hash(path_hashes, source_folder, target_folder):
             updated_hashes = True
 
     return updated_hashes
-    
+
 
 class VimboxClient():
 
@@ -257,8 +259,8 @@ class VimboxClient():
                 "Tried to fetch encrypted version of %s but it exists "
                 "unencrypted in remote"
             )
-            return None, 'api-error', password 
-            
+            return None, 'api-error', password
+
 
         if status == 'online' and remote_content is None:
 
@@ -305,8 +307,9 @@ class VimboxClient():
 
         # Quick exit on decription failure
         if fetch_status == 'decription-failed':
-            print('\nDecription failed check password and vimbox version\n')
-            exit(0)
+            VimboxClientError(
+                'Decription failed check password and vimbox version'
+            )
 
         # Force use of -f to create new folders
         if (
@@ -315,8 +318,7 @@ class VimboxClient():
             not force_creation and
             not local_content
         ):
-            print('\nYou need to create a file, use -f or -e\n')
-            exit(0)
+            VimboxClientError('You need to create a file, use -f or -e')
 
         # Merge
         if remote_content is None:
@@ -448,7 +450,7 @@ class VimboxClient():
                     new_display_folders.append(entry)
             display_folders = new_display_folders
 
-            # Display entries sorted and with colors 
+            # Display entries sorted and with colors
             new_display_folders = []
             indices = sorted(
                 range(len(display_folders)),
@@ -487,30 +489,29 @@ class VimboxClient():
 
     def make_directory(self, remote_target):
         if remote_target[-1] != '/':
-            print("\nFolder paths must end in / \n")
-            exit(1)
+            raise VimboxClientError("Folder paths must end in / ")
         file_type, is_encripted, status = self.file_type(remote_target[:-1])
         if status != 'online':
-            print("\n%s can not create files/folders\n" % red("offline"))            
-            exit(1)
+            raise VimboxClientError(
+                "%s can not create files/folders" % red("offline")
+            )
 
         if file_type is None:
             status = self.client.make_directory(remote_target[:-1])
             if status == 'online':
                 self.register_file(remote_target, False)
         elif file_type == 'dir':
-            print("\n%s already exists\n" % remote_target) 
-            exit(1)
+            raise VimboxClientError("%s already exists" % remote_target)
         elif is_encripted:
-            print(
-                "\n%s already exists as an encrypted file\n" % remote_target
-            ) 
-            exit(1)
+            raise VimboxClientError(
+                "%s already exists as an encrypted file" % remote_target
+            )
         else:
-            print("\n%s already exists as a file\n" % remote_target) 
-            exit(1)
+            raise VimboxClientError(
+                "%s already exists as a file" % remote_target
+            )
 
-        return status 
+        return status
 
     def copy(self, remote_source, remote_target):
         """
@@ -537,7 +538,7 @@ class VimboxClient():
         # Move paths in hash
         updated_hashes = copy_hash(
             self.config['path_hashes'],
-            remote_source, 
+            remote_source,
             remote_target
         )
         if updated_hashes:
@@ -573,12 +574,12 @@ class VimboxClient():
         if status != 'online':
             is_rem = False
             reason = 'We are offline'
-        elif file_type == 'dir':    
+        elif file_type == 'dir':
             is_rem = True
             reason = None
             pass
         elif (
-            remote_file not in self.config['path_hashes'].values() and 
+            remote_file not in self.config['path_hashes'].values() and
             is_encrypted
         ):
             is_rem = False
@@ -592,19 +593,17 @@ class VimboxClient():
     def remove(self, remote_file, recursive=False, password=None):
 
         if remote_file == '/':
-            print(
+            raise VimboxClientError(
                 "\nRemoving root is disallowed, just in case you have fat"
                 " fingers\n"
             )
-            exit(1)
 
         # Extra check for deletable files/folders
         if remote_file[-1] == '/':
             remote_file = remote_file[:-1]
         is_rem, reason = self.is_removable(remote_file)
         if not is_rem:
-            print("\nCan not remove. %s\n" % reason)
-            exit(1)
+            raise VimboxClientError("\nCan not remove. %s\n" % reason)
 
         # Hash name if necessary
         if remote_file in self.config['path_hashes'].values():
@@ -655,8 +654,9 @@ class VimboxClient():
         """Copy and remove"""
         is_rem, reason = self.is_removable(remote_source)
         if not is_rem:
-            print("\nCan not move (remove) due to %s\n" % reason)
-            exit(1)
+            raise VimboxClientError(
+                "Can not move (remove) due to %s" % reason
+            )
         self.copy(remote_source, remote_target)
         self.remove(remote_source)
 
@@ -683,8 +683,8 @@ class VimboxClient():
                 """Write empty file with given text"""
                 if content['remote']:
                     if content['remote'] == content['merged']:
-                        return content['merged'] 
-                    elif content['remote'] != content['merged']:     
+                        return content['merged']
+                    elif content['remote'] != content['merged']:
                         raise Exception(
                             "File exists in remote and differs in content"
                         )
@@ -731,14 +731,14 @@ class VimboxClient():
 
         # Sanity checks
         if remote_file[-1] == '/':
-            print("Can not edit folders")
-            exit(1)
+            raise VimboxClientError("Can not edit folders")
         elif (
             remote_file in self.config['path_hashes'].values() and
             force_creation
         ):
-            print('\n%s exists in remote and is encrypted.\n' % remote_file)
-            exit(1)
+            raise VimboxClientError(
+                '\n%s exists in remote and is encrypted.\n' % remote_file
+            )
         if remove_local is None:
             remove_local = self.config['remove_local']
 
@@ -754,8 +754,9 @@ class VimboxClient():
 
         # Sanity checks
         if fetch_status == 'connection-error' and password is not None:
-            print("Creation of back-end encrypted files has no sense offline")
-            exit(1)
+            raise VimboxClientError(
+                "Creation of back-end encrypted files has no sense offline"
+            )
         elif force_creation and content['local'] and content['remote'] is None:
             print("\nRecovered local version from %s\n" % remote_file)
 
@@ -771,17 +772,15 @@ class VimboxClient():
 
         # Abort if file being created but no changes
         if (
-            content['edited'] is None and 
-            content['remote'] is not None and 
+            content['edited'] is None and
+            content['remote'] is not None and
             fetch_status != 'connection-error'
         ):
             # For debug purposes
-            print(
+            VimboxClientError(
                 "\nInvalid state: edited local_file non existing but remote"
                 " does\n"
             )
-            # File creation aborted
-            exit(1)
 
         # Pull again if recovered offline status
         if fetch_status == 'connection-error':
@@ -879,16 +878,16 @@ class VimboxClient():
 
         file_type, status = self.client.file_type(remote_file)
         if file_type == None and status == 'online':
-            # I file not found, try hashed name version 
+            # I file not found, try hashed name version
             remote_file = crypto.get_path_hash(remote_file)
             file_type, status = self.client.file_type(remote_file)
-            is_encripted = False 
+            is_encripted = False
             if file_type:
-                is_encripted = True 
+                is_encripted = True
         elif file_type == 'file':
             is_encripted = False
         else:
-            is_encripted = None 
+            is_encripted = None
 
         return file_type, is_encripted, status
 

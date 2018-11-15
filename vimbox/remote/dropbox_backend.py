@@ -145,7 +145,6 @@ class StorageBackEnd():
             status = 'connection-error'
         except ApiError as exception:
             print(exception)
-            import ipdb;ipdb.set_trace(context=30)
             if type(exception.error._value).__name__ == 'LookupError':
                 status = 'online'
             else:
