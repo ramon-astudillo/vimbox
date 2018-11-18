@@ -48,6 +48,7 @@ def install():
     # Modify bashrc
     local.modify_bashrc(virtualenv)
     print("vimbox %s installed sucessfully\n" % __version__)
+    return True
 
 
 def password_prompt(remote_file, config):
@@ -133,7 +134,7 @@ def main(args=None, config_path=None, password=None):
 
     if len(args) == 0:
         vimbox_help()
-        return
+        return False
 
     # Sanity check: back-end is installed
     if args[0] not in ['setup', 'complete']:
@@ -141,6 +142,7 @@ def main(args=None, config_path=None, password=None):
             local.local_install_check()
         except primitives.VimboxClientError as exception:
             print("\n%s\n" % exception.message)
+            return False
 
     if args[0] == 'help':
 
@@ -149,28 +151,33 @@ def main(args=None, config_path=None, password=None):
             vimbox_help(args[1])
         else:
             vimbox_help()
+        return True 
 
     elif args[0] == 'setup':
 
         # Set-up back-end
         install()
+        return True 
 
     elif args[0] == 'complete':
 
         # strings to store when calling command -W in .basrc
         for autocomplete_option in local.get_complete_arguments():
             print(autocomplete_option)
+        return True 
 
     elif args[0] == 'cache':
 
         # Folders cached in this computer (latter minus commans e.g. ls)
         for cached_file in sorted(local.get_cache()):
             print(cached_file)
+        return True 
 
     elif args[0] == 'config':
 
         # Open config in editor
         local.edit_config()
+        return True 
 
     elif args[0] == 'ls':
 
@@ -179,15 +186,20 @@ def main(args=None, config_path=None, password=None):
         if len(args) == 1:
             try:
                 client.list_folders('')
+                return True 
             except primitives.VimboxClientError as exception:
                 print("\n%s\n" % exception.message)
+                return False 
         elif len(args) == 2:
             try:
                 client.list_folders(args[1])
+                return True 
             except primitives.VimboxClientError as exception:
                 print("\n%s\n" % exception.message)
+                return False 
         else:
             vimbox_help()
+            return False 
 
     elif args[0] == 'mkdir':
 
@@ -195,10 +207,13 @@ def main(args=None, config_path=None, password=None):
         client = primitives.VimboxClient(config_path=config_path)
         if len(args) != 2:
             vimbox_help()
+            return False
         try:    
             client.make_directory(args[1])
+            return True 
         except primitives.VimboxClientError as exception:
             print("\n%s\n" % exception.message)
+            return False
 
     elif args[0] == 'cp':
 
@@ -206,10 +221,13 @@ def main(args=None, config_path=None, password=None):
         client = primitives.VimboxClient(config_path=config_path)
         if len(args) != 3:
             vimbox_help()
+            return False
         try:    
             client.copy(args[1], args[2])
+            return True 
         except primitives.VimboxClientError as exception:
             print("\n%s\n" % exception.message)
+            return False
 
     elif args[0] == 'cat':
 
@@ -218,8 +236,10 @@ def main(args=None, config_path=None, password=None):
         for arg in args[1:]:
             try:
                 client.cat(arg)
+                return True 
             except primitives.VimboxClientError as exception:
                 print("\n%s\n" % exception.message)
+                return False
 
     elif args[0] == 'rm':
 
@@ -228,13 +248,17 @@ def main(args=None, config_path=None, password=None):
         if len(args) == 2:
             try:
                 client.remove(args[1], recursive=False)
+                return True 
             except primitives.VimboxClientError as exception:
                 print("\n%s\n" % exception.message)
+                return False
         elif len(args) == 3 and args[1] == '-R':
             try:
                 client.remove(args[2], recursive=True)
+                return True 
             except primitives.VimboxClientError as exception:
                 print("\n%s\n" % exception.message)
+                return False
         else:
             vimbox_help()
 
@@ -244,10 +268,13 @@ def main(args=None, config_path=None, password=None):
         client = primitives.VimboxClient(config_path=config_path)
         if len(args) != 3:
             vimbox_help()
+            return False 
         try:
             client.move(args[1], args[2])
+            return True 
         except primitives.VimboxClientError as exception:
             print("\n%s\n" % exception.message)
+            return False
 
     else:
 
@@ -260,6 +287,7 @@ def main(args=None, config_path=None, password=None):
             # Alias for ls
             client = primitives.VimboxClient(config_path=config_path)
             client.list_folders(remote_file)
+            return True 
 
         else:
 
@@ -274,6 +302,7 @@ def main(args=None, config_path=None, password=None):
                     password = password_prompt(remote_file, client.config)
                 except primitives.VimboxClientError as e:
                     print("\n%s\n" % exception.message)
+                    return False 
 
             # Call function
             try:
@@ -283,8 +312,10 @@ def main(args=None, config_path=None, password=None):
                     password=password,
                     initial_text=initial_text
                 )
+                return True 
             except primitives.VimboxClientError as exception:
                 print("\n%s\n" % exception.message)
+                return False 
 
 if __name__ == "__main__":
     main()
