@@ -38,9 +38,9 @@ def install_backend(config_file, default_config):
 
         # Validate token by connecting to dropbox
         client = StorageBackEnd(dropbox_token)
-        user_acount, error = client.get_user_account()
+        user_acount, status = client.get_user_account()
         if user_acount is None:
-            print("Could not connect to dropbox %s" % error)
+            print("Could not connect to dropbox %s" % status)
             exit(1)
         else:
 
@@ -63,32 +63,34 @@ class StorageBackEnd():
     def get_user_account(self):
         """Provide info on users current account"""
         # TODO: Abstract out this try except in all methods into a wrapper
+        out_message = '' 
         try:
 
             # Get user info to validate account
             user = self.dropbox_client.users_get_current_account()
-            error = None
+            status = None
 
         except ConnectionError:
 
             # Dropbox unrechable
             user = None
-            error = 'connection-error'
+            status = 'connection-status'
 
         except ApiError as exception:
 
-            # API error
-            print(exception)
+            # API status
+            out_message = exception
             user = None
-            error = 'api-error'
+            status = 'api-status'
 
-        return user, error
+        return user, status, out_message
 
     def files_upload(self, new_local_content, remote_file_hash):
         assert remote_file_hash[-1] != '/', \
             "Dropbox paths can not finish in /"
         """Overwrites file in the remote"""
 
+        out_message = '' 
         try:
 
             # Upload file to the server
@@ -97,25 +99,26 @@ class StorageBackEnd():
                 remote_file_hash,
                 mode=WriteMode('overwrite')
             )
-            error = None
+            status = None
 
         except ConnectionError:
 
             # File non-existing or unreachable
-            error = 'connection-error'
+            status = 'connection-status'
 
         except ApiError as exception:
 
-            # API error
-            print(exception)
+            # API status
+            out_message = exception
             import ipdb;ipdb.set_trace(context=30)
             # File non-existing or unreachable
-            error = 'api-error'
+            status = 'api-status'
 
-        return error
+        return status, out_message
 
     def make_directory(self, remote_target):
         assert remote_target[-1] != '/', "Dropbox paths can not finish in /"
+        out_message = '' 
         try:
             return_value = self.dropbox_client.files_create_folder_v2(
                 remote_target
@@ -123,17 +126,18 @@ class StorageBackEnd():
             status = 'online'
         except ConnectionError:
             # This can be missleading
-            status = 'connection-error'
+            status = 'connection-status'
         except ApiError as exception:
-            print(exception)
+            out_message = exception
             import ipdb;ipdb.set_trace(context=30)
-            status = 'api-error'
+            status = 'api-status'
 
-        return status
+        return status, out_message
 
     def files_copy(self, remote_source, remote_target):
         assert remote_source[-1] != '/', "Dropbox paths can not finish in /"
         assert remote_target[-1] != '/', "Dropbox paths can not finish in /"
+        out_message = ''
         try:
             return_value = self.dropbox_client.files_copy_v2(
                 remote_source,
@@ -142,32 +146,54 @@ class StorageBackEnd():
             status = 'online'
         except ConnectionError:
             # This can be missleading
-            status = 'connection-error'
+            status = 'connection-status'
         except ApiError as exception:
-            print(exception)
-            if type(exception.error._value).__name__ == 'LookupError':
+            out_message = exception
+            if type(exception.status._value).__name__ == 'LookupError':
                 status = 'online'
             else:
-                status = 'api-error'
+                status = 'api-status'
 
-        return status
+        return status, out_message
 
     def files_delete(self, remote_source):
         assert remote_source[-1] != '/', "Dropbox paths can not finish in /"
+        out_message = '' 
         try:
             return_value = self.dropbox_client.files_delete_v2(remote_source)
             status = 'online'
         except ConnectionError:
             # This can be missleading
-            status = 'connection-error'
+            status = 'connection-status'
         except ApiError as exception:
-            if type(exception.error._value).__name__ == 'LookupError':
+            if type(exception.status._value).__name__ == 'LookupError':
+                status = 'online'
+            else:
+                out_message = exception
+                status = 'api-status'
+
+        return status, out_message
+
+    def _get_meta_data(self, remote_source):
+
+        try:
+            result = self.dropbox_client.files_alpha_get_metadata(
+                remote_source
+            )
+            status = 'online'
+        except ConnectionError:
+            # This can be missleading
+            result = None
+            status = 'connection-status'
+        except ApiError as exception:
+            result = None
+            if type(exception.status._value).__name__ == 'LookupError':
                 status = 'online'
             else:
                 print(exception)
-                status = 'api-error'
+                status = 'api-status'
 
-        return status
+        return result, status
 
     def file_type(self, remote_source):
         assert remote_source[-1] != '/', "Dropbox paths can not finish in /"
@@ -185,21 +211,21 @@ class StorageBackEnd():
             status = 'online'
         except ConnectionError:
             # This can be missleading
-            status = 'connection-error'
+            status = 'connection-status'
             file_exists = False
         except ApiError as exception:
             file_type = None 
-            if type(exception.error._value).__name__ == 'LookupError':
+            if type(exception.status._value).__name__ == 'LookupError':
                 status = 'online'
             else:
                 print(exception)
-                status = 'api-error'
+                status = 'api-status'
 
         return file_type, status
 
     def file_download(self, remote_file):
         assert remote_file[-1] != '/', "Dropbox paths can not finish in /"
-
+        out_message = '' 
         try:
 
             # Look for remote file, store content
@@ -216,49 +242,67 @@ class StorageBackEnd():
 
             # Dropbox unrechable
             remote_content = None
-            status = 'connection-error'
+            status = 'connection-status'
 
         except ApiError as exception:
 
             # File non-existing
             remote_content = None
-            if type(exception.error._value).__name__ == 'LookupError':
+            if type(exception.status._value).__name__ == 'LookupError':
                 status = 'online'
             else:
-                print(exception)
+                out_message = exception
                 import ipdb;ipdb.set_trace(context=30)
-                status = 'api-error'
+                status = 'api-status'
 
-        return remote_content, status
+        return remote_content, status, out_message
 
     def list_folders(self, remote_folder):
         if remote_folder:
             assert remote_folder[-1] != '/', \
                 "Dropbox paths can not finish in /"
+        exception = '' 
         try:
 
             # Get user info to validate account
             result = self.dropbox_client.files_list_folder(remote_folder)
+            response = {
+                'entries': [x.name for x in result.entries]
+                'is_file': [
+                    hasattr(x, 'content_hash') for x in result.entries
+                 ]
+            }
             status = 'online'
 
         except ConnectionError:
 
             # Dropbox unrechable
-            result = None
+            response = {'entries': None 'is_file': None }
             status = 'connection-status'
 
         except ApiError as exception:
 
             # API status
-            result = None
-            print(exception)
-            import ipdb;ipdb.set_trace(context=30)
-            status = 'api-error'
+            if type(exception.status._value).__name__ == 'LookupError':
 
-        if result:
-            entries = [x.name for x in result.entries]
-            is_file = [hasattr(x, 'content_hash') for x in result.entries]
-        else:
-            entries = None
-            is_file = None
-        return entries, is_file, status
+                if exception.status._value._tag == u'not_folder':
+                    # Its a file rint meta-data for files
+                    out_message = self._get_meta_data(remote_folder)[0])
+                    entries = None
+                    is_file = None
+                    status = 'online'
+
+                else:
+                    # Nothing found
+                    entries = False 
+                    is_file = None
+                    status = 'online'
+
+            else:
+                out_message = exception
+                import ipdb;ipdb.set_trace(context=30)
+                entries = None
+                is_file = None
+                status = 'api-status'
+
+        return  response, out_message 

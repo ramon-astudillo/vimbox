@@ -250,9 +250,8 @@ class VimboxClient():
         assert remote_file[0] == '/', "Dropbox remote paths start with /"
         assert remote_file[-1] != '/', "Can only fetch files"
 
-        remote_content, status = self.client.file_download(
-            remote_file,
-        )
+        remote_content, status, message = \
+            self.client.file_download(remote_file)
 
         if status == 'online' and remote_content and password:
             print(
@@ -261,12 +260,11 @@ class VimboxClient():
             )
             return None, 'api-error', password
 
-
         if status == 'online' and remote_content is None:
 
             # File does not exist, try encrypted name
             remote_file_hash = crypto.get_path_hash(remote_file)
-            remote_content, status = self.client.file_download(
+            remote_content, status, message = self.client.file_download(
                 remote_file_hash,
             )
 
@@ -384,12 +382,33 @@ class VimboxClient():
 
         # Try first remote
         if remote_folder and remote_folder[-1] == '/':
-            entries, is_files, error = self.client.list_folders(
-                remote_folder[:-1]
-            )
+             items = self.client.list_folders(remote_folder[:-1])
         else:
-            entries, is_files, error = self.client.list_folders(remote_folder)
-        if entries is not None:
+             items = self.client.list_folders(remote_folder)
+        entries, is_files, status, message = items
+
+        # Second try to see if there is an ecrypted file
+        is_encrypted = False
+        if status == 'online' and entries == False:
+            remote_folder = crypto.get_path_hash(remote_folder)
+            entries, is_files, status, message = \
+                self.client.list_folders(remote_folder)
+            is_encrypted = status == 'online' 
+
+        if status == 'api-error':
+            raise VimboxClientError("api-error")
+
+        elif status == 'online' and entries == False:
+            # Folder/File non existing
+            raise VimboxClientError(
+                "%s does not exist in remote" % remote_folder
+            )
+
+        elif status == 'online' and entries is None:
+            # This was a file 
+            return True
+
+        elif status == 'online':
 
             # Differentiate file and folders
             display_folders = []
@@ -471,10 +490,6 @@ class VimboxClient():
                 self.config['cache'].append(remote_folder)
                 local.write_config(self.config_path, self.config)
 
-        elif error == 'api-error':
-
-            display_string = "Folder does not exist in remote!"
-
         else:
 
             # If it fails resort to local cache
@@ -497,7 +512,7 @@ class VimboxClient():
             )
 
         if file_type is None:
-            status = self.client.make_directory(remote_target[:-1])
+            status, message = self.client.make_directory(remote_target[:-1])
             if status == 'online':
                 self.register_file(remote_target, False)
         elif file_type == 'dir':
