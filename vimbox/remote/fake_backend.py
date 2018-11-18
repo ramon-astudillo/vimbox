@@ -124,26 +124,6 @@ class StorageBackEnd():
             error = 'connection-error'
         return error
 
-#    def is_file(self, remote_source):
-#        """ Returns true if remote_file is a file """
-#        if self.online:
-#            # stata = ['online', 'connection-error', 'api-error']
-#            fake_remote_file = "%s/%s" % (
-#                self.fake_remote_folder,
-#                remote_source
-#            )
-#            is_file = os.path.isfile(fake_remote_file)
-#            status = 'online'
-#            # FIXME: This is to mimic dropbox behaviour better avoid it
-#            #if is_file:
-#            #    status = 'online'
-#            #else:
-#            #    status = 'api-error'
-#        else:
-#            is_file = False
-#            status = 'connection-error'
-#        return is_file, status
-
     def file_type(self, remote_source):
         """ Returns true if remote_file is a file """
         if self.online:
@@ -164,17 +144,15 @@ class StorageBackEnd():
         return file_type, status
 
     def file_download(self, remote_source):
-        # stata = ['online', 'connection-error']
         if self.online:
             fake_remote_source = "%s/%s" % (
                 self.fake_remote_folder, remote_source
             )
+            status = 'online'
             if os.path.isfile(fake_remote_source):
                 remote_content = self._remote_read(remote_source)
-                status = 'online'
             else:
                 remote_content = None
-                status = 'online'
         else:
             remote_content = None
             status = 'connection-error'
@@ -185,11 +163,24 @@ class StorageBackEnd():
             self.fake_remote_folder, remote_folder
         )
         if self.online:
-            entries = os.listdir(fake_remote_source)
-            is_files = [
-                os.path.isfile("%s/%s" % (fake_remote_source, entry)) 
-                for entry in entries
-            ] 
+            try:
+                entries = os.listdir(fake_remote_source)
+                is_files = [
+                    os.path.isfile("%s/%s" % (fake_remote_source, entry)) 
+                    for entry in entries
+                ] 
+            except OSError:
+                if os.path.isfile(fake_remote_source):
+                    print("")
+                    print(fake_remote_source)
+                    print("")
+                    entries = None 
+                    is_files = None
+
+                else:
+                    entries = False
+                    is_files = None
+
             return entries, is_files, 'online' 
         else:
             return None, None, 'connection-error'
