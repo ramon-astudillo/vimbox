@@ -313,6 +313,20 @@ def main(args=None, config_path=None, password=None):
                     initial_text=initial_text
                 )
                 return True 
+
+            except primitives.VimboxOfflineError as exception:
+
+                # Offline mode
+                local_file = local.get_local_file(remote_file)
+                if not os.path.isfile(local_file) and initial_text:
+                    dirname = os.path.dirname(local_file)
+                    if not os.path.isdir(dirname):
+                        os.makedirs(dirname)
+                    local.write_file(local_file, initial_text)
+                else:
+                    local.edittool(local_file)
+                return True 
+
             except primitives.VimboxClientError as exception:
                 print("\n%s\n" % exception.message)
                 return False 

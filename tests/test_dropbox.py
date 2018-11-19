@@ -39,60 +39,60 @@ def test_main():
     print("File upload %s" % green("OK"))
 
     # Check existance file
-    file_type, status = client.file_type(TMP_FILE)
-    assert status == 'online', "Status not online on file_type"
-    assert file_type == 'file' , "Dropbox file creation failed"
+    remote = client.file_type(TMP_FILE)
+    assert remote['status'] == 'online', "Status not online on file_type"
+    assert remote['content'] == 'file' , "Dropbox file creation failed"
     print("File existance %s" % green("OK"))
 
     # Check content
-    remote_content, status = client.file_download(TMP_FILE)
-    assert status == 'online', "Status not online on file_download"
+    remote = client.file_download(TMP_FILE)
+    assert remote['status'] == 'online', "Status not online on file_download"
     if sys.version_info[0] > 2:
         # Encoding for Python3
         remote_content = str.encode(remote_content)
-    assert TMP_CONTENT == remote_content, "Retrieval of remote content failed"
+    assert TMP_CONTENT == remote['content'], \
+        "Retrieval of remote content failed"
     print("Content check %s" % green("OK"))
 
     # List folders does not die
-    result, status = client.list_folders(REMOTE_UNIT_TEST_FOLDER[:-1])
-    assert status == 'online', "Status not online on list_folders"
+    remote = client.list_folders(REMOTE_UNIT_TEST_FOLDER[:-1])
+    assert remote['status'] == 'online', "Status not online on list_folders"
     print("Listing files %s" % green("OK"))
 
     # Move
     client.files_copy(TMP_FILE, TMP_FILE2)
     client.files_delete(TMP_FILE)
     # Check non existance file
-    file_type, status = client.file_type(TMP_FILE)
-    assert status == 'online' and file_type is None, "File removal failed"
+    remote = client.file_type(TMP_FILE)
+    assert remote['status'] == 'online' and remote['content'] is None, \
+        "File removal failed"
     print("Move files %s" % green("OK"))
 
     # Make folder
     client.make_directory(TMP_FOLDER[:-1])
-    file_type, status = client.file_type(TMP_FOLDER[:-1])
-    assert status == 'online' and file_type == 'dir', "Folder creation failed"
+    remote = client.file_type(TMP_FOLDER[:-1])
+    assert remote['status'] == 'online' and remote['content'] == 'dir', \
+        "Folder creation failed"
     print("Make folder %s" % green("OK"))
 
     # Move folder
     client.files_copy(TMP_FOLDER[:-1], TMP_FOLDER2[:-1])
-    file_type, status = client.file_type(TMP_FOLDER2[:-1])
-    assert status == 'online' and file_type == 'dir', "Folder creation failed"
+    remote = client.file_type(TMP_FOLDER2[:-1])
+    assert remote['status'] == 'online' and remote['content'] == 'dir', \
+        "Folder creation failed"
     client.files_delete(TMP_FOLDER[:-1])
-    file_type, status = client.file_type(TMP_FOLDER[:-1])
-    assert status == 'online' and file_type is None, "Folder removal failed"
+    remote = client.file_type(TMP_FOLDER[:-1])
+    assert remote['status'] == 'online' and remote['content'] is None, \
+        "Folder removal failed"
     print("Move folder %s" % green("OK"))
 
     # Clean-up
     client.files_delete(REMOTE_UNIT_TEST_FOLDER[:-1])
-    file_type, status = client.file_type(REMOTE_UNIT_TEST_FOLDER[:-1])
-    assert status == 'online' and file_type is None, "Folder removal failed"
-
+    remote = client.file_type(REMOTE_UNIT_TEST_FOLDER[:-1])
+    assert remote['status'] == 'online' and remote['content'] is None, \
+        "Folder removal failed"
 
 if __name__ == '__main__':
-
-    start_environment(backend_name='dropbox')
-    test_main()
-    reset_environment(sucess=True)
-    exit()
 
     try:
         start_environment(backend_name='dropbox')

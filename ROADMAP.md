@@ -48,6 +48,8 @@
 - Refactor argument parsing with`click`
     - Really missing `vimbox -O` but does not seem easy
 
+* Clean-up `list_folder` code
+
 * Add `vimbox local` to get local path of files
 
 * Proper unit tests with pytest
