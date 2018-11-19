@@ -52,12 +52,6 @@ def test_main():
 
 if __name__ == '__main__':
 
-    #start_environment(backend_name='fake')
-    start_environment()
-    test_main()
-    reset_environment(sucess=True)
-    exit()
-
     try:
         start_environment(backend_name='fake')
         test_main()
