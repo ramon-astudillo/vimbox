@@ -185,5 +185,5 @@ class StorageBackEnd():
             entries = False
             is_files = None
 
-        response = {'entries': entries, 'is_file': is_files}
+        response = {'entries': entries, 'is_files': is_files}
         return {'status': status, 'content': response, 'alerts': alerts}
