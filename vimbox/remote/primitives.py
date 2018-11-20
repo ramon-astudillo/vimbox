@@ -604,6 +604,12 @@ class VimboxClient():
                 else:
                     addendum = os.path.basename(remote_source)
                     remote_target = remote_target + addendum
+        else: 
+            file_type, is_encripted, status = self.file_type(remote_target)
+            if file_type: 
+                raise VimboxClientError(
+                    'Target file %s exists' % remote_target
+                )
 
         # Move paths in hash
         updated_hashes = copy_hash(
