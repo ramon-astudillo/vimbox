@@ -153,7 +153,7 @@ def automerge(reference_content, modified_content, automerge_rules):
     return merged_content, merge_strategy
 
 
-def copy_hash(path_hashes, source_folder, target_folder):
+def copy_hash(path_hashes, source_folder, target_folder, verbose):
 
     # Do not allow to copy encrypted files or folder containing them
     updated_hashes = False
@@ -170,7 +170,8 @@ def copy_hash(path_hashes, source_folder, target_folder):
                 new_path = target_folder + '/' + \
                     path_hashes[key][len(source_folder):]
             path_hashes.update({new_key: new_path})
-            print("Copied hash %s -> %s" % (path_hashes[key], new_path))
+            if verbose > 0:
+                print("Copied hash %s -> %s" % (path_hashes[key], new_path))
             updated_hashes = True
 
     return updated_hashes
@@ -178,11 +179,12 @@ def copy_hash(path_hashes, source_folder, target_folder):
 
 class VimboxClient():
 
-    def __init__(self, config_path=local.CONFIG_FILE):
+    def __init__(self, config_path=local.CONFIG_FILE, verbose=1):
 
         # Load local config if not provided
         self.config_path = config_path
         self.config = local.load_config(config_path)
+        self.verbose = verbose
 
         # Get reference to remote client
         if self.config['backend_name'] == 'dropbox':
@@ -239,10 +241,7 @@ class VimboxClient():
                 # Encoding for Python3
                 new_local_content = str.encode(new_local_content)
         # Overwrite remote
-        self.client.files_upload(
-            new_local_content,
-            remote_file_hash,
-        )
+        self.client.files_upload(new_local_content, remote_file_hash)
 
     def _tentative_fetch(self, remote_file, password):
 
@@ -372,7 +371,8 @@ class VimboxClient():
                 os.remove(old_local_file)
             else:
                 local.write_file(local_file, merged_content)
-                print("merged by %s" % merge_strategy)
+                if self.verbose > 0: 
+                    print("merged by %s" % merge_strategy)
 
         else:
 
@@ -418,7 +418,7 @@ class VimboxClient():
     def cat(self, remote_file):
         """ Equivalent of bash cat in remote """
         response, password = self.fetch(remote_file)
-        if response['status'] == 'online':
+        if response['status'] == 'online' and self.verbose > 0:
             print(response['content'])
 
     def list_folders(self, remote_folder):
@@ -545,13 +545,15 @@ class VimboxClient():
 
             # If it fails resort to local cache
             display_folders = local.list_local(remote_folder, self.config)
-            print("\n%s content for %s " % (red("offline"), remote_folder))
+            if self.verbose > 0:
+                print("\n%s content for %s " % (red("offline"), remote_folder))
             display_string = "".join(
                 ["%s\n" % folder for folder in sorted(display_folders)]
             )
 
         # Print
-        print("\n%s\n" % display_string.rstrip())
+        if self.verbose > 0:
+            print("\n%s\n" % display_string.rstrip())
 
     def make_directory(self, remote_target):
         if remote_target[-1] != '/':
@@ -615,7 +617,8 @@ class VimboxClient():
         updated_hashes = copy_hash(
             self.config['path_hashes'],
             remote_source,
-            remote_target
+            remote_target,
+            self.verbose
         )
         if updated_hashes:
             local.write_config(self.config_path, self.config)
@@ -629,14 +632,15 @@ class VimboxClient():
         response = self.client.files_copy(remote_source, remote_target)
         if response['status'] != 'connection-error':
             self.register_file(remote_target, False)
-            print(
-                "%-12s %s %s" % (
-                    yellow("copied"),
-                    remote_source,
-                    remote_target
+            if self.verbose > 0:
+                print(
+                    "%-12s %s %s" % (
+                        yellow("copied"),
+                        remote_source,
+                        remote_target
+                    )
                 )
-            )
-        else:
+        elif self.verbose > 0:
             print("%-12s did not copy!" % red("offline"))
 
     def is_removable(self, remote_file):
@@ -709,10 +713,12 @@ class VimboxClient():
             elif os.path.isdir(local_file):
                 shutil.rmtree(local_file)
             self.unregister_file(remote_file)
-            print("%s did not exist in remote!" % original_name)
+            if self.verbose > 0:
+                print("%s did not exist in remote!" % original_name)
 
         elif response['status'] != 'connection-error':
-            print("%-12s %s" % (yellow("removed"), original_name))
+            if self.verbose > 0:
+                print("%-12s %s" % (yellow("removed"), original_name))
 
             # Remove local copy
             local_file = self.get_local_file(remote_file)
@@ -721,7 +727,7 @@ class VimboxClient():
             elif os.path.isdir(local_file):
                 shutil.rmtree(local_file)
             self.unregister_file(remote_file)
-        else:
+        elif self.verbose > 0:
             print(
                 "%-12s did not remove!  %s" % (red("offline"), original_name)
             )
@@ -828,7 +834,12 @@ class VimboxClient():
             amerge_ref_is_local=amerge_ref_is_local
         )
 
-        if force_creation and content['local'] and content['remote'] is None:
+        if (
+            force_creation and 
+            content['local'] and 
+            content['remote'] is None and
+            self.verbose > 0
+        ):
             print("\nRecovered local version from %s\n" % remote_file)
 
         # Apply edit if needed
@@ -882,15 +893,18 @@ class VimboxClient():
             # Inform the user
             if error is None:
                 # We pushed sucessfully
-                print("%-12s %s" % (yellow("pushed"), remote_file))
+                if self.verbose > 0:
+                    print("%-12s %s" % (yellow("pushed"), remote_file))
             elif error == 'connection-error':
                 # Offline
-                print("%-12s %s" % (red("offline"), remote_file))
+                if self.verbose > 0:
+                    print("%-12s %s" % (red("offline"), remote_file))
             elif error == 'api-error':
                 # This is not a normal state. Probably bug on our side or API
                 # change/bug on the backend.
-                print("%-12s %s" % (red("api-error"), remote_file))
-                print("API error (something bad happened)")
+                if self.verbose > 0:
+                    print("%-12s %s" % (red("api-error"), remote_file))
+                    print("API error (something bad happened)")
             else:
                 # This is most certainly a bug on our side
                 raise Exception("Unknown _push error %s" % error)
@@ -920,7 +934,8 @@ class VimboxClient():
                     local.local_edit(local_file, content['merged'])
                 # Remove local file if solicited
                 os.remove(local_file)
-                print("%-12s %s" % (red("cleaned"), local_file))
+                if self.verbose > 0:
+                    print("%-12s %s" % (red("cleaned"), local_file))
 
             elif content['local'] != content['merged']:
                 # If local content was changed we need to update
@@ -930,16 +945,19 @@ class VimboxClient():
             # We overwrote local with remote
             local_file = self.get_local_file(remote_file)
             local.local_edit(local_file, content['merged'], no_edit=True)
-            print("%-12s %s" % (yellow("pulled"), remote_file))
+            if self.verbose > 0:
+                print("%-12s %s" % (yellow("pulled"), remote_file))
             if register_folder:
                 self.register_file(remote_file, password is not None)
 
         else:
             # No changes needed on either side
-            print("%-12s %s" % (green("in-sync"), remote_file))
+            if self.verbose > 0:
+                print("%-12s %s" % (green("in-sync"), remote_file))
             if remove_local and os.path.isfile(local_file):
                 os.remove(local_file)
-                print("%-12s %s" % (red("cleaned"), local_file))
+                if self.verbose > 0:
+                    print("%-12s %s" % (red("cleaned"), local_file))
             if register_folder:
                 self.register_file(remote_file, password is not None)
 

@@ -120,7 +120,7 @@ def vimbox_help(command=None):
         print("\nvimbox %-35s %s\n" % COMMAND_HELP[command])
 
 
-def main(args=None, config_path=None, password=None):
+def main(args=None, config_path=None, password=None, verbose=1):
     """
     This is refered as vimbox in setup.py
     """
@@ -182,7 +182,10 @@ def main(args=None, config_path=None, password=None):
     elif args[0] == 'ls':
 
         # List contents of folder
-        client = primitives.VimboxClient(config_path=config_path)
+        client = primitives.VimboxClient(
+            config_path=config_path,
+            verbose=verbose
+        )
         if len(args) == 1:
             try:
                 client.list_folders('')
@@ -204,7 +207,10 @@ def main(args=None, config_path=None, password=None):
     elif args[0] == 'mkdir':
 
         # Copy file to file or folder
-        client = primitives.VimboxClient(config_path=config_path)
+        client = primitives.VimboxClient(
+            config_path=config_path,
+            verbose=verbose
+        )
         if len(args) != 2:
             vimbox_help()
             return False
@@ -218,7 +224,10 @@ def main(args=None, config_path=None, password=None):
     elif args[0] == 'cp':
 
         # Copy file to file or folder
-        client = primitives.VimboxClient(config_path=config_path)
+        client = primitives.VimboxClient(
+            config_path=config_path,
+            verbose=verbose
+        )
         if len(args) != 3:
             vimbox_help()
             return False
@@ -232,7 +241,10 @@ def main(args=None, config_path=None, password=None):
     elif args[0] == 'cat':
 
         # Copy file to file or folder
-        client = primitives.VimboxClient(config_path=config_path)
+        client = primitives.VimboxClient(
+            config_path=config_path,
+            verbose=verbose
+        )
         for arg in args[1:]:
             try:
                 client.cat(arg)
@@ -244,7 +256,10 @@ def main(args=None, config_path=None, password=None):
     elif args[0] == 'rm':
 
         # Remove file or folder
-        client = primitives.VimboxClient(config_path=config_path)
+        client = primitives.VimboxClient(
+            config_path=config_path,
+            verbose=verbose
+        )
         if len(args) == 2:
             try:
                 client.remove(args[1], recursive=False)
@@ -265,7 +280,10 @@ def main(args=None, config_path=None, password=None):
     elif args[0] == 'mv':
 
         # Move file to file or folder
-        client = primitives.VimboxClient(config_path=config_path)
+        client = primitives.VimboxClient(
+            config_path=config_path,
+            verbose=verbose 
+        )
         if len(args) != 3:
             vimbox_help()
             return False 
@@ -285,7 +303,10 @@ def main(args=None, config_path=None, password=None):
         if remote_file[-1] == '/':
 
             # Alias for ls
-            client = primitives.VimboxClient(config_path=config_path)
+            client = primitives.VimboxClient(
+                config_path=config_path,
+                verbose=verbose 
+            )
             client.list_folders(remote_file)
             return True 
 
@@ -294,7 +315,10 @@ def main(args=None, config_path=None, password=None):
             # Edit
 
             # Get config
-            client = primitives.VimboxClient(config_path=config_path)
+            client = primitives.VimboxClient(
+                config_path=config_path,
+                verbose=verbose
+            )
 
             # Create new encrypted file or register existing one
             if encrypt and password is None:
