@@ -16,39 +16,35 @@ from tools import (
 
 def test_main():
 
-    # Encrypted files created but not in hash list will not be seen when
-    # creating a new file
-    if main(['ls', '/folder1/']):
-        main(['rm', '-R', '/folder1/'])
-    if main(['ls', '/folder3/']):
-        main(['rm', '-R', '/folder3/'])
+    main(['-f', '/.unit_test/folder1/plain', 'Cosa mariposa'])
+    assert main(['ls', '/.unit_test/folder1/plain'], verbose=0)
 
-    main(['-f', '/logs/temp/plain', 'Cosa mariposa'])
-    assert main(['ls', '/logs/temp/plain'])
+    main(['-e', '/.unit_test/folder1/folder2/encrypted', 'This is secret'], 
+         password='dummy')
+    assert main(['ls', '/.unit_test/folder1/folder2/encrypted'], verbose=0)
 
-    main(['-e', '/folder1/folder2/encrypted', 'Cosa mariposa'], password='dummy')
-    assert main(['ls', '/folder1/folder2/encrypted'])
-
-    main(['mkdir', '/folder3/'])
-    main(['mv', '/folder1/folder2/', '/folder3/'])
-    main(['ls', '/folder3/folder2/'])
-    assert main(['ls', '/folder3/folder2/encrypted'])
+    main(['mkdir', '/.unit_test/folder3/'])
+    main(['mv', '/.unit_test/folder1/folder2/', '/.unit_test/folder3/'])
+    assert main(['ls', '/.unit_test/folder3/folder2/encrypted'], verbose=0)
+    print("Move encrypted %s" % green("OK"))
 
     # Create an encrypted file and root and try to overwrite it
-    main(['-e', '/secret_file', 'Some encrypted data'], password='pass')
-    assert main(['ls', '/secret_file'])
-    assert not main(['-f', '/secret_file', 'Here is some more content'])
+    main(['-e', '/.unit_test/secret_file', 'Some encrypted data'], password='pass')
+    assert main(['ls', '/.unit_test/secret_file'], verbose=0)
+    assert not main(['-f', '/.unit_test/secret_file', 'Here is some more content'])
+    print("Create encrypted in root %s" % green("OK"))
 
     # Fail at creating folder with same name
-    assert not main(['mkdir', '/secret_file/'])
+    assert not main(['mkdir', '/.unit_test/secret_file/'])
+    print("Encrypted file folder collision %s" % green("OK"))
+
+    # Fail at moving a file overwriting another file
+    main(['mv', '/.unit_test/secret_file', '/.unit_test/folder3/folder2/encrypted'])
+    print("Encrypted file moved file collision %s" % green("OK"))
 
     # Cleanup
-    if main(['ls', '/secret_file']):
-        main(['rm', '/secret_file'])
-    if main(['ls', '/folder1/']):
-        main(['rm', '-R', '/folder1/'])
-    if main(['ls', '/folder3/']):
-        main(['rm', '-R', '/folder3/'])
+    if main(['ls', '/.unit_test/'], verbose=0):
+        main(['rm', '-R', '/.unit_test/'])
 
 if __name__ == '__main__':
 

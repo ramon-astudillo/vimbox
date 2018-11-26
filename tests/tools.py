@@ -9,7 +9,7 @@ from vimbox import local
 green = style(font_color='light green')
 
 # Name of the folder where we carry on the test
-REMOTE_UNIT_TEST_FOLDER = '/14s52fr34G2R3tH42341/'
+REMOTE_UNIT_TEST_FOLDER = '/.unit_test/'
 UNIT_TEST_FOLDER = os.path.realpath(
     "/%s/../tests/" % os.path.dirname(vimbox.__file__)
 )

@@ -18,7 +18,7 @@ def test_main():
     Test StorageBackEnd primitives
     '''
 
-    assert REMOTE_UNIT_TEST_FOLDER == '/14s52fr34G2R3tH42341/', \
+    assert REMOTE_UNIT_TEST_FOLDER == '/.unit_test/', \
         "CHANGING INTEGRATION TEST FOLDER CAN LEAD TO DATA LOSS"
     assert REMOTE_UNIT_TEST_FOLDER[-1] == '/', "Folder paths end in /"
 
