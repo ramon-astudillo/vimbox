@@ -9,9 +9,11 @@ from tools import (
     start_environment,
     reset_environment,
     REMOTE_UNIT_TEST_FOLDER,
-    green
+    green,
+    run_in_environment
 )
 from vimbox.remote.dropbox_backend import StorageBackEnd
+
 
 def test_main():
     '''
@@ -92,19 +94,6 @@ def test_main():
     assert remote['status'] == 'online' and remote['content'] is None, \
         "Folder removal failed"
 
+
 if __name__ == '__main__':
-
-    try:
-        start_environment(backend_name='dropbox')
-        test_main()
-        reset_environment(sucess=True)
-
-    except Exception as exception:
-        # Ensure we restore the original config
-        reset_environment()
-        # Reraise error
-        if sys.version_info[0] > 2:
-            raise exception.with_traceback(sys.exc_info()[2])
-        else:
-            t, v, tb = sys.exc_info()
-            raise(t, v, tb)
+    run_in_environment(test_main, debug=True)
