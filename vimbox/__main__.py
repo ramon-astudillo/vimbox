@@ -19,11 +19,12 @@ COMMAND_HELP = {
     'rm -R': ('rm -R /path/to/folder/', 'remove folder'),
     'cp': ('cp /path/to/file /path2/to/[file2]', 'copy file'),
     'mv': ('mv /path/to/file /path2/to/[file2]', 'move file'),
-    'cat': ('cat /path/to/file /path2/file', 'concatenate file outputs')
+    'cat': ('cat /path/to/file /path2/file', 'concatenate file outputs'),
+    'mkdir': ('mkdir /path/to/folder/', 'create folder')
 }
 COMMAND_ORDER = [
     'setup', '-f', '-e', '', 'cache', 'config', 'ls', 'rm', 'rm -R', 'cp',
-    'mv', 'cat'
+    'mv', 'cat', 'mkdir'
 ]
 
 
