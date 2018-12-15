@@ -24,7 +24,7 @@ COMMAND_HELP = {
 }
 COMMAND_ORDER = [
     'setup', '-f', '-e', '', 'cache', 'config', 'ls', 'rm', 'rm -R', 'cp',
-    'mv', 'cat'
+    'mv', 'cat', 'mkdir'
 ]
 
 
@@ -166,6 +166,13 @@ def main(args=None, config_path=None, password=None, verbose=1):
         for autocomplete_option in local.get_complete_arguments():
             print(autocomplete_option)
         return True
+
+    elif args[0] == 'local':
+
+        if len(args) == 2:
+            print(local.get_local_file(args[1]))
+        else:
+            vimbox_help()
 
     elif args[0] == 'cache':
 
