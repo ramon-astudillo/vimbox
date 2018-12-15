@@ -25,8 +25,8 @@ def test_main():
     TMP_FILE = '%splain' % REMOTE_UNIT_TEST_FOLDER
     TMP_CONTENT = 'This is some text'
     TMP_FILE2 = '%splain2' % REMOTE_UNIT_TEST_FOLDER
-    TMP_FOLDER =  '%stest_folder/' % REMOTE_UNIT_TEST_FOLDER 
-    TMP_FOLDER2 =  '%stest_folder2/' % REMOTE_UNIT_TEST_FOLDER 
+    TMP_FOLDER =  '%stest_folder/' % REMOTE_UNIT_TEST_FOLDER
+    TMP_FOLDER2 =  '%stest_folder2/' % REMOTE_UNIT_TEST_FOLDER
 
     client = StorageBackEnd(load_config()['DROPBOX_TOKEN'])
 
@@ -54,7 +54,7 @@ def test_main():
     print("Content check %s" % green("OK"))
 
     # List folders does not die
-    result, status = client.list_folders(REMOTE_UNIT_TEST_FOLDER[:-1])
+    _, _, status = client.list_folders(REMOTE_UNIT_TEST_FOLDER[:-1])
     assert status == 'online', "Status not online on list_folders"
     print("Listing files %s" % green("OK"))
 

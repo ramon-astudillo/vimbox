@@ -164,6 +164,13 @@ def main(args=None, config_path=None, password=None):
         for autocomplete_option in local.get_complete_arguments():
             print(autocomplete_option)
 
+    elif args[0] == 'local':
+
+        if len(args) == 2:
+            print(local.get_local_file(args[1]))
+        else:
+            vimbox_help()
+
     elif args[0] == 'cache':
 
         # Folders cached in this computer (latter minus commans e.g. ls)
