@@ -27,8 +27,8 @@ def test_main():
     TMP_FILE = '%splain' % REMOTE_UNIT_TEST_FOLDER
     TMP_CONTENT = 'This is some text'
     TMP_FILE2 = '%splain2' % REMOTE_UNIT_TEST_FOLDER
-    TMP_FOLDER =  '%stest_folder/' % REMOTE_UNIT_TEST_FOLDER 
-    TMP_FOLDER2 =  '%stest_folder2/' % REMOTE_UNIT_TEST_FOLDER 
+    TMP_FOLDER =  '%stest_folder/' % REMOTE_UNIT_TEST_FOLDER
+    TMP_FOLDER2 =  '%stest_folder2/' % REMOTE_UNIT_TEST_FOLDER
 
     client = StorageBackEnd(load_config()['DROPBOX_TOKEN'])
 
