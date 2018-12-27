@@ -1,11 +1,14 @@
 import os
 # import sys
 from setuptools import setup, find_packages
+try:  # for pip >=12
+    from pip._internal.req import parse_requirements
+    from pip._internal import download
+except ImportError:  # for pip <= 9.0.3
+    from pip.req import parse_requirements
+    from pip import download
 
-from pip.req import parse_requirements
-import pip.download
-
-VERSION='0.3.2'
+VERSION='0.4'
 
 # Check if we are on a virtual environment
 # https://stackoverflow.com/questions/1871549/determine-if-python-is-running-inside-virtualenv
@@ -14,7 +17,7 @@ VERSION='0.3.2'
 # parse_requirements() returns generator of pip.req.InstallRequirement
 # objects
 install_reqs = parse_requirements(
-    "requirements.txt", session=pip.download.PipSession()
+    "requirements.txt", session=download.PipSession()
 )
 # install_requires is a list of requirement
 install_requires = [str(ir.req) for ir in install_reqs]
