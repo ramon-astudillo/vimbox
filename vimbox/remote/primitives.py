@@ -20,11 +20,14 @@ yellow = diogenes.style(font_color='yellow')
 green = diogenes.style(font_color='light green')
 blue = diogenes.style(font_color='light blue')
 
+
 class VimboxClientError(Exception):
     pass
 
+
 class VimboxOfflineError(Exception):
     pass
+
 
 def get_path_components(path):
     return tuple(filter(None, path.split('/')))
@@ -101,8 +104,8 @@ def automerge(reference_content, modified_content, automerge_rules):
                 non_editable.match(reference_line) and
                 non_editable.match(modified_line) and
                 non_editable.match(reference_line).groups() ==
-                    non_editable.match(modified_line).groups()
-            ):
+                non_editable.match(modified_line).groups()
+        ):
             # Matches in the parts specified by the regexp
             merge_strategy |= set(['ignore-edit'])
             modified_cursor += 1
@@ -121,7 +124,7 @@ def automerge(reference_content, modified_content, automerge_rules):
             modified_cursor += 1
         elif (
             'append' in automerge_rules and
-            modified_cursor == num_lines_local - 1
+            modified_cursor == num_lines_reference - 1
         ):
             # Line appended to modified
             merge_strategy |= set(['append'])
@@ -262,7 +265,7 @@ class VimboxClient():
             # Offline
             raise VimboxOfflineError("Connection error")
 
-        elif response['content'] == False:
+        elif response['content'] is None:
 
             # No file found, but need to check for hashed / unhashed name
             # collision
@@ -274,6 +277,7 @@ class VimboxClient():
                 remote_file_hash = crypto.get_path_hash(remote_file)
                 response = self.client.file_download(remote_file_hash)
 
+            # Second check
             if response['status'] == 'api-error':
                 # Unexpected error
                 # This one is weird, since we tried once and it was ok
@@ -283,7 +287,7 @@ class VimboxClient():
                 # Suddenly, Offline
                 raise VimboxOfflineError("Connection error")
 
-            elif response['content'] == False:
+            elif response['content'] is None:
                 # File really does not exist
                 pass
 
@@ -320,7 +324,7 @@ class VimboxClient():
                 password = getpass.getpass('Input file password: ')
             validated_password = crypto.validate_password(password)
             response['content'], sucess = crypto.decript_content(
-                remote_content, validated_password
+                response['content'], validated_password
             )
             if not sucess:
                 raise VimboxClientError("Decrypting %s filed" % remote_file)
@@ -396,9 +400,9 @@ class VimboxClient():
         # Force use of -f or -e to create new folders
         if (
             response['status'] == 'online' and
-            response['content'] == False and
-            not force_creation and
-            not local_content
+            response['content'] is None and
+            not force_creation  # and
+            # not local_content
         ):
             VimboxClientError('You need to create a file, use -f or -e')
 
@@ -436,7 +440,7 @@ class VimboxClient():
 
         # Second try to see if there is an ecrypted file
         is_encrypted = False
-        if status == 'online' and entries == False:
+        if status == 'online' and not entries:
             remote_folder = crypto.get_path_hash(remote_folder)
             # entries, is_files, status, message = \
             response = self.client.list_folders(remote_folder)
@@ -449,7 +453,7 @@ class VimboxClient():
         if status == 'api-error':
             raise VimboxClientError("api-error")
 
-        elif status == 'online' and entries == False:
+        elif status == 'online' and not entries:
             # Folder/File non existing
             raise VimboxClientError(
                 "%s does not exist in remote" % remote_folder
@@ -965,7 +969,7 @@ class VimboxClient():
 
     def file_type(self, remote_file):
         response = self.client.file_type(remote_file)
-        if response['content'] == None and response['status'] == 'online':
+        if response['content'] is None and response['status'] == 'online':
             # I file not found, try hashed name version
             remote_file = crypto.get_path_hash(remote_file)
             response = self.client.file_type(remote_file)
