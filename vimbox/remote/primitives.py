@@ -407,7 +407,7 @@ class VimboxClient():
             not force_creation  # and
             # not local_content
         ):
-            VimboxClientError('You need to create a file, use -f or -e')
+            raise VimboxClientError('You need to create a file, use -f or -e')
 
         # Merge
         if response['status'] == 'online':
