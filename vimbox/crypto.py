@@ -46,7 +46,7 @@ def encrypt_content(text, password):
         iv = os.urandom(16)
     else:
         # Python2
-        iv = str(os.urandom(16)) 
+        iv = str(os.urandom(16))
     obj = AES.new(password, AES.MODE_CBC, iv)
 
     # Create header to be a multiple of 16
@@ -105,7 +105,7 @@ def get_path_hash(path_str):
     else:
         # Python2
         h.update(basename)
-    if dirname != '/':    
+    if dirname != '/':
         return "%s/.%s" % (dirname, h.hexdigest())
     else:
         return "/.%s" % h.hexdigest()

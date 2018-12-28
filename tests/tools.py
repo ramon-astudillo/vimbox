@@ -4,7 +4,8 @@ import shutil
 import vimbox
 from vimbox.diogenes import style
 from vimbox import local
-
+from vimbox.remote.primitives import VimboxClient
+from vimbox.remote.fake_backend import get_fake_remote_local_path
 
 green = style(font_color='light green')
 
@@ -23,7 +24,7 @@ def read_file(file_path):
 
 
 def read_remote_content(remote_file):
-    true_path = local.get_remote_path(remote_file)
+    true_path = get_fake_remote_local_path(remote_file)
     with open(true_path, 'rb') as fid:
         text = fid.read()
 
@@ -38,36 +39,19 @@ def read_remote_content(remote_file):
     return text
 
 
-def reset_folder(folder_path, delete=False, backend_name=None):
+def reset_folder(folder_path, delete=False):
 
-    if backend_name is None:
-
-        # Fake backend
-        if os.path.isdir(folder_path):
-            shutil.rmtree(folder_path)
-            print("Reset %s" % folder_path)
-        if delete:
-            os.mkdirs(folder_path)
-
-    elif backend_name == 'dropbox':
-
-        # Dropbox
-        from vimbox.remote.primitives import VimboxClient
-        from vimbox.local import load_config
-        # Extra sanity check
-        client = StorageBackEnd(load_config()['DROPBOX_TOKEN'])
-        import ipdb;ipdb.set_trace(context=30)
-        if client.file_type(REMOTE_UNIT_TEST_FOLDER[:-1])['content']:
-            client.files_delete(REMOTE_UNIT_TEST_FOLDER[:-1])
-        if delete:
-            client.make_directory(REMOTE_UNIT_TEST_FOLDER[:-1])
-
-    else:
-        raise Exception("%s backend not supported in tests" % backend_name)
+    # Dropbox
+    # NOTE: This assumes these operations pass the unit test!
+    client = VimboxClient()
+    if client.client.file_type(REMOTE_UNIT_TEST_FOLDER[:-1])['content']:
+        client.client.files_delete(REMOTE_UNIT_TEST_FOLDER[:-1])
+    if not delete:
+        client.client.make_directory(REMOTE_UNIT_TEST_FOLDER[:-1])
 
 
 def write_remote_content(remote_file, remote_content):
-    true_path = get_remote_path(remote_file)
+    true_path = local.get_remote_path(remote_file)
 
     # Python3
     if sys.version_info[0] > 2:
@@ -85,12 +69,6 @@ def start_environment(**config_delta):
     """
     Create a folder for tests, store a copy of the config
     """
-
-    # Fake remote storage
-    backend_name = config_delta.get('backend_name', None)
-    assert REMOTE_UNIT_TEST_FOLDER[:-1] == '/.vimbox_unit_test', \
-        "CHANGING UNIT TEST FOLDER CAN LEAD TO DATA LOSS"
-    reset_folder(REMOTE_UNIT_TEST_FOLDER, backend_name=backend_name)
 
     # Overload some config fields if solicited
     original_config = local.load_config()
@@ -114,6 +92,12 @@ def start_environment(**config_delta):
     local.CONFIG_FILE = unit_test_config
     print("Using config %s" % unit_test_config)
 
+    # Remote storage
+    backend_name = config_delta.get('backend_name', None)
+    assert REMOTE_UNIT_TEST_FOLDER[:-1] == '/.vimbox_unit_test', \
+        "CHANGING UNIT TEST FOLDER CAN LEAD TO DATA LOSS"
+    reset_folder(REMOTE_UNIT_TEST_FOLDER)
+
     return unit_test_config
 
 
@@ -124,30 +108,29 @@ def reset_environment(sucess=False):
     - keep original config to restore it later
     """
     # Local storage
-    reset_folder(UNIT_TEST_FOLDER, delete=True)
-
-    # Remove overloaded config
-    unit_test_config = "%s/unit_test_%s" % (
-        os.path.dirname(local.CONFIG_FILE),
-        os.path.basename(local.CONFIG_FILE)
-    )
-    os.remove(unit_test_config)
+    test_config = local.load_config()
+    reset_folder(REMOTE_UNIT_TEST_FOLDER, delete=True)
+    # Extra check
+    assert os.path.basename(local.CONFIG_FILE) == 'unit_test_config.yml', \
+        "unit test configurstion has unexpected name, not deleting it"
+    os.remove(local.CONFIG_FILE)
+    print("Removing config %s" % local.CONFIG_FILE)
 
     # Inform user
     if sucess:
         print("Test was %s" % green("OK"))
 
 
-def run_in_environment(test_function, debug=False):
+def run_in_environment(test_function, backend_name='fake', debug=False):
 
     if debug:
-        start_environment(backend_name='dropbox')
+        start_environment(backend_name=backend_name)
         test_function()
         reset_environment(sucess=True)
 
     else:
         try:
-            start_environment(backend_name='dropbox')
+            start_environment(backend_name=backend_name)
             test_function()
             reset_environment(sucess=True)
 

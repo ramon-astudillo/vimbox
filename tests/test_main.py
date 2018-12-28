@@ -4,13 +4,12 @@ import sys
 from vimbox.__main__ import main
 from vimbox.crypto import get_path_hash
 from vimbox.local import load_config, get_local_file
+from vimbox.remote.fake_backend import get_fake_remote_local_path
 from tools import (
-    get_remote_path,
-    read_remote_content,
-    start_environment,
-    reset_environment,
+    green,
+    run_in_environment,
     REMOTE_UNIT_TEST_FOLDER,
-    green
+    read_remote_content
 )
 
 
@@ -21,12 +20,12 @@ def test_main():
     TMP_FILE = '%splain' % REMOTE_UNIT_TEST_FOLDER
     TMP_CONTENT = 'This is some text'
     TMP_FILE2 = '%splain2' % REMOTE_UNIT_TEST_FOLDER
-    TMP_FOLDER =  '%stest_folder/' % REMOTE_UNIT_TEST_FOLDER 
-    TMP_FOLDER2 =  '%stest_folder2/' % REMOTE_UNIT_TEST_FOLDER 
+    TMP_FOLDER = '%stest_folder/' % REMOTE_UNIT_TEST_FOLDER
+    TMP_FOLDER2 = '%stest_folder2/' % REMOTE_UNIT_TEST_FOLDER
 
     # Files in this computer
     local_file = get_local_file(TMP_FILE)
-    remote_file = get_remote_path(TMP_FILE)
+    remote_file = get_fake_remote_local_path(TMP_FILE)
 
     # FILE CREATION
     # Creation
@@ -44,7 +43,7 @@ def test_main():
     assert dirname in load_config()['cache'], "Register in cache failed"
     print("File creation %s" % green("OK"))
 
-    # REMOVE NON EXISTING FILE 
+    # REMOVE NON EXISTING FILE
     main(['rm', TMP_FILE + '_not_real'])
     print("Remove non-existing %s" % green("OK"))
 
@@ -59,32 +58,32 @@ def test_main():
     assert not os.path.isfile(local_file), \
         "Removal of local file %s failed" % local_file
     # Check new file was created
-    remote_file2 = get_remote_path(TMP_FILE2)
+    remote_file2 = get_fake_remote_local_path(TMP_FILE2)
     assert os.path.isfile(remote_file2), "File creation failed"
     print("Move file %s" % green("OK"))
 
-    TMP_FOLDER = '%stest_folder/' % REMOTE_UNIT_TEST_FOLDER 
-    TMP_FOLDER2 = '%stest_folder2/' % REMOTE_UNIT_TEST_FOLDER 
+    TMP_FOLDER = '%stest_folder/' % REMOTE_UNIT_TEST_FOLDER
+    TMP_FOLDER2 = '%stest_folder2/' % REMOTE_UNIT_TEST_FOLDER
 
     # MOVE FOLDER
     main(['mkdir', TMP_FOLDER])
     main(['mv', TMP_FOLDER, TMP_FOLDER2])
     # Original file was removed
     # Check fake remote file was removed
-    assert not os.path.isdir(get_remote_path(TMP_FOLDER)), \
+    assert not os.path.isdir(get_fake_remote_local_path(TMP_FOLDER)), \
         "Removal of remote file %s failed" % remote_file
     # Check local file was removed
-    assert not os.path.isdir(get_local_file( TMP_FOLDER)), \
+    assert not os.path.isdir(get_local_file(TMP_FOLDER)), \
         "Removal of local file %s failed" % local_file
     # Check new file was created
-    assert os.path.isdir(get_remote_path(TMP_FOLDER2)), \
+    assert os.path.isdir(get_fake_remote_local_path(TMP_FOLDER2)), \
         "File creation failed"
     print("Move folder %s" % green("OK"))
 
-    # REMOVE FOLDER 
+    # REMOVE FOLDER
     main(['rm', '-R', TMP_FOLDER2])
     # Check fake remote folder was removed
-    remote_folder = get_remote_path(TMP_FOLDER2)
+    remote_folder = get_fake_remote_local_path(TMP_FOLDER2)
     assert not os.path.isdir(remote_folder), "Removal of remote folder failed"
     # Check local file was removed
     local_folder = get_local_file(TMP_FOLDER2)
@@ -102,7 +101,8 @@ def test_main():
     main(['-e', FAKE_FILE_ENCRYPTED, FAKE_SECRET_CONTENT], password='dummy')
     # Check file and content are in the remote
     fake_file_encrypted_hash = get_path_hash(FAKE_FILE_ENCRYPTED)
-    assert os.path.isfile(get_remote_path(fake_file_encrypted_hash)),\
+    assert \
+        os.path.isfile(get_fake_remote_local_path(fake_file_encrypted_hash)),\
         "File creation failed"
     written_content = read_remote_content(fake_file_encrypted_hash)
     assert FAKE_SECRET_CONTENT != written_content, \
@@ -116,16 +116,18 @@ def test_main():
         "Register of path hash failed"
     print("Encrypted file creation %s" % green("OK"))
 
-    # MOVE FOLDER WITH ENCRYPTED FILES 
+    # MOVE FOLDER WITH ENCRYPTED FILES
     # This tests both copy and remove
     # FIXME: HARDEN copy
     main(['mv', TMP_FOLDER2, TMP_FOLDER])
     # Original file was removed
     # Check fake remote file was removed
-    assert not os.path.isdir(get_remote_path(TMP_FOLDER2)), \
-        "Removal of remote dir %s failed" % get_remote_path(TMP_FOLDER2)
+    assert not os.path.isdir(get_fake_remote_local_path(TMP_FOLDER2)), \
+        "Removal of remote dir %s failed" % \
+        get_fake_remote_local_path(TMP_FOLDER2)
     # Check new dir was created
-    assert os.path.isdir(get_remote_path(TMP_FOLDER)), "Dir creation failed"
+    assert os.path.isdir(get_fake_remote_local_path(TMP_FOLDER)), \
+        "Dir creation failed"
     print("Move folder with encrypted files  %s" % green("OK"))
     # Check has was updated
 
@@ -140,18 +142,4 @@ def test_main():
 
 
 if __name__ == '__main__':
-
-    try:
-        start_environment(backend_name='fake')
-        test_main()
-        reset_environment(sucess=True)
-
-    except Exception as exception:
-        # Ensure we restore the original config
-        reset_environment()
-        # Reraise error
-        if sys.version_info[0] > 2:
-            raise exception.with_traceback(sys.exc_info()[2])
-        else:
-            t, v, tb = sys.exc_info()
-            raise(t, v, tb)
+    run_in_environment(test_main, backend_name='fake', debug=True)

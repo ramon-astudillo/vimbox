@@ -1,6 +1,6 @@
 import copy
 import sys
-from tools import reset_environment, start_environment, green
+from tools import green, run_in_environment
 from vimbox.remote.primitives import automerge
 
 
@@ -110,18 +110,4 @@ def test_main():
 
 
 if __name__ == '__main__':
-
-    try:
-        start_environment(backend_name='fake')
-        test_main()
-        reset_environment(sucess=True)
-
-    except Exception as exception:
-        # Ensure we restore the original config
-        reset_environment()
-        # Reraise error
-        if sys.version_info[0] > 2:
-            raise exception.with_traceback(sys.exc_info()[2])
-        else:
-            t, v, tb = sys.exc_info()
-            raise(t, v, tb)
+    run_in_environment(test_main, backend_name='fake', debug=True)

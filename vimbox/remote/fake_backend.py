@@ -1,6 +1,6 @@
 import os
 import sys
-import shutil 
+import shutil
 import codecs
 from vimbox import local
 
@@ -13,12 +13,17 @@ def install_backend(self, config_file, config):
     print("Created config in %s" % config_file)
 
 
+def get_fake_remote_local_path(file_path=''):
+    return os.path.realpath(
+            "%s/../../tests/.fake_remote/%s" %
+            (os.path.dirname(__file__), file_path)
+        )
+
+
 class StorageBackEnd():
 
     def __init__(self, online=True):
-        self.fake_remote_folder = os.path.realpath(
-            "%s/../../tests/.fake_remote/" % os.path.dirname(__file__)
-        )
+        self.fake_remote_folder = get_fake_remote_local_path()
         # Create storage folder if it does not exit
         if not os.path.isdir(self.fake_remote_folder):
             os.makedirs(self.fake_remote_folder)
@@ -80,7 +85,7 @@ class StorageBackEnd():
     def make_directory(self, remote_target):
         if self.online:
             self._remote_makedir(remote_target)
-            status = 'online' 
+            status = 'online'
         else:
             status = 'connection-status'
         return {'status': status, 'content': None, 'alerts': None}
@@ -128,14 +133,14 @@ class StorageBackEnd():
                 remote_source
             )
             if os.path.isfile(fake_remote_file):
-                file_type = 'file' 
+                file_type = 'file'
             elif os.path.isdir(fake_remote_file):
-                file_type = 'dir' 
+                file_type = 'dir'
             else:
                 file_type = None
             status = 'online'
         else:
-            file_type = None 
+            file_type = None
             status = 'connection-error'
         return {'status': status, 'content': file_type, 'alerts': None}
 
@@ -163,20 +168,20 @@ class StorageBackEnd():
             try:
                 entries = os.listdir(fake_remote_source)
                 is_files = [
-                    os.path.isfile("%s/%s" % (fake_remote_source, entry)) 
+                    os.path.isfile("%s/%s" % (fake_remote_source, entry))
                     for entry in entries
-                ] 
+                ]
                 status = 'online'
             except OSError:
                 if os.path.isfile(fake_remote_source):
                     # It is a file
                     status = 'online'
                     alerts = fake_remote_source
-                    entries = None 
+                    entries = None
                     is_files = None
 
                 else:
-                    # Does not exist 
+                    # Does not exist
                     status = 'online'
                     entries = False
                     is_files = None

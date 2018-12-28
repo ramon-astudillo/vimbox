@@ -3,15 +3,7 @@ import sys
 from vimbox.__main__ import main
 from vimbox.crypto import get_path_hash
 from vimbox.local import load_config, get_local_file
-from tools import (
-    get_remote_path,
-    read_remote_content,
-    start_environment,
-    reset_environment,
-    REMOTE_UNIT_TEST_FOLDER,
-    green,
-    run_in_environment
-)
+from tools import REMOTE_UNIT_TEST_FOLDER, green, run_in_environment
 from vimbox.remote.dropbox_backend import StorageBackEnd
 
 
@@ -20,15 +12,15 @@ def test_main():
     Test StorageBackEnd primitives
     '''
 
-    assert REMOTE_UNIT_TEST_FOLDER == '/.unit_test/', \
+    assert REMOTE_UNIT_TEST_FOLDER == '/.vimbox_unit_test/', \
         "CHANGING INTEGRATION TEST FOLDER CAN LEAD TO DATA LOSS"
     assert REMOTE_UNIT_TEST_FOLDER[-1] == '/', "Folder paths end in /"
 
     TMP_FILE = '%splain' % REMOTE_UNIT_TEST_FOLDER
     TMP_CONTENT = 'This is some text'
     TMP_FILE2 = '%splain2' % REMOTE_UNIT_TEST_FOLDER
-    TMP_FOLDER =  '%stest_folder/' % REMOTE_UNIT_TEST_FOLDER
-    TMP_FOLDER2 =  '%stest_folder2/' % REMOTE_UNIT_TEST_FOLDER
+    TMP_FOLDER = '%stest_folder/' % REMOTE_UNIT_TEST_FOLDER
+    TMP_FOLDER2 = '%stest_folder2/' % REMOTE_UNIT_TEST_FOLDER
 
     client = StorageBackEnd(load_config()['DROPBOX_TOKEN'])
 
@@ -43,7 +35,7 @@ def test_main():
     # Check existance file
     remote = client.file_type(TMP_FILE)
     assert remote['status'] == 'online', "Status not online on file_type"
-    assert remote['content'] == 'file' , "Dropbox file creation failed"
+    assert remote['content'] == 'file', "Dropbox file creation failed"
     print("File existance %s" % green("OK"))
 
     # Check content
@@ -51,7 +43,7 @@ def test_main():
     assert remote['status'] == 'online', "Status not online on file_download"
     if sys.version_info[0] > 2:
         # Encoding for Python3
-        remote_content = str.encode(remote_content)
+        remote['content'] = str.encode(remote['content'])
     assert TMP_CONTENT == remote['content'], \
         "Retrieval of remote content failed"
     print("Content check %s" % green("OK"))

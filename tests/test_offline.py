@@ -3,12 +3,7 @@ import copy
 import sys
 from vimbox.__main__ import main
 from vimbox.local import load_config, get_local_file
-from tools import (
-    start_environment,
-    reset_environment,
-    REMOTE_UNIT_TEST_FOLDER,
-    green
-)
+from tools import run_in_environment
 
 
 def test_main():
@@ -25,22 +20,8 @@ def test_main():
     assert os.path.isfile(get_local_file('/folder1/plain')), \
         "Creation of local file %s failed" % '/folder1/plain'
 
-    # All other attempts should give primitives.VimboxOfflineError
+    # TODO: All other attempts should give primitives.VimboxOfflineError
 
 
 if __name__ == '__main__':
-
-    try:
-        start_environment(backend_name='fake-offline')
-        test_main()
-        reset_environment(sucess=True)
-
-    except Exception as exception:
-        # Ensure we restore the original config
-        reset_environment()
-        # Reraise error
-        if sys.version_info[0] > 2:
-            raise exception.with_traceback(sys.exc_info()[2])
-        else:
-            t, v, tb = sys.exc_info()
-            raise(t, v, tb)
+    run_in_environment(test_main, debug=True)

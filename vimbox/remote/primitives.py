@@ -182,7 +182,10 @@ def copy_hash(path_hashes, source_folder, target_folder, verbose):
 
 class VimboxClient():
 
-    def __init__(self, config_path=local.CONFIG_FILE, verbose=1):
+    def __init__(self, config_path=None, verbose=1):
+
+        if config_path is None:
+            config_path = local.CONFIG_FILE
 
         # Load local config if not provided
         self.config_path = config_path
@@ -439,8 +442,10 @@ class VimboxClient():
         message = response['alerts']
 
         # Second try to see if there is an ecrypted file
+        # TODO: entries is None is used to signal a this is a file not a
+        # folder. This is an obscure way of dealing with this.
         is_encrypted = False
-        if status == 'online' and not entries:
+        if status == 'online' and entries is False:
             remote_folder = crypto.get_path_hash(remote_folder)
             # entries, is_files, status, message = \
             response = self.client.list_folders(remote_folder)
@@ -453,7 +458,7 @@ class VimboxClient():
         if status == 'api-error':
             raise VimboxClientError("api-error")
 
-        elif status == 'online' and not entries:
+        elif status == 'online' and entries is False:
             # Folder/File non existing
             raise VimboxClientError(
                 "%s does not exist in remote" % remote_folder
