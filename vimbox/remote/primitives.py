@@ -569,9 +569,7 @@ class VimboxClient():
             raise VimboxClientError("Folder paths must end in / ")
         file_type, is_encripted, status = self.file_type(remote_target[:-1])
         if status != 'online':
-            raise VimboxClientError(
-                "%s can not create files/folders" % red("offline")
-            )
+            raise VimboxOfflineError("Connection error")
 
         if file_type is None:
             response = self.client.make_directory(remote_target[:-1])
@@ -604,7 +602,7 @@ class VimboxClient():
         """
 
         # Map `cp /path/to/file /path2/` to `cp /path/to/file /path/file`
-        if remote_target[-1] == '/':
+        if remote_target[1] == '/':
             file_type, is_encripted, status = self.file_type(
                 remote_target[:-1]
             )
@@ -621,6 +619,9 @@ class VimboxClient():
                 raise VimboxClientError(
                     'Target file %s exists' % remote_target
                 )
+
+        if status == 'connection-error':
+            raise VimboxOfflineError("Connection error")
 
         # Move paths in hash
         updated_hashes = copy_hash(
@@ -661,8 +662,7 @@ class VimboxClient():
         # Disallow deleting of folders.
         file_type, is_encrypted, status = self.file_type(remote_file)
         if status != 'online':
-            is_rem = False
-            reason = 'We are offline'
+            raise VimboxOfflineError("Connection error")
         elif file_type == 'dir':
             is_rem = True
             reason = None
