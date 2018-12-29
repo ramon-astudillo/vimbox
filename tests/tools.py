@@ -1,7 +1,6 @@
 import os
 import sys
 import shutil
-import vimbox
 from vimbox.diogenes import style
 from vimbox import local
 from vimbox.remote.primitives import VimboxClient
@@ -41,16 +40,24 @@ def read_remote_content(remote_file):
 
 def reset_folder(folder_path, delete=False):
 
-    # Dropbox
+    # Remote
     # NOTE: This assumes these operations pass the unit test!
     client = VimboxClient()
-    if client.client.file_type(REMOTE_UNIT_TEST_FOLDER[:-1])['content']:
-        client.client.files_delete(REMOTE_UNIT_TEST_FOLDER[:-1])
+    client.client.files_delete(REMOTE_UNIT_TEST_FOLDER[:-1])
     if not delete:
         client.client.make_directory(REMOTE_UNIT_TEST_FOLDER[:-1])
+    # Local
+    local_unit_test_folder = local.get_local_file(REMOTE_UNIT_TEST_FOLDER)
+    unit_test_name = os.path.basename(local_unit_test_folder[:-1])
+    assert unit_test_name == '.vimbox_unit_test', \
+        "unit-test folder changed name. Aborting just in case."
+    if os.path.isdir(local_unit_test_folder):
+        shutil.rmtree(local_unit_test_folder)
 
 
 def write_remote_content(remote_file, remote_content):
+
+    # FIXME: This function does not exist
     true_path = local.get_remote_path(remote_file)
 
     # Python3
