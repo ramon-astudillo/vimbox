@@ -127,7 +127,7 @@ class StorageBackEnd():
             # This can be missleading
             status = 'connection-error'
         except ApiError as exception:
-            import ipdb;ipdb.set_trace(context=30)
+            import ipdb; ipdb.set_trace(context=30)
             out_message = exception
             status = 'api-error'
         return {'status': status, 'content': None, 'alert': out_message}
@@ -207,6 +207,7 @@ class StorageBackEnd():
             status = 'online'
         except ConnectionError:
             # This can be missleading
+            file_type = None
             status = 'connection-error'
             file_exists = False
         except ApiError as exception:
@@ -276,7 +277,7 @@ class StorageBackEnd():
         except ConnectionError:
 
             # Dropbox unrechable
-            response = {'entries': None, 'is_files': None }
+            response = {'entries': None, 'is_files': None}
             status = 'connection-error'
 
         except ApiError as exception:
@@ -288,19 +289,19 @@ class StorageBackEnd():
                     # Its a file print meta-data for files
                     out_message = self._get_meta_data(remote_folder)[0]
                     status = 'online'
-                    response = {'entries': None, 'is_files': None }
+                    response = {'entries': None, 'is_files': None}
 
                 else:
                     # Nothing found
                     entries = False
                     is_files = None
                     status = 'online'
-                    response = {'entries': None, 'is_files': None }
+                    response = {'entries': None, 'is_files': None}
 
             else:
                 out_message = exception
-                import ipdb;ipdb.set_trace(context=30)
-                response = {'entries': None, 'is_files': None }
+                import ipdb; ipdb.set_trace(context=30)
+                response = {'entries': None, 'is_files': None}
                 status = 'api-error'
 
         return {'status': status, 'content': response, 'alerts': out_message}
