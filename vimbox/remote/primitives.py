@@ -602,7 +602,7 @@ class VimboxClient():
         """
 
         # Map `cp /path/to/file /path2/` to `cp /path/to/file /path/file`
-        if remote_target[1] == '/':
+        if remote_target[-1] == '/':
             file_type, is_encripted, status = self.file_type(
                 remote_target[:-1]
             )
@@ -688,9 +688,8 @@ class VimboxClient():
             )
 
         # Extra check for deletable files/folders
-        if remote_file[-1] == '/':
-            remote_file = remote_file[:-1]
         is_rem, reason = self.is_removable(remote_file)
+
         if not is_rem:
             raise VimboxClientError("\nCan not remove. %s\n" % reason)
 
