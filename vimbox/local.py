@@ -19,8 +19,6 @@ DEFAULT_CONFIG = {
     'DROPBOX_TOKEN': None,
     # This will be appended to local paths
     'local_root': '%s/DATA' % ROOT_FOLDER,
-    # This will be appended to all paths within dropbox
-    'remote_root': None,
     # This will store the local cache
     'cache': [],
     # This will store dict() s of hash: file_path for encripted files

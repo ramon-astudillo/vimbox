@@ -87,7 +87,6 @@ def start_environment(**config_delta):
         'backend_name': original_config['backend_name'],
         'cache': {},
         'path_hashes': {},
-        'remote_root': None,
         'remove_local': False
     }
     if config_delta:
