@@ -43,7 +43,10 @@ def reset_folder(folder_path, delete=False):
     # Remote
     # NOTE: This assumes these operations pass the unit test!
     client = VimboxClient()
-    client.client.files_delete(REMOTE_UNIT_TEST_FOLDER[:-1])
+    ret = client.client.file_type(REMOTE_UNIT_TEST_FOLDER[:-1])
+    if ret['status'] == 'online' and ret['content'] == 'dir':
+        client.client.files_delete(REMOTE_UNIT_TEST_FOLDER[:-1])
+        print("Removed %s" % REMOTE_UNIT_TEST_FOLDER)
     if not delete:
         client.client.make_directory(REMOTE_UNIT_TEST_FOLDER[:-1])
     # Local
