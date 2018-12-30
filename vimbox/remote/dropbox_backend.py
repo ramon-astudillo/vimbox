@@ -293,10 +293,8 @@ class StorageBackEnd():
 
                 else:
                     # Nothing found
-                    entries = False
-                    is_files = None
                     status = 'online'
-                    response = {'entries': None, 'is_files': None}
+                    response = {'entries': False, 'is_files': None}
 
             else:
                 out_message = exception
