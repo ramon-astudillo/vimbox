@@ -52,4 +52,4 @@ def test_main():
 
 
 if __name__ == '__main__':
-    run_in_environment(test_main, debug=True)
+    run_in_environment(test_main, debug=True, backend_name='dropbox')

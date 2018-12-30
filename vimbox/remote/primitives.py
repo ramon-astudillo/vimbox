@@ -958,6 +958,13 @@ class VimboxClient():
             if register_folder:
                 self.register_file(remote_file, password is not None)
 
+        elif all(
+            content[key] is None
+            for key in ['merged', 'local', 'remote', 'edited']
+        ):
+            # Edit aborted
+            pass
+
         else:
             # No changes needed on either side
             if self.verbose > 0:
