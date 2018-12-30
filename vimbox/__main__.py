@@ -28,6 +28,16 @@ COMMAND_ORDER = [
 ]
 
 
+def assert_valid_path(file_path, path_type=None):
+    assert file_path.find('//') == -1, "Paths can not have double slashes"
+    if path_type == 'file':
+        assert file_path[-1] != '/', "File types can not finish in slash"
+    elif path_type == 'dir':
+        assert file_path[-1] == '/', "File types must finish in slash"
+    elif path_type is not None:
+        raise Exception("Path type must be file, dir or None")
+
+
 def install():
 
     # Check if we are in virtual environment
@@ -56,7 +66,9 @@ def password_prompt(remote_file, config):
 
     # Check if file in cache already
     if remote_file in config['path_hashes'].values():
-        primitives.VimboxClientError('\nCan not re-encrypt a registered file.\n')
+        primitives.VimboxClientError(
+            '\nCan not re-encrypt a registered file.\n'
+        )
 
     # Prompt for password
     password = getpass.getpass('Input file password: ')
@@ -185,6 +197,7 @@ def main(args=None, config_path=None, password=None, verbose=1):
     elif args[0] == 'local':
 
         if len(args) == 2:
+            assert_valid_path(args[1])
             print(local.get_local_file(args[1]))
         else:
             vimbox_help()
@@ -218,6 +231,7 @@ def main(args=None, config_path=None, password=None, verbose=1):
             argument = ''
         elif len(args) == 2:
             argument = args[1]
+            assert_valid_path(argument)
         else:
             vimbox_help()
             return False
@@ -245,6 +259,7 @@ def main(args=None, config_path=None, password=None, verbose=1):
             vimbox_help()
             return False
         try:
+            assert_valid_path(args[1], path_type='dir')
             client.make_directory(args[1])
             return True
         except primitives.VimboxOfflineError as exception:
@@ -267,6 +282,8 @@ def main(args=None, config_path=None, password=None, verbose=1):
             verbose=verbose
         )
         try:
+            assert_valid_path(args[1])
+            assert_valid_path(args[2])
             client.copy(args[1], args[2])
             return True
         except primitives.VimboxOfflineError as exception:
@@ -285,6 +302,7 @@ def main(args=None, config_path=None, password=None, verbose=1):
         )
         for arg in args[1:]:
             try:
+                assert_valid_path(arg)
                 client.cat(arg)
                 return True
             except primitives.VimboxClientError as exception:
@@ -311,6 +329,7 @@ def main(args=None, config_path=None, password=None, verbose=1):
             verbose=verbose
         )
         try:
+            assert_valid_path(arguments)
             client.remove(arguments, recursive=recursive_flag)
             return True
         except primitives.VimboxOfflineError as exception:
@@ -335,6 +354,8 @@ def main(args=None, config_path=None, password=None, verbose=1):
             verbose=verbose
         )
         try:
+            assert_valid_path(args[1])
+            assert_valid_path(args[2])
             client.move(args[1], args[2])
             return True
         except primitives.VimboxOfflineError as exception:
@@ -349,6 +370,8 @@ def main(args=None, config_path=None, password=None, verbose=1):
         # Get flags from arguments
         remote_file, force_creation, encrypt, initial_text = \
             argument_handling(args)
+
+        assert_valid_path(remote_file)
 
         if remote_file[-1] == '/':
 
@@ -374,7 +397,7 @@ def main(args=None, config_path=None, password=None, verbose=1):
             if encrypt and password is None:
                 try:
                     password = password_prompt(remote_file, client.config)
-                except primitives.VimboxClientError as e:
+                except primitives.VimboxClientError as exception:
                     print("\n%s\n" % exception.message)
                     return False
 
@@ -403,6 +426,7 @@ def main(args=None, config_path=None, password=None, verbose=1):
             except primitives.VimboxClientError as exception:
                 print("\n%s\n" % exception.message)
                 return False
+
 
 if __name__ == "__main__":
     main()
