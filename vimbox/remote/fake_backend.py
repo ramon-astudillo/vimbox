@@ -92,16 +92,18 @@ class StorageBackEnd():
 
     def files_copy(self, remote_source, remote_target):
         if self.online:
-            if os.path.isdir(
-                "%s/%s" % (self.fake_remote_folder, remote_source)
-            ):
+            fake_path = "%s/%s" % (self.fake_remote_folder, remote_source)
+            if os.path.isdir(fake_path):
                 self._remote_copy_dirs(remote_source, remote_target)
-            else:
+                status = 'online'
+            elif os.path.isfile(fake_path):
                 remote_content = self._remote_read(remote_source)
                 self._remote_write(remote_target, remote_content)
-            status = None
+                status = 'online'
+            else:
+                status = 'api-error'
         else:
-            status = 'connection-status'
+            status = 'connection-error'
         return {'status': status, 'content': None, 'alerts': None}
 
     def files_delete(self, remote_source):
@@ -120,7 +122,7 @@ class StorageBackEnd():
                 status = 'online'
             else:
                 # Unexisting file returns api-status
-                status = 'api-status'
+                status = 'api-error'
         else:
             status = 'connection-status'
         return {'status': status, 'content': None, 'alerts': None}
