@@ -446,9 +446,8 @@ class VimboxClient():
         # folder. This is an obscure way of dealing with this.
         is_encrypted = False
         if status == 'online' and entries is False:
-            remote_folder = crypto.get_path_hash(remote_folder)
-            # entries, is_files, status, message = \
-            response = self.client.list_folders(remote_folder)
+            enc_remote_folder = crypto.get_path_hash(remote_folder)
+            response = self.client.list_folders(enc_remote_folder)
             entries = response['content']['entries']
             is_files = response['content']['is_files']
             status = response['status']
