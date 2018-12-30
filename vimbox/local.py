@@ -195,8 +195,11 @@ def unregister_file(remote_file, config):
     if remote_file[-1] == '/':
         remote_folder = remote_file
     else:
-        # For files we register only the folder in the cache
-        remote_folder = '%s/' % os.path.dirname(remote_file)
+        # For files we unregister only the folder in the cache
+        # TODO: We could check if folder is empty and unregister containing
+        # folder but this hurts speed
+        # remote_folder = '%s/' % os.path.dirname(remote_file)
+        return None
 
     rewrite_config = False
     if remote_folder in config['cache']:
