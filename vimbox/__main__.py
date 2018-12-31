@@ -3,8 +3,7 @@ import os
 import getpass
 # vimbox
 from vimbox.remote import primitives
-from vimbox import local
-from vimbox import __version__
+from vimbox import local, __version__, VimboxClientError, VimboxOfflineError
 
 # Commands and help
 COMMAND_HELP = {
@@ -398,6 +397,7 @@ def main(args=None, config_path=None, password=None, verbose=1):
             )
 
             # Create new encrypted file or register existing one
+            # TODO: This should happend inside of the client
             if encrypt and password is None:
                 try:
                     password = password_prompt(remote_file, client.config)

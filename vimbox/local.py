@@ -123,9 +123,9 @@ def load_config(config_path=None):
 
 
 def get_cache():
-    # note that we do not use load_config here on purpose. If instalation failed
-    # this will be called in .bashrc to set arguments. It is safer to return
-    # empty directly that having any code running.
+    # note that we do not use load_config here on purpose. If instalation
+    # failed this will be called in .bashrc to set arguments. It is safer to
+    # return empty directly that having any code running.
     if os.path.isfile(CONFIG_FILE):
         config = read_config(CONFIG_FILE)
         return list(config['cache'])
@@ -282,7 +282,9 @@ def list_local(remote_file, config):
 
     if config.get('remove_local', False):
         # There is no local files, so just use the cache
-        folders = list(set([os.path.dirname(path) for path in config['cache']]))
+        folders = list(
+            set([os.path.dirname(path) for path in config['cache']])
+        )
         offset = len(remote_file)
         display_folders = set()
         for folder in folders:

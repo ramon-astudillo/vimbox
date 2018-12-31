@@ -9,9 +9,13 @@ import re
 import shutil
 import getpass
 #
-from vimbox import local
-from vimbox import crypto
-from vimbox import diogenes
+from vimbox import (
+    local,
+    crypto,
+    diogenes,
+    VimboxClientError,
+    VimboxOfflineError
+)
 
 
 # Bash font styles
@@ -19,14 +23,6 @@ red = diogenes.style(font_color='light red')
 yellow = diogenes.style(font_color='yellow')
 green = diogenes.style(font_color='light green')
 blue = diogenes.style(font_color='light blue')
-
-
-class VimboxClientError(Exception):
-    pass
-
-
-class VimboxOfflineError(Exception):
-    pass
 
 
 def get_path_components(path):
@@ -396,29 +392,51 @@ class VimboxClient():
     def pull(self, remote_file, force_creation, password=None,
              automerge_rules=None, amerge_ref_is_local=False):
 
-        # Fetch remote content for this file. If the is connction error, use
-        # offline mode
-        response, password = self.fetch(remote_file, password=password)
+        if force_creation:
 
-        # Force use of -f or -e to create new folders
-        if (
-            response['status'] == 'online' and
-            response['content'] is None and
-            not force_creation  # and
-            # not local_content
-        ):
-            raise VimboxClientError('You need to create a file, use -f or -e')
+            # Check created files/folders with same name in cache and remote
+            if remote_file in self.config['path_hashes'].values():
+                raise VimboxClientError(
+                    '\n%s exists in remote and is encrypted.\n' % remote_file
+                )
+            file_type, is_encripted, fetch_status = self.file_type(remote_file)
+            if file_type == 'file':
+                message = '\n%s exists in remote.\n' % remote_file
+                if is_encripted:
+                    message += " and is encrypted"
+                raise VimboxClientError(message)
+            elif file_type == 'dir':
+                message = '\n%s exists in remote as a folder.\n' % remote_file
+                raise VimboxClientError(message)
+            content = {'local': None, 'remote': None, 'merged': None}
 
-        # Merge
-        if response['status'] == 'online':
-            content = self.merge(
-                remote_file,
-                response['content'],
-                automerge_rules,
-                amerge_ref_is_local
-            )
         else:
-            raise VimboxClientError("Connection error")
+
+            # Fetch remote content for this file. If there is connction error,
+            # use offline mode
+            response, password = self.fetch(remote_file, password=password)
+
+            # Force use of -f or -e to create new folders
+            if (
+                response['status'] == 'online' and
+                response['content'] is None and
+                not force_creation  # and
+                # not local_content
+            ):
+                raise VimboxClientError(
+                    'You need to create a file, use -f or -e'
+                )
+
+            # Merge
+            if response['status'] == 'online':
+                content = self.merge(
+                    remote_file,
+                    response['content'],
+                    automerge_rules,
+                    amerge_ref_is_local
+                )
+            else:
+                raise VimboxOfflineError("Connection error")
 
         return content, 'online', password
 
@@ -829,13 +847,6 @@ class VimboxClient():
         # Sanity checks
         if remote_file[-1] == '/':
             raise VimboxClientError("Can not edit folders")
-        elif (
-            remote_file in self.config['path_hashes'].values() and
-            force_creation
-        ):
-            raise VimboxClientError(
-                '\n%s exists in remote and is encrypted.\n' % remote_file
-            )
         if remove_local is None:
             remove_local = self.config['remove_local']
 
@@ -849,16 +860,11 @@ class VimboxClient():
             amerge_ref_is_local=amerge_ref_is_local
         )
 
-        if (
-            force_creation and
-            content['local'] and
-            content['remote'] is None and
-            self.verbose > 0
-        ):
-            print("\nRecovered local version from %s\n" % remote_file)
-
         # Apply edit if needed
         local_file = self.get_local_file(remote_file)
+        dirname = os.path.dirname(local_file)
+        if not os.path.isdir(dirname):
+            os.mkdir(dirname)
         if edits:
             content['edited'] = edits(local_file, content)
         else:
@@ -870,7 +876,6 @@ class VimboxClient():
             )
 
         # Update local and remote
-
         # Abort if file being created but no changes
         if (
             content['edited'] is None and
@@ -996,18 +1001,25 @@ class VimboxClient():
                 self.register_file(remote_file, password is not None)
 
     def file_type(self, remote_file):
+
+        assert not crypto.is_encrypted_path(remote_file), \
+            "file_type receives unencrypted paths"
+
+        # Try finding plain file first
         response = self.client.file_type(remote_file)
+        is_encrypted = False
         if response['content'] is None and response['status'] == 'online':
-            # I file not found, try hashed name version
-            remote_file = crypto.get_path_hash(remote_file)
-            response = self.client.file_type(remote_file)
+            # Then encrypted file
+            remote_file_hash = crypto.get_path_hash(remote_file)
+            response = self.client.file_type(remote_file_hash)
+            is_encrypted = True
+
+        if response['content'] is None:
             is_encrypted = False
-            if response['content']:
-                is_encrypted = True
-        elif response['content'] == 'file':
-            is_encrypted = False
-        else:
-            is_encrypted = None
+
+        if response['status'] != 'online':
+            raise VimboxOfflineError("Connection error")
+
         return response['content'], is_encrypted, response['status']
 
     # LOCAL METHODS

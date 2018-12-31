@@ -29,7 +29,6 @@ def test_main():
 
     # FILE CREATION
     # Creation
-    # b vimbox/local.py:160
     main(['-f', TMP_FILE, TMP_CONTENT])
     # Check file and content are in the remote
     assert os.path.isfile(remote_file), "File creation failed"
@@ -97,7 +96,6 @@ def test_main():
     FAKE_SECRET_CONTENT = "This is some encrypted text"
 
     # ENCRYPTED FILE CREATION
-    # b vimbox/remote/primitives.py:606
     main(['-e', FAKE_FILE_ENCRYPTED, FAKE_SECRET_CONTENT], password='dummy')
     # Check file and content are in the remote
     fake_file_encrypted_hash = get_path_hash(FAKE_FILE_ENCRYPTED)

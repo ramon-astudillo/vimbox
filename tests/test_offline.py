@@ -10,7 +10,7 @@ def test_main():
 
     # Creation
     tmp_file = '%sfolder1/plain' % REMOTE_UNIT_TEST_FOLDER
-    main(['-f', tmp_file, 'This is some text'])
+    assert main(['-f', tmp_file, 'This is some text'])
     # Check a local copy was created (if intended)
     assert os.path.isfile(get_local_file(tmp_file)), \
         "Creation of local file %s failed" % tmp_file

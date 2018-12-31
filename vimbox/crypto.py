@@ -86,7 +86,6 @@ def decript_content(text_cipher, password):
         header = items[0].rstrip()
         text = "\n".join(items[1:])
 
-
     return text, (
         header == HEADER or
         header == "# this was encripted"  # Hack pre v0.0.6, autofix
