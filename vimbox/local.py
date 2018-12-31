@@ -36,19 +36,6 @@ MERGETOOL = 'vimdiff'
 red = diogenes.style(font_color='light red')
 
 
-def update_cache():
-
-    complete = get_complete_arguments()[::-1]
-    the_call = 'complete -W \"%s\" \'vimbox\'' % (' '.join(complete))
-    process = subprocess.Popen(
-            [the_call],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            shell=True
-    )
-    print("Updated cache (%d folders + commands)" % len(complete))
-
-
 def modify_bashrc(virtualenv):
     """Adds complete -W command to bashrc or activate in a virtualenv"""
 
@@ -174,6 +161,7 @@ def register_file(remote_file, config, is_encripted):
     if not is_registered and list(set(remote_folder))[0] != '/':
         config['cache'].append(remote_folder)
         rewrite_config = True
+        # update cache in system
         print("Added to cache %s" % remote_folder)
 
     # Register file hash in the local cache
