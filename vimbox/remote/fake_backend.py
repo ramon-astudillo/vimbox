@@ -15,9 +15,8 @@ def install_backend(self, config_file, config):
 
 def get_fake_remote_local_path(file_path=''):
     return os.path.realpath(
-            "%s/../../tests/.fake_remote/%s" %
-            (os.path.dirname(__file__), file_path)
-        )
+        "%s/.fake_remote_data/%s" % (local.ROOT_FOLDER, file_path)
+    )
 
 
 class StorageBackEnd():

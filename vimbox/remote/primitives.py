@@ -591,6 +591,9 @@ class VimboxClient():
         if file_type is None:
             response = self.client.make_directory(remote_target[:-1])
             if response['status'] == 'online':
+                # Local file
+                os.mkdir(local.get_local_file(remote_target))
+                # Cache
                 self.register_file(remote_target, False)
         elif file_type == 'dir':
             raise VimboxClientError("%s already exists" % remote_target)
@@ -652,13 +655,34 @@ class VimboxClient():
 
         # For folder we need to remove the ending back-slash
         if remote_source[-1] == '/':
-            remote_source = remote_source[:-1]
+            remote_source2 = remote_source[:-1]
+        else:
+            remote_source2 = remote_source
         if remote_target[-1] == '/':
-            remote_target = remote_target[:-1]
+            remote_target2 = remote_target[:-1]
+        else:
+            remote_target2 = remote_target
+        response = self.client.files_copy(remote_source2, remote_target2)
+        # If there is an error, try encrypted names
+        is_encrypted = False
+        if response['status'] == 'api-error':
+            remote_source_hash = crypto.get_path_hash(remote_source2)
+            remote_target_hash = crypto.get_path_hash(remote_target2)
+            response = self.client.files_copy(
+                remote_source_hash, remote_target_hash
+            )
+            is_encrypted = True
 
-        response = self.client.files_copy(remote_source, remote_target)
-        if response['status'] != 'connection-error':
-            self.register_file(remote_target, False)
+        if response['status'] == 'online':
+            # Local move
+            local_source = self.get_local_file(remote_source)
+            local_target = self.get_local_file(remote_target)
+            if os.path.isfile(local_source):
+                shutil.move(local_source, local_target)
+            else:
+                shutil.copytree(local_source, local_target)
+            # cache
+            self.register_file(remote_target, is_encrypted)
             if self.verbose > 0:
                 print(
                     "%-12s %s %s" % (
@@ -667,8 +691,10 @@ class VimboxClient():
                         remote_target
                     )
                 )
-        elif self.verbose > 0:
-            print("%-12s did not copy!" % red("offline"))
+        elif response['status'] == 'connection-error':
+            raise VimboxOfflineError("Connection error")
+        else:
+            raise VimboxClientError("api-error")
 
     def is_removable(self, remote_file):
         """Check if file/folder is removable"""

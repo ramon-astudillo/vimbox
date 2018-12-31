@@ -2,6 +2,7 @@ import os
 import sys
 import shutil
 from vimbox.diogenes import style
+from vimbox import crypto
 from vimbox import local
 from vimbox.remote.primitives import VimboxClient
 from vimbox.remote.fake_backend import get_fake_remote_local_path
@@ -17,15 +18,46 @@ else:
 REMOTE_UNIT_TEST_FOLDER = '/.vimbox_unit_test/'
 
 
+def is_local_file(file_path):
+    local_file = local.get_local_file(file_path)
+    return os.path.isfile(local_file)
+
+
+def is_local_dir(file_path):
+    local_file = local.get_local_file(file_path)
+    return os.path.isdir(local_file)
+
+
+def is_fake_remote_file(file_path, password=None):
+    if password:
+        file_path = crypto.get_path_hash(file_path)
+    remote_file = get_fake_remote_local_path(file_path)
+    return os.path.isfile(remote_file)
+
+
+def is_fake_remote_dir(file_path):
+    remote_file = get_fake_remote_local_path(file_path)
+    return os.path.isdir(remote_file)
+
+
 def read_file(file_path):
     with open(file_path) as fid:
         return fid.read()
 
 
-def read_remote_content(remote_file):
-    true_path = get_fake_remote_local_path(remote_file)
-    with open(true_path, 'rb') as fid:
-        text = fid.read()
+def read_remote_content(remote_file, password=None):
+
+    if password:
+        password = crypto.validate_password(password)
+        remote_file = crypto.get_path_hash(remote_file)
+        true_path = get_fake_remote_local_path(remote_file)
+        with open(true_path, 'rb') as fid:
+            text = fid.read()
+        text, _ = crypto.decript_content(text, password)
+    else:
+        true_path = get_fake_remote_local_path(remote_file)
+        with open(true_path, 'rb') as fid:
+            text = fid.read()
 
     # Python3
     if text and sys.version_info[0] > 2:

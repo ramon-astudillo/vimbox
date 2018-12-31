@@ -28,13 +28,13 @@ COMMAND_ORDER = [
 
 
 def assert_valid_path(file_path, path_type=None):
-    assert file_path.find('//') == -1, "Paths can not have double slashes"
-    if path_type == 'file':
-        assert file_path[-1] != '/', "File types can not finish in slash"
-    elif path_type == 'dir':
-        assert file_path[-1] == '/', "File types must finish in slash"
-    elif path_type is not None:
-        raise Exception("Path type must be file, dir or None")
+    if file_path.find('//') != -1:
+        return "Paths can not have double slashes"
+    if path_type == 'file' and file_path[-1] == '/':
+        return "File paths can not finish in slash"
+    elif path_type == 'dir' and file_path[-1] != '/':
+        return "Folder paths must finish in slash"
+    return None
 
 
 def install():
@@ -196,7 +196,10 @@ def main(args=None, config_path=None, password=None, verbose=1):
     elif args[0] == 'local':
 
         if len(args) == 2:
-            assert_valid_path(args[1])
+            alert = assert_valid_path(args[1])
+            if alert:
+                print("\n\%s\n" % alert)
+                return False
             print(local.get_local_file(args[1]))
         else:
             vimbox_help()
@@ -231,7 +234,10 @@ def main(args=None, config_path=None, password=None, verbose=1):
             argument = ''
         elif len(args) == 2:
             argument = args[1]
-            assert_valid_path(argument)
+            alert = assert_valid_path(argument)
+            if alert:
+                print("\n\%s\n" % alert)
+                return False
         else:
             vimbox_help()
             return False
@@ -259,7 +265,10 @@ def main(args=None, config_path=None, password=None, verbose=1):
             vimbox_help()
             return False
         try:
-            assert_valid_path(args[1], path_type='dir')
+            alert = assert_valid_path(args[1], path_type='dir')
+            if alert:
+                print("\n\%s\n" % alert)
+                return False
             client.make_directory(args[1])
             return True
         except primitives.VimboxOfflineError as exception:
@@ -282,8 +291,14 @@ def main(args=None, config_path=None, password=None, verbose=1):
             verbose=verbose
         )
         try:
-            assert_valid_path(args[1])
-            assert_valid_path(args[2])
+            alert = assert_valid_path(args[1], path_type='dir')
+            if alert:
+                print("\n\%s\n" % alert)
+                return False
+            alert = assert_valid_path(args[2], path_type='dir')
+            if alert:
+                print("\n\%s\n" % alert)
+                return False
             client.copy(args[1], args[2])
             return True
         except primitives.VimboxOfflineError as exception:
@@ -302,7 +317,10 @@ def main(args=None, config_path=None, password=None, verbose=1):
         )
         for arg in args[1:]:
             try:
-                assert_valid_path(arg)
+                alert = assert_valid_path(arg, path_type='dir')
+                if alert:
+                    print("\n\%s\n" % alert)
+                    return False
                 client.cat(arg)
                 return True
             except primitives.VimboxClientError as exception:
@@ -329,7 +347,10 @@ def main(args=None, config_path=None, password=None, verbose=1):
             verbose=verbose
         )
         try:
-            assert_valid_path(arguments)
+            alert = assert_valid_path(arguments)
+            if alert:
+                print("\n\%s\n" % alert)
+                return False
             client.remove(arguments, recursive=recursive_flag)
             return True
         except primitives.VimboxOfflineError as exception:
@@ -354,8 +375,14 @@ def main(args=None, config_path=None, password=None, verbose=1):
             verbose=verbose
         )
         try:
-            assert_valid_path(args[1])
-            assert_valid_path(args[2])
+            alert = assert_valid_path(args[1])
+            if alert:
+                print("\n\%s\n" % alert)
+                return False
+            alert = assert_valid_path(args[2])
+            if alert:
+                print("\n\%s\n" % alert)
+                return False
             client.move(args[1], args[2])
             return True
         except primitives.VimboxOfflineError as exception:
@@ -373,8 +400,10 @@ def main(args=None, config_path=None, password=None, verbose=1):
             vimbox_help()
             return False
         remote_file, force_creation, encrypt, initial_text = arguments
-
-        assert_valid_path(remote_file)
+        alert = assert_valid_path(remote_file)
+        if alert:
+            print("\n\%s\n" % alert)
+            return False
 
         if remote_file[-1] == '/':
 

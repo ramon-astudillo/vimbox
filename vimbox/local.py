@@ -194,12 +194,15 @@ def unregister_file(remote_file, config):
         print("Removed from cache %s" % remote_folder)
 
     # Unregister file hash
-    if remote_file in config['path_hashes'].keys():
-        print(
-            "Removed from hash list %s" % config['path_hashes'][remote_file]
-        )
-        del config['path_hashes'][remote_file]
-        rewrite_config = True
+    for path in config['path_hashes'].keys():
+        # Remove any matching folder or folder contained in it
+        if remote_file == path[:len(remote_file)]:
+            print(
+                "Removed from hash list %s" %
+                config['path_hashes'][path]
+            )
+            del config['path_hashes'][path]
+            rewrite_config = True
 
     if rewrite_config:
         write_config(CONFIG_FILE, config)
