@@ -656,10 +656,11 @@ class VimboxClient():
         """Check if file/folder is removable"""
         # Disallow deleting of encrypted files that have unknown name. Also
         # consider the unfrequent file is registered but user uses hash name
-        if remote_file[-1] == '/':
-            remote_file = remote_file[:-1]
         # Disallow deleting of folders.
-        file_type, is_encrypted, status = self.file_type(remote_file)
+        if remote_file[-1] == '/':
+            file_type, is_encrypted, status = self.file_type(remote_file[:-1])
+        else:
+            file_type, is_encrypted, status = self.file_type(remote_file)
         if status != 'online':
             raise VimboxOfflineError("Connection error")
         elif file_type == 'dir':
@@ -667,14 +668,21 @@ class VimboxClient():
             reason = None
             pass
         elif (
+            file_type == 'file' and
             remote_file not in self.config['path_hashes'].values() and
             is_encrypted
         ):
             is_rem = False
             reason = "Can not delete uncached encrypted files"
-        else:
+        elif file_type == 'file' or remote_file in self.config['cache']:
             is_rem = True
             reason = None
+        else:
+            # A file may not exist but be on cache (invalid state) allow
+            # deleting in this case
+            raise VimboxClientError(
+                "%s does not exist in remote" % remote_file
+            )
 
         return is_rem, reason
 
@@ -832,7 +840,7 @@ class VimboxClient():
             remove_local = self.config['remove_local']
 
         # Fetch remote content, merge if neccesary with local.mergetool
-        # local_content, remote_content, merged_content
+        # will provide local, remote and merged copies
         content, fetch_status, password = self.pull(
             remote_file,
             force_creation,
@@ -850,14 +858,18 @@ class VimboxClient():
             print("\nRecovered local version from %s\n" % remote_file)
 
         # Apply edit if needed
+        local_file = self.get_local_file(remote_file)
         if edits:
-            local_file = self.get_local_file(remote_file)
             content['edited'] = edits(local_file, content)
         else:
-            # Why this?
-            content['edited'] = content['merged']
+            # No edits (still need to be sure we update local)
+            content['edited'] = local.local_edit(
+                local_file,
+                content['merged'],
+                no_edit=True
+            )
 
-        # update local and remote
+        # Update local and remote
 
         # Abort if file being created but no changes
         if (
@@ -884,11 +896,19 @@ class VimboxClient():
                 content = content2
                 content['edited'] = content['remote']
 
+        self.update_rules(remote_file, content, password, fetch_status,
+                          register_folder, remove_local)
+
+        return content['local'] == content['remote']
+
+    def update_rules(self, remote_file, content, password, status,
+                     register_folder, remove_local):
+
         # Update remote
         if content['edited'] != content['remote']:
 
             # Try to push into remote
-            if fetch_status != 'connection-error':
+            if status != 'connection-error':
                 error = self._push(
                     content['edited'],
                     remote_file,
@@ -974,8 +994,6 @@ class VimboxClient():
                     print("%-12s %s" % (red("cleaned"), local_file))
             if register_folder:
                 self.register_file(remote_file, password is not None)
-
-        return content['local'] == content['remote']
 
     def file_type(self, remote_file):
         response = self.client.file_type(remote_file)
