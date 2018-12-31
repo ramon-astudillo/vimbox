@@ -9,9 +9,9 @@ from vimbox import __version__
 # Commands and help
 COMMAND_HELP = {
     'setup': ('setup', 'set-up dropbox backend'),
-    '-f': ('-f /path/to/file', 'create file'),
+    '-f': ('-f /path/to/file [some text]', 'create file'),
     '': ('/path/to/file', 'open created file'),
-    '-e': ('-e /path/to/file', 'create encrypted file'),
+    '-e': ('-e /path/to/file [some text]', 'create encrypted file'),
     'cache': ('cache', 'show cached folders'),
     'config': ('config', 'open vimbox config in editor'),
     'ls': ('ls /path/to/folder/', 'list files in remote folder, update cache'),
@@ -106,12 +106,12 @@ def argument_handling(args):
             # are in creation mode, admit this is as initial text
             initial_text = option
         else:
-            vimbox_help()
+            return None
 
     # Sanity checks
     # Check we got a file path
     if remote_file is None:
-        vimbox_help()
+        return None
 
     # Quick exit: edit file is a folder
     if remote_file[-1] == '/' and encrypt:
@@ -201,6 +201,7 @@ def main(args=None, config_path=None, password=None, verbose=1):
             print(local.get_local_file(args[1]))
         else:
             vimbox_help()
+            return False
 
     elif args[0] == 'config':
 
@@ -368,8 +369,11 @@ def main(args=None, config_path=None, password=None, verbose=1):
     else:
 
         # Get flags from arguments
-        remote_file, force_creation, encrypt, initial_text = \
-            argument_handling(args)
+        arguments = argument_handling(args)
+        if not arguments:
+            vimbox_help()
+            return False
+        remote_file, force_creation, encrypt, initial_text = arguments
 
         assert_valid_path(remote_file)
 
