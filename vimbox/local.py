@@ -19,8 +19,6 @@ DEFAULT_CONFIG = {
     'DROPBOX_TOKEN': None,
     # This will be appended to local paths
     'local_root': '%s/DATA' % ROOT_FOLDER,
-    # This will be appended to all paths within dropbox
-    'remote_root': None,
     # This will store the local cache
     'cache': [],
     # This will store dict() s of hash: file_path for encripted files
@@ -36,19 +34,6 @@ MERGETOOL = 'vimdiff'
 
 # Bash font styles
 red = diogenes.style(font_color='light red')
-
-
-def update_cache():
-
-    complete = get_complete_arguments()[::-1]
-    the_call = 'complete -W \"%s\" \'vimbox\'' % (' '.join(complete))
-    process = subprocess.Popen(
-            [the_call],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            shell=True
-    )
-    print("Updated cache (%d folders + commands)" % len(complete))
 
 
 def modify_bashrc(virtualenv):
@@ -138,9 +123,9 @@ def load_config(config_path=None):
 
 
 def get_cache():
-    # note that we do not use load_config here on purpose. If instalation failed
-    # this will be called in .bashrc to set arguments. It is safer to return
-    # empty directly that having any code running.
+    # note that we do not use load_config here on purpose. If instalation
+    # failed this will be called in .bashrc to set arguments. It is safer to
+    # return empty directly that having any code running.
     if os.path.isfile(CONFIG_FILE):
         config = read_config(CONFIG_FILE)
         return list(config['cache'])
@@ -159,9 +144,12 @@ def register_file(remote_file, config, is_encripted):
 
     if remote_file[-1] == '/':
         remote_folder = remote_file
-    else:
+    elif os.path.dirname(remote_file) != '/':
         # For files we register only the folder in the cache
         remote_folder = '%s/' % os.path.dirname(remote_file)
+    else:
+        remote_folder = '/'
+
     is_registered = False
     if remote_folder and remote_folder in config['cache']:
         is_registered = True
@@ -170,9 +158,10 @@ def register_file(remote_file, config, is_encripted):
 
     # Register folder from cache
     rewrite_config = False
-    if not is_registered:
+    if not is_registered and list(set(remote_folder))[0] != '/':
         config['cache'].append(remote_folder)
         rewrite_config = True
+        # update cache in system
         print("Added to cache %s" % remote_folder)
 
     # Register file hash in the local cache
@@ -192,8 +181,11 @@ def unregister_file(remote_file, config):
     if remote_file[-1] == '/':
         remote_folder = remote_file
     else:
-        # For files we register only the folder in the cache
-        remote_folder = '%s/' % os.path.dirname(remote_file)
+        # For files we unregister only the folder in the cache
+        # TODO: We could check if folder is empty and unregister containing
+        # folder but this hurts speed
+        # remote_folder = '%s/' % os.path.dirname(remote_file)
+        return None
 
     rewrite_config = False
     if remote_folder in config['cache']:
@@ -202,12 +194,15 @@ def unregister_file(remote_file, config):
         print("Removed from cache %s" % remote_folder)
 
     # Unregister file hash
-    if remote_file in config['path_hashes'].keys():
-        print(
-            "Removed from hash list %s" % config['path_hashes'][remote_file]
-        )
-        del config['path_hashes'][remote_file]
-        rewrite_config = True
+    for path in config['path_hashes'].keys():
+        # Remove any matching folder or folder contained in it
+        if remote_file == path[:len(remote_file)]:
+            print(
+                "Removed from hash list %s" %
+                config['path_hashes'][path]
+            )
+            del config['path_hashes'][path]
+            rewrite_config = True
 
     if rewrite_config:
         write_config(CONFIG_FILE, config)
@@ -290,7 +285,9 @@ def list_local(remote_file, config):
 
     if config.get('remove_local', False):
         # There is no local files, so just use the cache
-        folders = list(set([os.path.dirname(path) for path in config['cache']]))
+        folders = list(
+            set([os.path.dirname(path) for path in config['cache']])
+        )
         offset = len(remote_file)
         display_folders = set()
         for folder in folders:

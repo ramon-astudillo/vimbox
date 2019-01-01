@@ -9,9 +9,13 @@ import re
 import shutil
 import getpass
 #
-from vimbox import local
-from vimbox import crypto
-from vimbox import diogenes
+from vimbox import (
+    local,
+    crypto,
+    diogenes,
+    VimboxClientError,
+    VimboxOfflineError
+)
 
 
 # Bash font styles
@@ -96,8 +100,8 @@ def automerge(reference_content, modified_content, automerge_rules):
                 non_editable.match(reference_line) and
                 non_editable.match(modified_line) and
                 non_editable.match(reference_line).groups() ==
-                    non_editable.match(modified_line).groups()
-            ):
+                non_editable.match(modified_line).groups()
+        ):
             # Matches in the parts specified by the regexp
             merge_strategy |= set(['ignore-edit'])
             modified_cursor += 1
@@ -116,7 +120,7 @@ def automerge(reference_content, modified_content, automerge_rules):
             modified_cursor += 1
         elif (
             'append' in automerge_rules and
-            modified_cursor == num_lines_local - 1
+            modified_cursor == num_lines_reference - 1
         ):
             # Line appended to modified
             merge_strategy |= set(['append'])
@@ -148,7 +152,7 @@ def automerge(reference_content, modified_content, automerge_rules):
     return merged_content, merge_strategy
 
 
-def copy_hash(path_hashes, source_folder, target_folder):
+def copy_hash(path_hashes, source_folder, target_folder, verbose):
 
     # Do not allow to copy encrypted files or folder containing them
     updated_hashes = False
@@ -165,19 +169,24 @@ def copy_hash(path_hashes, source_folder, target_folder):
                 new_path = target_folder + '/' + \
                     path_hashes[key][len(source_folder):]
             path_hashes.update({new_key: new_path})
-            print("Copied hash %s -> %s" % (path_hashes[key], new_path))
+            if verbose > 0:
+                print("Copied hash %s -> %s" % (path_hashes[key], new_path))
             updated_hashes = True
 
     return updated_hashes
-    
+
 
 class VimboxClient():
 
-    def __init__(self, config_path=local.CONFIG_FILE):
+    def __init__(self, config_path=None, verbose=1):
+
+        if config_path is None:
+            config_path = local.CONFIG_FILE
 
         # Load local config if not provided
         self.config_path = config_path
         self.config = local.load_config(config_path)
+        self.verbose = verbose
 
         # Get reference to remote client
         if self.config['backend_name'] == 'dropbox':
@@ -234,10 +243,67 @@ class VimboxClient():
                 # Encoding for Python3
                 new_local_content = str.encode(new_local_content)
         # Overwrite remote
-        self.client.files_upload(
-            new_local_content,
-            remote_file_hash,
-        )
+        self.client.files_upload(new_local_content, remote_file_hash)
+
+    def _tentative_fetch(self, remote_file, password):
+
+        # Initial assumption about encryption
+        if password:
+            is_encrypted = True
+            remote_file_hash = crypto.get_path_hash(remote_file)
+            response = self.client.file_download(remote_file_hash)
+        else:
+            is_encrypted = False
+            response = self.client.file_download(remote_file)
+
+        if response['status'] == 'api-error':
+            # Unexpected error
+            raise VimboxClientError("api-error:\n%s" % response['alerts'])
+
+        elif response['status'] == 'connection-error':
+            # Offline
+            raise VimboxOfflineError("Connection error")
+
+        elif response['content'] is None:
+
+            # No file found, but need to check for hashed / unhashed name
+            # collision
+            if password:
+                # We asked for an encrypted file, try unencrypted
+                response = self.client.file_download(remote_file)
+            else:
+                # We asked for an unencrypted file try encrypted
+                remote_file_hash = crypto.get_path_hash(remote_file)
+                response = self.client.file_download(remote_file_hash)
+
+            # Second check
+            if response['status'] == 'api-error':
+                # Unexpected error
+                # This one is weird, since we tried once and it was ok
+                raise VimboxClientError("api-error:\n%s" % response['alerts'])
+
+            elif response['status'] == 'connection-error':
+                # Suddenly, Offline
+                raise VimboxOfflineError("Connection error")
+
+            elif response['content'] is None:
+                # File really does not exist
+                pass
+
+            elif password:
+
+                # Provided a password but the file exists unencrypted in remote
+                VimboxClientError(
+                    "Tried to fetch encrypted version of %s but it exists "
+                    "unencrypted in remote" % remote_file
+                )
+
+            else:
+
+                # Tried to fetch as unecrypted but it is encrypted
+                is_encrypted = True
+
+        return response, is_encrypted
 
     def fetch(self, remote_file, password=None):
         """
@@ -248,76 +314,36 @@ class VimboxClient():
         assert remote_file[0] == '/', "Dropbox remote paths start with /"
         assert remote_file[-1] != '/', "Can only fetch files"
 
-        remote_content, status = self.client.file_download(
-            remote_file,
-        )
+        # Fetch file without assumptions about encryption
+        response, is_encrypted = self._tentative_fetch(remote_file, password)
 
-        if status == 'online' and remote_content is None:
-
-            # File does not exist, try encrypted name
-            remote_file_hash = crypto.get_path_hash(remote_file)
-            remote_content, status = self.client.file_download(
-                remote_file_hash,
+        # Decryption
+        if response['content'] and is_encrypted:
+            if not password:
+                password = getpass.getpass('Input file password: ')
+            validated_password = crypto.validate_password(password)
+            response['content'], sucess = crypto.decript_content(
+                response['content'], validated_password
             )
+            if not sucess:
+                raise VimboxClientError("Decrypting %s filed" % remote_file)
 
-            if remote_content:
-                # Fond encrypted content, decrypt
-                if not password:
-                    password = getpass.getpass('Input file password: ')
-                validated_password = crypto.validate_password(password)
-                remote_content, sucess = crypto.decript_content(
-                    remote_content, validated_password
-                )
+        return response, password
 
-                # FIXME: This needs to be taken into consideration
-                # If encryption is used we need to register the file in the
-                # cache
-                # if not register_folder:
-                #    print('\nFile encryption only with register_folder \n')
-                #    EXIT()
-
-                if not sucess:
-                    status = 'decription-failed'
-                    password = None
-
-        return remote_content, status, password
-
-    def pull(self, remote_file, force_creation, password=None,
-             automerge_rules=None, amerge_ref_is_local=False):
+    def merge(self, remote_file, remote_content, automerge_rules,
+              amerge_ref_is_local):
 
         # Fetch local content for this file
         local_file, local_content = self.get_local_content(remote_file)
 
-        # Fetch remote content for this file
-        # Note: Will try encrypted path if clean path fails
-        remote_content, fetch_status, password = self.fetch(
-            remote_file,
-            password=password
-        )
-
-        # Quick exit on decription failure
-        if fetch_status == 'decription-failed':
-            print('\nDecription failed check password and vimbox version\n')
-            exit(0)
-
-        # Force use of -f to create new folders
-        if (
-            fetch_status == 'online' and
-            remote_content is None and
-            not force_creation and
-            not local_content
-        ):
-            print('\nYou need to create a file, use -f or -e\n')
-            exit(0)
-
         # Merge
         if remote_content is None:
+            if local_content is None:
+                merged_content = None
+            else:
+                merged_content = local_content
 
-            # No file in remote (we could be creating one or syncing after
-            # offline)
-            merged_content = None
-
-        elif local_content is not None and local_content != remote_content:
+        elif local_content and local_content != remote_content:
 
             # If automerge selected try one or more strategies
             merge_strategy = None
@@ -348,45 +374,125 @@ class VimboxClient():
                 os.remove(old_local_file)
             else:
                 local.write_file(local_file, merged_content)
-                print("merged by %s" % merge_strategy)
+                if self.verbose > 0:
+                    print("merged by %s" % merge_strategy)
 
         else:
 
             # No local content, or local matches remote
             merged_content = remote_content
+            local.local_edit(local_file, merged_content, no_edit=True)
 
-        content = {
+        return {
             'local': local_content,
             'remote': remote_content,
             'merged': merged_content
         }
 
-        return content, fetch_status, password
+    def pull(self, remote_file, force_creation, password=None,
+             automerge_rules=None, amerge_ref_is_local=False):
+
+        if force_creation:
+
+            # Check created files/folders with same name in cache and remote
+            if remote_file in self.config['path_hashes'].values():
+                raise VimboxClientError(
+                    '\n%s exists in remote and is encrypted.\n' % remote_file
+                )
+            file_type, is_encripted, fetch_status = self.file_type(remote_file)
+            if file_type == 'file':
+                message = '\n%s exists in remote.\n' % remote_file
+                if is_encripted:
+                    message += " and is encrypted"
+                raise VimboxClientError(message)
+            elif file_type == 'dir':
+                message = '\n%s exists in remote as a folder.\n' % remote_file
+                raise VimboxClientError(message)
+            content = {'local': None, 'remote': None, 'merged': None}
+
+        else:
+
+            # Fetch remote content for this file. If there is connction error,
+            # use offline mode
+            response, password = self.fetch(remote_file, password=password)
+
+            # Force use of -f or -e to create new folders
+            if (
+                response['status'] == 'online' and
+                response['content'] is None and
+                not force_creation  # and
+                # not local_content
+            ):
+                raise VimboxClientError(
+                    'You need to create a file, use -f or -e'
+                )
+
+            # Merge
+            if response['status'] == 'online':
+                content = self.merge(
+                    remote_file,
+                    response['content'],
+                    automerge_rules,
+                    amerge_ref_is_local
+                )
+            else:
+                raise VimboxOfflineError("Connection error")
+
+        return content, 'online', password
 
     def cat(self, remote_file):
         """ Equivalent of bash cat in remote """
-        remote_content, status, _ = self.fetch(remote_file)
-        if status == 'online':
-            print(remote_content)
+        response, password = self.fetch(remote_file)
+        if response['status'] == 'online' and self.verbose > 0:
+            print(response['content'])
 
     def list_folders(self, remote_folder):
         """ list folder content in remote """
 
-        if remote_folder == '/':
-            remote_folder = ''
-
-        # NotImplementedYet: Listing of files
-        if remote_folder and remote_folder[-1] != '/':
-            print("\nOnly /folders/ can be listed right now\n")
-            exit(1)
-
         # Try first remote
-        entries, is_files, error = self.client.list_folders(remote_folder)
-        if entries is not None:
+        if remote_folder and remote_folder[-1] == '/':
+             response = self.client.list_folders(remote_folder[:-1])
+        else:
+             response = self.client.list_folders(remote_folder)
+        entries = response['content']['entries']
+        is_files = response['content']['is_files']
+        status = response['status']
+        message = response['alerts']
+
+        # Second try to see if there is an ecrypted file
+        # TODO: entries is None is used to signal a this is a file not a
+        # folder. This is an obscure way of dealing with this.
+        is_encrypted = False
+        if status == 'online' and entries is False:
+            enc_remote_folder = crypto.get_path_hash(remote_folder)
+            response = self.client.list_folders(enc_remote_folder)
+            entries = response['content']['entries']
+            is_files = response['content']['is_files']
+            status = response['status']
+            message = response['alerts']
+            is_encrypted = status == 'online'
+
+        if status == 'api-error':
+            raise VimboxClientError("api-error")
+
+        elif status == 'online' and entries is False:
+            # Folder/File non existing
+            raise VimboxClientError(
+                "%s does not exist in remote" % remote_folder
+            )
+
+        elif status == 'online' and entries is None:
+            # This was a file
+            return True
+
+        elif status == 'online':
 
             # Differentiate file and folders
             display_folders = []
             for entry, is_file in zip(entries, is_files):
+                # Add slash to files on root
+                if remote_folder == '':
+                    entry = '/' + entry
                 if is_file:
                     # File
                     display_folders.append(entry)
@@ -396,7 +502,7 @@ class VimboxClient():
             display_folders = sorted(display_folders)
 
             # Update to match folder
-            if remote_folder and remote_folder[-1] == '/':
+            if remote_folder:
 
                 # Remove folder paths no more in remote
                 for path in self.config['cache']:
@@ -427,7 +533,7 @@ class VimboxClient():
             new_display_folders = []
             for entry in display_folders:
                 key = "%s%s" % (remote_folder, entry)
-                if key in self.config['path_hashes']:
+                if key in self.config['path_hashes'].keys():
                     entry_types.append('encrypted')
                     new_display_folders.append(
                         os.path.basename(self.config['path_hashes'][key])
@@ -440,7 +546,7 @@ class VimboxClient():
                     new_display_folders.append(entry)
             display_folders = new_display_folders
 
-            # Display entries sorted and with colors 
+            # Display entries sorted and with colors
             new_display_folders = []
             indices = sorted(
                 range(len(display_folders)),
@@ -461,30 +567,50 @@ class VimboxClient():
                 self.config['cache'].append(remote_folder)
                 local.write_config(self.config_path, self.config)
 
-        elif error == 'api-error':
-
-            display_string = "Folder does not exist in remote!"
-
         else:
 
             # If it fails resort to local cache
             display_folders = local.list_local(remote_folder, self.config)
-            print("\n%s content for %s " % (red("offline"), remote_folder))
+            if self.verbose > 0:
+                print("\n%s content for %s " % (red("offline"), remote_folder))
             display_string = "".join(
                 ["%s\n" % folder for folder in sorted(display_folders)]
             )
 
         # Print
-        print("\n%s\n" % display_string.rstrip())
+        if self.verbose > 0:
+            print("\n%s\n" % display_string.rstrip())
 
     def make_directory(self, remote_target):
         if remote_target[-1] != '/':
-            print("\nFolder paths must end in / \n")
-            exit(1)
-        status = self.client.make_directory(remote_target[:-1])
-        if status == 'online':
-            self.register_file(remote_target, False)
-        return status 
+            raise VimboxClientError("Folder paths must end in / ")
+        file_type, is_encripted, status = self.file_type(remote_target[:-1])
+        if status != 'online':
+            raise VimboxOfflineError("Connection error")
+
+        if file_type is None:
+            response = self.client.make_directory(remote_target[:-1])
+            if response['status'] == 'online':
+                # Local file
+                os.mkdir(local.get_local_file(remote_target))
+                # Cache
+                self.register_file(remote_target, False)
+        elif file_type == 'dir':
+            raise VimboxClientError("%s already exists" % remote_target)
+        elif is_encripted:
+            raise VimboxClientError(
+                "%s already exists as an encrypted file" % remote_target
+            )
+        else:
+            raise VimboxClientError(
+                "%s already exists as a file" % remote_target
+            )
+
+        return {
+            'status': status,
+            'content': None,
+            'alert': None
+        }
 
     def copy(self, remote_source, remote_target):
         """
@@ -497,7 +623,9 @@ class VimboxClient():
 
         # Map `cp /path/to/file /path2/` to `cp /path/to/file /path/file`
         if remote_target[-1] == '/':
-            file_type, is_encripted, status = self.file_type(remote_target)
+            file_type, is_encripted, status = self.file_type(
+                remote_target[:-1]
+            )
             if file_type == 'dir':
                 if remote_source[-1] == '/':
                     addendum = os.path.basename(remote_source[:-1])
@@ -505,68 +633,116 @@ class VimboxClient():
                 else:
                     addendum = os.path.basename(remote_source)
                     remote_target = remote_target + addendum
+        else:
+            file_type, is_encripted, status = self.file_type(remote_target)
+            if file_type:
+                raise VimboxClientError(
+                    'Target file %s exists' % remote_target
+                )
+
+        if status == 'connection-error':
+            raise VimboxOfflineError("Connection error")
 
         # Move paths in hash
         updated_hashes = copy_hash(
             self.config['path_hashes'],
-            remote_source, 
-            remote_target
+            remote_source,
+            remote_target,
+            self.verbose
         )
         if updated_hashes:
             local.write_config(self.config_path, self.config)
 
         # For folder we need to remove the ending back-slash
         if remote_source[-1] == '/':
-            remote_source = remote_source[:-1]
-        if remote_target[-1] == '/':
-            remote_target = remote_target[:-1]
-
-        status = self.client.files_copy(remote_source, remote_target)
-        if status != 'connection-error':
-            self.register_file(remote_target, False)
-            print(
-                "%-12s %s %s" % (
-                    yellow("copied"),
-                    remote_source,
-                    remote_target
-                )
-            )
+            remote_source2 = remote_source[:-1]
         else:
-            print("%-12s did not copy!" % red("offline"))
+            remote_source2 = remote_source
+        if remote_target[-1] == '/':
+            remote_target2 = remote_target[:-1]
+        else:
+            remote_target2 = remote_target
+        response = self.client.files_copy(remote_source2, remote_target2)
+        # If there is an error, try encrypted names
+        is_encrypted = False
+        if response['status'] == 'api-error':
+            remote_source_hash = crypto.get_path_hash(remote_source2)
+            remote_target_hash = crypto.get_path_hash(remote_target2)
+            response = self.client.files_copy(
+                remote_source_hash, remote_target_hash
+            )
+            is_encrypted = True
+
+        if response['status'] == 'online':
+            # Local move
+            local_source = self.get_local_file(remote_source)
+            local_target = self.get_local_file(remote_target)
+            if os.path.isfile(local_source):
+                shutil.move(local_source, local_target)
+            else:
+                shutil.copytree(local_source, local_target)
+            # cache
+            self.register_file(remote_target, is_encrypted)
+            if self.verbose > 0:
+                print(
+                    "%-12s %s %s" % (
+                        yellow("copied"),
+                        remote_source,
+                        remote_target
+                    )
+                )
+        elif response['status'] == 'connection-error':
+            raise VimboxOfflineError("Connection error")
+        else:
+            raise VimboxClientError("api-error")
 
     def is_removable(self, remote_file):
         """Check if file/folder is removable"""
         # Disallow deleting of encrypted files that have unknown name. Also
         # consider the unfrequent file is registered but user uses hash name
-
         # Disallow deleting of folders.
-        file_type, is_encrypted, status = self.file_type(remote_file)
+        if remote_file[-1] == '/':
+            file_type, is_encrypted, status = self.file_type(remote_file[:-1])
+        else:
+            file_type, is_encrypted, status = self.file_type(remote_file)
         if status != 'online':
-            is_rem = False
-            reason = 'We are offline'
-        elif file_type == 'dir':    
+            raise VimboxOfflineError("Connection error")
+        elif file_type == 'dir':
             is_rem = True
             reason = None
             pass
         elif (
-            remote_file not in self.config['path_hashes'].values() and 
+            file_type == 'file' and
+            remote_file not in self.config['path_hashes'].values() and
             is_encrypted
         ):
             is_rem = False
             reason = "Can not delete uncached encrypted files"
-        else:
+        elif file_type == 'file' or remote_file in self.config['cache']:
             is_rem = True
             reason = None
+        else:
+            # A file may not exist but be on cache (invalid state) allow
+            # deleting in this case
+            raise VimboxClientError(
+                "%s does not exist in remote" % remote_file
+            )
 
         return is_rem, reason
 
     def remove(self, remote_file, recursive=False, password=None):
 
+        if remote_file == '/':
+            raise VimboxClientError(
+                "\nRemoving root is disallowed, just in case you have fat"
+                " fingers\n"
+            )
+
         # Extra check for deletable files/folders
         is_rem, reason = self.is_removable(remote_file)
+
         if not is_rem:
-            print("\nCan not remove. %s\n" % reason)
-            exit(1)
+            raise VimboxClientError("\nCan not remove. %s\n" % reason)
 
         # Hash name if necessary
         if remote_file in self.config['path_hashes'].values():
@@ -581,25 +757,13 @@ class VimboxClient():
             # Remove backslash
             # TODO: This is input sanity check should go in the client
             # dependent part
-            status = self.client.files_delete(remote_file[:-1])
+            response = self.client.files_delete(remote_file[:-1])
             # update cache
             # local.update_cache()
         else:
-            status = self.client.files_delete(remote_file)
+            response = self.client.files_delete(remote_file)
 
-        if status == 'api-error':
-
-            # Remove local copy
-            local_file = self.get_local_file(remote_file)
-            if os.path.isfile(local_file):
-                os.remove(local_file)
-            elif os.path.isdir(local_file):
-                shutil.rmtree(local_file)
-            self.unregister_file(remote_file)
-            print("%s did not exist in remote!" % original_name)
-
-        elif status != 'connection-error':
-            print("%-12s %s" % (yellow("removed"), original_name))
+        if response['status'] == 'api-error':
 
             # Remove local copy
             local_file = self.get_local_file(remote_file)
@@ -608,7 +772,21 @@ class VimboxClient():
             elif os.path.isdir(local_file):
                 shutil.rmtree(local_file)
             self.unregister_file(remote_file)
-        else:
+            if self.verbose > 0:
+                print("%s did not exist in remote!" % original_name)
+
+        elif response['status'] != 'connection-error':
+            if self.verbose > 0:
+                print("%-12s %s" % (yellow("removed"), original_name))
+
+            # Remove local copy
+            local_file = self.get_local_file(remote_file)
+            if os.path.isfile(local_file):
+                os.remove(local_file)
+            elif os.path.isdir(local_file):
+                shutil.rmtree(local_file)
+            self.unregister_file(remote_file)
+        elif self.verbose > 0:
             print(
                 "%-12s did not remove!  %s" % (red("offline"), original_name)
             )
@@ -617,8 +795,9 @@ class VimboxClient():
         """Copy and remove"""
         is_rem, reason = self.is_removable(remote_source)
         if not is_rem:
-            print("\nCan not move (remove) due to %s\n" % reason)
-            exit(1)
+            raise VimboxClientError(
+                "Can not move (remove) due to %s" % reason
+            )
         self.copy(remote_source, remote_target)
         self.remove(remote_source)
 
@@ -641,24 +820,27 @@ class VimboxClient():
 
         if initial_text:
 
-            # Write empty file with given text
             def manual_edit(local_file, content):
-                assert not content['remote'], "Can not overwrite remote"
-                assert not content['local'], "Local content exists"
-                return local.local_edit(
-                    local_file,
-                    initial_text,
-                    no_edit=True
-                )
+                """Write empty file with given text"""
+                if content['remote']:
+                    if content['remote'] == content['merged']:
+                        return content['merged']
+                    elif content['remote'] != content['merged']:
+                        raise Exception(
+                            "File exists in remote and differs in content"
+                        )
+                else:
+                    return local.local_edit(
+                        local_file,
+                        initial_text,
+                        no_edit=True
+                    )
 
         else:
 
-            # Prompt user for edit
             def manual_edit(local_file, content):
-                return local.local_edit(
-                    local_file,
-                    content['merged']
-                )
+                """Prompt user for edit"""
+                return local.local_edit(local_file, content['merged'])
 
         self.sync(
             remote_file,
@@ -690,19 +872,12 @@ class VimboxClient():
 
         # Sanity checks
         if remote_file[-1] == '/':
-            print("Can not edit folders")
-            exit(1)
-        elif (
-            remote_file in self.config['path_hashes'].values() and
-            force_creation
-        ):
-            print('\nCan not re-encrypt a registered file.\n')
-            exit(1)
+            raise VimboxClientError("Can not edit folders")
         if remove_local is None:
             remove_local = self.config['remove_local']
 
         # Fetch remote content, merge if neccesary with local.mergetool
-        # local_content, remote_content, merged_content
+        # will provide local, remote and merged copies
         content, fetch_status, password = self.pull(
             remote_file,
             force_creation,
@@ -711,36 +886,33 @@ class VimboxClient():
             amerge_ref_is_local=amerge_ref_is_local
         )
 
-        # Sanity checks
-        if fetch_status == 'connection-error' and password is not None:
-            print("Creation of back-end encrypted files has no sense offline")
-            exit(1)
-        elif force_creation and content['local'] and content['remote'] is None:
-            print("\nRecovered local version from %s\n" % remote_file)
-
         # Apply edit if needed
+        local_file = self.get_local_file(remote_file)
+        dirname = os.path.dirname(local_file)
+        if not os.path.isdir(dirname):
+            os.mkdir(dirname)
         if edits:
-            local_file = self.get_local_file(remote_file)
             content['edited'] = edits(local_file, content)
         else:
-            # Why this?
-            content['edited'] = content['merged']
+            # No edits (still need to be sure we update local)
+            content['edited'] = local.local_edit(
+                local_file,
+                content['merged'],
+                no_edit=True
+            )
 
-        # update local and remote
-
+        # Update local and remote
         # Abort if file being created but no changes
         if (
-            content['edited'] is None and 
-            content['remote'] is not None and 
+            content['edited'] is None and
+            content['remote'] is not None and
             fetch_status != 'connection-error'
         ):
             # For debug purposes
-            print(
+            VimboxClientError(
                 "\nInvalid state: edited local_file non existing but remote"
                 " does\n"
             )
-            # File creation aborted
-            exit(1)
 
         # Pull again if recovered offline status
         if fetch_status == 'connection-error':
@@ -755,11 +927,19 @@ class VimboxClient():
                 content = content2
                 content['edited'] = content['remote']
 
+        self.update_rules(remote_file, content, password, fetch_status,
+                          register_folder, remove_local)
+
+        return content['local'] == content['remote']
+
+    def update_rules(self, remote_file, content, password, status,
+                     register_folder, remove_local):
+
         # Update remote
         if content['edited'] != content['remote']:
 
             # Try to push into remote
-            if fetch_status != 'connection-error':
+            if status != 'connection-error':
                 error = self._push(
                     content['edited'],
                     remote_file,
@@ -771,15 +951,18 @@ class VimboxClient():
             # Inform the user
             if error is None:
                 # We pushed sucessfully
-                print("%-12s %s" % (yellow("pushed"), remote_file))
+                if self.verbose > 0:
+                    print("%-12s %s" % (yellow("pushed"), remote_file))
             elif error == 'connection-error':
                 # Offline
-                print("%-12s %s" % (red("offline"), remote_file))
+                if self.verbose > 0:
+                    print("%-12s %s" % (red("offline"), remote_file))
             elif error == 'api-error':
                 # This is not a normal state. Probably bug on our side or API
                 # change/bug on the backend.
-                print("%-12s %s" % (red("api-error"), remote_file))
-                print("API error (something bad happened)")
+                if self.verbose > 0:
+                    print("%-12s %s" % (red("api-error"), remote_file))
+                    print("API error (something bad happened)")
             else:
                 # This is most certainly a bug on our side
                 raise Exception("Unknown _push error %s" % error)
@@ -802,14 +985,15 @@ class VimboxClient():
                     # remove the file we must prompt user first
                     _ = input(
                         "We are offline but I have to remove local files."
-                        " Will open the file once more for you to dave "
+                        " Will open the file once more for you to save "
                         "stuff, then it will be nuked. (press any key "
                         "when ready)"
                     )
                     local.local_edit(local_file, content['merged'])
                 # Remove local file if solicited
                 os.remove(local_file)
-                print("%-12s %s" % (red("cleaned"), local_file))
+                if self.verbose > 0:
+                    print("%-12s %s" % (red("cleaned"), local_file))
 
             elif content['local'] != content['merged']:
                 # If local content was changed we need to update
@@ -819,59 +1003,58 @@ class VimboxClient():
             # We overwrote local with remote
             local_file = self.get_local_file(remote_file)
             local.local_edit(local_file, content['merged'], no_edit=True)
-            print("%-12s %s" % (yellow("pulled"), remote_file))
+            if self.verbose > 0:
+                print("%-12s %s" % (yellow("pulled"), remote_file))
             if register_folder:
                 self.register_file(remote_file, password is not None)
+
+        elif all(
+            content[key] is None
+            for key in ['merged', 'local', 'remote', 'edited']
+        ):
+            # Edit aborted
+            pass
 
         else:
             # No changes needed on either side
-            print("%-12s %s" % (green("in-sync"), remote_file))
+            if self.verbose > 0:
+                print("%-12s %s" % (green("in-sync"), remote_file))
             if remove_local and os.path.isfile(local_file):
                 os.remove(local_file)
-                print("%-12s %s" % (red("cleaned"), local_file))
+                if self.verbose > 0:
+                    print("%-12s %s" % (red("cleaned"), local_file))
             if register_folder:
                 self.register_file(remote_file, password is not None)
 
-        return content['local'] == content['remote']
-
-#    def is_file(self, remote_file):
-#
-#        # TODO: Avoid ambiguous api-error
-#        is_file, status = self.client.is_file(remote_file)
-#        if not is_file and status == 'api-error':
-#            # I file not found, try hashed version
-#            remote_file = crypto.get_path_hash(remote_file)
-#            is_file, status = self.client.is_file(remote_file)
-#            is_encripted = is_file
-#        else:
-#            is_encripted = False
-#
-#        return is_file, is_encripted, status
-
     def file_type(self, remote_file):
 
-        file_type, status = self.client.file_type(remote_file)
-        if file_type == None and status == 'online':
-            # I file not found, try hashed name version 
-            remote_file = crypto.get_path_hash(remote_file)
-            file_type, status = self.client.file_type(remote_file)
-            is_encripted = False 
-            if file_type:
-                is_encripted = True 
-        elif file_type == 'file':
-            is_encripted = False
-        else:
-            is_encripted = None 
+        assert not crypto.is_encrypted_path(remote_file), \
+            "file_type receives unencrypted paths"
 
-        return file_type, is_encripted, status
+        # Try finding plain file first
+        response = self.client.file_type(remote_file)
+        is_encrypted = False
+        if response['content'] is None and response['status'] == 'online':
+            # Then encrypted file
+            remote_file_hash = crypto.get_path_hash(remote_file)
+            response = self.client.file_type(remote_file_hash)
+            is_encrypted = True
+
+        if response['content'] is None:
+            is_encrypted = False
+
+        if response['status'] != 'online':
+            raise VimboxOfflineError("Connection error")
+
+        return response['content'], is_encrypted, response['status']
 
     # LOCAL METHODS
 
     def get_local_file(self, remote_file):
         return local.get_local_file(remote_file, self.config)
 
-    def register_file(self, remote_file, is_encripted):
-        return local.register_file(remote_file, self.config, is_encripted)
+    def register_file(self, remote_file, is_encrypted):
+        return local.register_file(remote_file, self.config, is_encrypted)
 
     def unregister_file(self, remote_file):
         return local.unregister_file(remote_file, self.config)

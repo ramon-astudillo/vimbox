@@ -46,7 +46,7 @@ def encrypt_content(text, password):
         iv = os.urandom(16)
     else:
         # Python2
-        iv = str(os.urandom(16)) 
+        iv = str(os.urandom(16))
     obj = AES.new(password, AES.MODE_CBC, iv)
 
     # Create header to be a multiple of 16
@@ -86,7 +86,6 @@ def decript_content(text_cipher, password):
         header = items[0].rstrip()
         text = "\n".join(items[1:])
 
-
     return text, (
         header == HEADER or
         header == "# this was encripted"  # Hack pre v0.0.6, autofix
@@ -105,7 +104,10 @@ def get_path_hash(path_str):
     else:
         # Python2
         h.update(basename)
-    return "%s/.%s" % (dirname, h.hexdigest())
+    if dirname != '/':
+        return "%s/.%s" % (dirname, h.hexdigest())
+    else:
+        return "/.%s" % h.hexdigest()
 
 
 def is_encrypted_path(path_str):
