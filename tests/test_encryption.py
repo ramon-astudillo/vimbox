@@ -75,7 +75,6 @@ def test_main():
         "File inside folder was not removed in local"
     assert not is_fake_remote_file(encrypted_file2, password='dummy'), \
         "File inside folder was not removed in remote"
-
     assert hash_is_registered(moved_encrypted_file2), \
         "Register moved target file in hash list failed"
 

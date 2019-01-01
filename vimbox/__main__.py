@@ -291,11 +291,11 @@ def main(args=None, config_path=None, password=None, verbose=1):
             verbose=verbose
         )
         try:
-            alert = assert_valid_path(args[1], path_type='dir')
+            alert = assert_valid_path(args[1])
             if alert:
                 print("\n\%s\n" % alert)
                 return False
-            alert = assert_valid_path(args[2], path_type='dir')
+            alert = assert_valid_path(args[2])
             if alert:
                 print("\n\%s\n" % alert)
                 return False
