@@ -3,6 +3,7 @@ import sys
 import re
 from math import ceil
 #
+import hashlib
 from Crypto.Cipher import AES
 from Crypto.Hash import MD5
 
@@ -92,12 +93,16 @@ def decript_content(text_cipher, password):
     )
 
 
-def get_path_hash(path_str):
+def get_path_hash(path_str, md5_hash=False):
 
     dirname = os.path.dirname(path_str)
     basename = os.path.basename(path_str)
     #
-    h = MD5.new()
+    if md5_hash:
+        h = MD5.new()
+    else:
+        h = hashlib.sha256()
+
     if sys.version_info[0] > 2:
         # Python3
         h.update(basename.encode("utf-8"))

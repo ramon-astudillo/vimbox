@@ -49,6 +49,9 @@ def install():
     if not os.path.isdir(local.ROOT_FOLDER):
         os.mkdir(local.ROOT_FOLDER)
         print("Created %s" % local.ROOT_FOLDER)
+    if not os.path.isdir("%s/DATA/" % local.ROOT_FOLDER):
+        os.mkdir("%s/DATA/" % local.ROOT_FOLDER)
+        print("Created %s/DATA/" % local.ROOT_FOLDER)
 
     # Configure back-end
     # Right now only dropbox
@@ -157,18 +160,17 @@ def main(args=None, config_path=None, password=None, verbose=1):
     if len(args) == 0:
         vimbox_help()
         return False
+    # Sanity check: back-end is installed
+    if (
+        args[0] not in ['setup', 'complete'] and
+        not os.path.isfile(local.CONFIG_FILE)
+    ):
+        print("\nMissing config in %s\nRun vimbox setup\n" % local.CONFIG_FILE)
+        exit(1)
 
     #
     # LOCAL COMMANDS (will work offline)
     #
-
-    # Sanity check: back-end is installed
-    if args[0] not in ['setup', 'complete']:
-        try:
-            local.local_install_check()
-        except primitives.VimboxClientError as exception:
-            print("\n%s\n" % exception.message)
-            return False
 
     if args[0] == 'help':
 
@@ -190,8 +192,10 @@ def main(args=None, config_path=None, password=None, verbose=1):
 
         if len(args) == 2:
             print(local.get_local_file(args[1]))
+            return True
         else:
             vimbox_help()
+            return False
 
     elif args[0] == 'cache':
 

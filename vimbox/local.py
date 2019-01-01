@@ -79,12 +79,6 @@ def edit_config():
     edittool(CONFIG_FILE)
 
 
-def local_install_check():
-    if not os.path.isfile(CONFIG_FILE):
-        print("\nMissing config in %s\nRun vimbox setup\n" % CONFIG_FILE)
-        exit(1)
-
-
 def load_config(config_path=None):
 
     # This is not the same as putting CONFIG_FILE in the arguments directly.

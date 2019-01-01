@@ -8,7 +8,7 @@ except ImportError:  # for pip <= 9.0.3
     from pip.req import parse_requirements
     from pip import download
 
-VERSION='0.4'
+VERSION = '0.5.0'
 
 # Check if we are on a virtual environment
 # https://stackoverflow.com/questions/1871549/determine-if-python-is-running-inside-virtualenv

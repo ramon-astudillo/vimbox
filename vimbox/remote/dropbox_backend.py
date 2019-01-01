@@ -6,15 +6,33 @@ from dropbox.exceptions import ApiError
 from dropbox.files import WriteMode
 from requests.exceptions import ConnectionError
 #
-from vimbox import local
+from vimbox import local, __version__
 
 
 def install_backend(config_file, default_config):
 
     if os.path.isfile(config_file):
+
         config = local.read_config(config_file)
         if 'DROPBOX_TOKEN' in config:
             print("Found valid config in %s" % config_file)
+
+        # check for updated hashes from < v0.5.0
+        if int(__version__.split('.')[1]) >= 5:
+            from vimbox.crypto import get_path_hash
+            client = StorageBackEnd(config['DROPBOX_TOKEN'])
+            old_hashes = config['path_hashes'].items()
+            new_hashes = []
+            for dhash, path in old_hashes:
+                new_dhash = get_path_hash(path, md5_hash=False)
+                if dhash != new_dhash:
+                    # Change remote path
+                    client.files_copy(dhash, new_dhash)
+                    client.files_delete(dhash)
+                    new_hashes.append((str(new_dhash), str(path)))
+            config['path_hashes'] = dict(new_hashes)
+            local.write_config(config_file, config)
+            print("Updated %d hashes" % len(new_hashes))
 
     else:
 
@@ -39,11 +57,11 @@ def install_backend(config_file, default_config):
         # Validate token by connecting to dropbox
         client = StorageBackEnd(dropbox_token)
         response = client.get_user_account()
-        if response['user'] is None:
+        if response['content'] is None:
             print("Could not connect to dropbox %s" % response['status'])
             exit(1)
         else:
-            user_acount = response['user']
+            user_acount = response['content']
             print("Connected to dropbox account %s (%s)" % (
                 user_acount.name.display_name,
                 user_acount.email)
@@ -127,7 +145,6 @@ class StorageBackEnd():
             # This can be missleading
             status = 'connection-error'
         except ApiError as exception:
-            import ipdb; ipdb.set_trace(context=30)
             out_message = exception
             status = 'api-error'
         return {'status': status, 'content': None, 'alert': out_message}
@@ -298,7 +315,6 @@ class StorageBackEnd():
 
             else:
                 out_message = exception
-                import ipdb; ipdb.set_trace(context=30)
                 response = {'entries': None, 'is_files': None}
                 status = 'api-error'
 
