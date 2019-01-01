@@ -10,10 +10,6 @@ except ImportError:  # for pip <= 9.0.3
 
 VERSION = '0.5.0'
 
-# Check if we are on a virtual environment
-# https://stackoverflow.com/questions/1871549/determine-if-python-is-running-inside-virtualenv
-# if hasattr(sys, 'real_prefix'):
-
 # parse_requirements() returns generator of pip.req.InstallRequirement
 # objects
 install_reqs = parse_requirements(
@@ -22,18 +18,12 @@ install_reqs = parse_requirements(
 # install_requires is a list of requirement
 install_requires = [str(ir.req) for ir in install_reqs]
 
-# Utility function to read the README file.
-# Used for the long_description.  It's nice, because now 1) we have a top level
-# README file and 2) it's easier to type in the README file than to put a raw
-# string in below ...
-
 
 def read(filename):
     return open(os.path.join(os.path.dirname(__file__), filename)).read()
 
 
-package_data = {
-}
+package_data = {}
 
 setup(
     name='vimbox',
