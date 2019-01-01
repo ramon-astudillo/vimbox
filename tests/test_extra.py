@@ -7,6 +7,11 @@ from vimbox.local import load_config, get_local_file
 from tools import run_in_environment, green, REMOTE_UNIT_TEST_FOLDER
 
 
+def hash_is_registered(encrypted_file):
+    key = (get_path_hash(encrypted_file), encrypted_file)
+    return key in load_config()['path_hashes'].items()
+
+
 def test_main():
 
     # SIMPLE COLLISIONS
@@ -49,9 +54,13 @@ def test_main():
     assert main(['mv', source_folder, target_folder])
     assert main(['ls', moved_encrypted_file], verbose=0), \
         "Moving folder with encrypted file failed"
+    assert not hash_is_registered(source_folder), \
+        "Unregister file hash when removing folder failed"
+    assert hash_is_registered(moved_encrypted_file), \
+        "Register file hash when removing folder failed"
+    assert target_folder in load_config()['cache'], \
+        "Adding to cache failed"
     print("Move encrypted %s" % green("OK"))
-
-    # TODO: Check cache is ok
 
     # Create an encrypted file and root and try to overwrite it as plain
     encrypted_file2 = '%sencrypted2' % REMOTE_UNIT_TEST_FOLDER

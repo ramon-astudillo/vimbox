@@ -86,9 +86,9 @@ def test_main():
     assert not is_local_dir(folder2), "Removal of local folder failed"
     assert folder2 not in load_config()['cache'], \
         "Removal from cache failed"
-    print("Remove folder %s" % green("OK"))
     assert not hash_is_registered(moved_encrypted_file2), \
         "Unregister file when removing folder failed"
+    print("Remove folder %s" % green("OK"))
 
 
 if __name__ == '__main__':
