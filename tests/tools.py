@@ -60,7 +60,7 @@ def read_remote_content(remote_file, password=None):
             text = fid.read()
 
     # Python3
-    if text and sys.version_info[0] > 2:
+    if text and sys.version_info[0] > 2 and not isinstance(text, str):
         try:
             text = text.decode("utf-8")
         except UnicodeDecodeError:

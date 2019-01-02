@@ -103,8 +103,9 @@ def test_main():
             'line-prepend': True
         }
     )
-    assert merge_strategy == 'ignore-edit+insert+line-prepend', \
-        "Automerge ignore-edit failed"
+    assert sorted(merge_strategy.split('+')) == [
+        'ignore-edit', 'insert', 'line-prepend'
+    ], "Automerge ignore-edit failed"
     assert merged_content == remote_content, "Automerge ignore-edit failed"
     print("Automerge ignore-edit %s" % green("OK"))
 

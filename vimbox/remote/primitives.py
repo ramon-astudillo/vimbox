@@ -156,7 +156,7 @@ def copy_hash(path_hashes, source_folder, target_folder, verbose):
 
     # Do not allow to copy encrypted files or folder containing them
     updated_hashes = False
-    for key in path_hashes.keys():
+    for key in list(path_hashes.keys()):
         if path_hashes[key][:len(source_folder)] == source_folder:
             if target_folder[-1] == '/':
                 new_key = target_folder + \

@@ -188,7 +188,7 @@ def unregister_file(remote_file, config):
         print("Removed from cache %s" % remote_folder)
 
     # Unregister file hash
-    for path in config['path_hashes'].keys():
+    for path in list(config['path_hashes'].keys()):
         # Remove any matching folder or folder contained in it
         if remote_file == path[:len(remote_file)]:
             print(

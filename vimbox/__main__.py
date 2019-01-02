@@ -2,7 +2,7 @@ import sys
 import os
 import getpass
 # vimbox
-from vimbox.remote import primitives
+from vimbox.remote.primitives import VimboxClient
 from vimbox import local, __version__, VimboxClientError, VimboxOfflineError
 
 # Commands and help
@@ -68,7 +68,7 @@ def password_prompt(remote_file, config):
 
     # Check if file in cache already
     if remote_file in config['path_hashes'].values():
-        primitives.VimboxClientError(
+        VimboxClientError(
             '\nCan not re-encrypt a registered file.\n'
         )
 
@@ -76,9 +76,9 @@ def password_prompt(remote_file, config):
     password = getpass.getpass('Input file password: ')
     password2 = getpass.getpass('Repeat file password: ')
     if not password:
-        primitives.VimboxClientError("Passwords can not be empty!")
+        VimboxClientError("Passwords can not be empty!")
     if password != password2:
-        primitives.VimboxClientError("Passwords do not match!")
+        VimboxClientError("Passwords do not match!")
 
     return password
 
@@ -117,7 +117,7 @@ def argument_handling(args):
 
     # Quick exit: edit file is a folder
     if remote_file[-1] == '/' and encrypt:
-        primitives.VimboxClientError('\nOnly files can be encrypted\n')
+        VimboxClientError('\nOnly files can be encrypted\n')
 
     return remote_file, force_creation, encrypt, initial_text
 
@@ -209,7 +209,7 @@ def main(args=None, config_path=None, password=None, verbose=1):
         if len(args) == 2:
             alert = assert_valid_path(args[1])
             if alert:
-                print("\n\%s\n" % alert)
+                print("\n%s\n" % alert)
                 return False
             print(local.get_local_file(args[1]))
         else:
@@ -228,7 +228,7 @@ def main(args=None, config_path=None, password=None, verbose=1):
         try:
             install()
             return True
-        except primitives.VimboxOfflineError as exception:
+        except VimboxOfflineError:
             print("\nCan not install vimbox offline! (keep the token)")
             return False
 
@@ -247,46 +247,40 @@ def main(args=None, config_path=None, password=None, verbose=1):
             argument = args[1]
             alert = assert_valid_path(argument)
             if alert:
-                print("\n\%s\n" % alert)
+                print("\n%s\n" % alert)
                 return False
         else:
             vimbox_help()
             return False
 
         # Client
-        client = primitives.VimboxClient(
-            config_path=config_path,
-            verbose=verbose
-        )
+        client = VimboxClient(config_path=config_path, verbose=verbose)
         try:
             client.list_folders(argument)
             return True
-        except primitives.VimboxClientError as exception:
-            print("\n%s\n" % exception.message)
+        except VimboxClientError as exception:
+            print("\n%s\n" % str(exception))
             return False
 
     elif args[0] == 'mkdir':
 
         # Copy file to file or folder
-        client = primitives.VimboxClient(
-            config_path=config_path,
-            verbose=verbose
-        )
+        client = VimboxClient(config_path=config_path, verbose=verbose)
         if len(args) != 2:
             vimbox_help()
             return False
         try:
             alert = assert_valid_path(args[1], path_type='dir')
             if alert:
-                print("\n\%s\n" % alert)
+                print("\n%s\n" % alert)
                 return False
             client.make_directory(args[1])
             return True
-        except primitives.VimboxOfflineError as exception:
+        except VimboxOfflineError:
             print("\nCan not create folders offline")
             return False
-        except primitives.VimboxClientError as exception:
-            print("\n%s" % exception.message)
+        except VimboxClientError as exception:
+            print("\n%s" % str(exception))
             return False
 
     elif args[0] == 'cp':
@@ -297,45 +291,39 @@ def main(args=None, config_path=None, password=None, verbose=1):
             return False
 
         # Copy file to file or folder
-        client = primitives.VimboxClient(
-            config_path=config_path,
-            verbose=verbose
-        )
+        client = VimboxClient(config_path=config_path, verbose=verbose)
         try:
             alert = assert_valid_path(args[1])
             if alert:
-                print("\n\%s\n" % alert)
+                print("\n%s\n" % alert)
                 return False
             alert = assert_valid_path(args[2])
             if alert:
-                print("\n\%s\n" % alert)
+                print("\n%s\n" % alert)
                 return False
             client.copy(args[1], args[2])
             return True
-        except primitives.VimboxOfflineError as exception:
+        except VimboxOfflineError:
             print("\nCan not copy files offline")
             return False
-        except primitives.VimboxClientError as exception:
-            print("\n%s" % exception.message)
+        except VimboxClientError as exception:
+            print("\n%s" % str(exception))
             return False
 
     elif args[0] == 'cat':
 
         # Copy file to file or folder
-        client = primitives.VimboxClient(
-            config_path=config_path,
-            verbose=verbose
-        )
+        client = VimboxClient(config_path=config_path, verbose=verbose)
         for arg in args[1:]:
             try:
                 alert = assert_valid_path(arg, path_type='dir')
                 if alert:
-                    print("\n\%s\n" % alert)
+                    print("\n%s\n" % alert)
                     return False
                 client.cat(arg)
                 return True
-            except primitives.VimboxClientError as exception:
-                print("\n%s" % exception.message)
+            except VimboxClientError as exception:
+                print("\n%s" % str(exception))
                 return False
 
     elif args[0] == 'rm':
@@ -353,22 +341,19 @@ def main(args=None, config_path=None, password=None, verbose=1):
             vimbox_help()
 
         # Call client
-        client = primitives.VimboxClient(
-            config_path=config_path,
-            verbose=verbose
-        )
+        client = VimboxClient(config_path=config_path, verbose=verbose)
         try:
             alert = assert_valid_path(arguments)
             if alert:
-                print("\n\%s\n" % alert)
+                print("\n%s\n" % alert)
                 return False
             client.remove(arguments, recursive=recursive_flag)
             return True
-        except primitives.VimboxOfflineError as exception:
+        except VimboxOfflineError:
             print("\nCan not remove files offline")
             return False
-        except primitives.VimboxClientError as exception:
-            print("\n%s\n" % exception.message)
+        except VimboxClientError as exception:
+            print("\n%s\n" % str(exception))
             return False
 
     elif args[0] == 'mv':
@@ -381,26 +366,23 @@ def main(args=None, config_path=None, password=None, verbose=1):
             return False
 
         # Call client
-        client = primitives.VimboxClient(
-            config_path=config_path,
-            verbose=verbose
-        )
+        client = VimboxClient(config_path=config_path, verbose=verbose)
         try:
             alert = assert_valid_path(args[1])
             if alert:
-                print("\n\%s\n" % alert)
+                print("\n%s\n" % alert)
                 return False
             alert = assert_valid_path(args[2])
             if alert:
-                print("\n\%s\n" % alert)
+                print("\n%s\n" % alert)
                 return False
             client.move(args[1], args[2])
             return True
-        except primitives.VimboxOfflineError as exception:
+        except VimboxOfflineError:
             print("\nCan not move files offline")
             return False
-        except primitives.VimboxClientError as exception:
-            print("\n%s\n" % exception.message)
+        except VimboxClientError as exception:
+            print("\n%s\n" % str(exception))
             return False
 
     else:
@@ -413,16 +395,13 @@ def main(args=None, config_path=None, password=None, verbose=1):
         remote_file, force_creation, encrypt, initial_text = arguments
         alert = assert_valid_path(remote_file)
         if alert:
-            print("\n\%s\n" % alert)
+            print("\n%s\n" % alert)
             return False
 
         if remote_file[-1] == '/':
 
             # Alias for ls
-            client = primitives.VimboxClient(
-                config_path=config_path,
-                verbose=verbose
-            )
+            client = VimboxClient(config_path=config_path, verbose=verbose)
             client.list_folders(remote_file)
             return True
 
@@ -431,18 +410,15 @@ def main(args=None, config_path=None, password=None, verbose=1):
             # Edit
 
             # Get config
-            client = primitives.VimboxClient(
-                config_path=config_path,
-                verbose=verbose
-            )
+            client = VimboxClient(config_path=config_path, verbose=verbose)
 
             # Create new encrypted file or register existing one
             # TODO: This should happend inside of the client
             if encrypt and password is None:
                 try:
                     password = password_prompt(remote_file, client.config)
-                except primitives.VimboxClientError as exception:
-                    print("\n%s\n" % exception.message)
+                except VimboxClientError as exception:
+                    print("\n%s\n" % str(exception))
                     return False
 
             # Call function
@@ -455,7 +431,7 @@ def main(args=None, config_path=None, password=None, verbose=1):
                 )
                 return True
 
-            except primitives.VimboxOfflineError as exception:
+            except VimboxOfflineError:
 
                 # Offline mode
                 local_file = local.get_local_file(remote_file)
@@ -467,8 +443,8 @@ def main(args=None, config_path=None, password=None, verbose=1):
                     offline_edit(local_file, initial_text)
                     return True
 
-            except primitives.VimboxClientError as exception:
-                print("\n%s\n" % exception.message)
+            except VimboxClientError as exception:
+                print("\n%s\n" % str(exception))
                 return False
 
 
