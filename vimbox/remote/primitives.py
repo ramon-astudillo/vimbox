@@ -472,6 +472,7 @@ class VimboxClient():
             message = response['alerts']
             is_encrypted = status == 'online'
 
+        display_string = ""
         if status == 'api-error':
             raise VimboxClientError("api-error")
 
@@ -567,7 +568,7 @@ class VimboxClient():
                 self.config['cache'].append(remote_folder)
                 local.write_config(self.config_path, self.config)
 
-        else:
+        elif os.path.isdir(local.get_local_file(remote_folder)):
 
             # If it fails resort to local cache
             display_folders = local.list_local(remote_folder, self.config)
@@ -696,7 +697,7 @@ class VimboxClient():
         else:
             raise VimboxClientError("api-error")
 
-    def is_removable(self, remote_file):
+    def is_removable(self, remote_file, recursive):
         """Check if file/folder is removable"""
         # Disallow deleting of encrypted files that have unknown name. Also
         # consider the unfrequent file is registered but user uses hash name
@@ -708,9 +709,12 @@ class VimboxClient():
         if status != 'online':
             raise VimboxOfflineError("Connection error")
         elif file_type == 'dir':
-            is_rem = True
-            reason = None
-            pass
+            if recursive:
+                is_rem = True
+                reason = None
+            else:
+                is_rem = False
+                reason = "Need to use recursive flag -R to remove folders"
         elif (
             file_type == 'file' and
             remote_file not in self.config['path_hashes'].values() and
@@ -739,7 +743,7 @@ class VimboxClient():
             )
 
         # Extra check for deletable files/folders
-        is_rem, reason = self.is_removable(remote_file)
+        is_rem, reason = self.is_removable(remote_file, recursive)
 
         if not is_rem:
             raise VimboxClientError("\nCan not remove. %s\n" % reason)

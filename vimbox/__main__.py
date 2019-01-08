@@ -339,6 +339,7 @@ def main(args=None, config_path=None, password=None, verbose=1):
             recursive_flag = True
         else:
             vimbox_help()
+            return False
 
         # Call client
         client = VimboxClient(config_path=config_path, verbose=verbose)
