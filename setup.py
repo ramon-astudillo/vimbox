@@ -8,7 +8,7 @@ except ImportError:  # for pip <= 9.0.3
     from pip.req import parse_requirements
     from pip import download
 
-VERSION = '0.5.0'
+VERSION = '0.5.2'
 
 # parse_requirements() returns generator of pip.req.InstallRequirement
 # objects
