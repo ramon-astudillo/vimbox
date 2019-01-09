@@ -316,7 +316,7 @@ def main(args=None, config_path=None, password=None, verbose=1):
         client = VimboxClient(config_path=config_path, verbose=verbose)
         for arg in args[1:]:
             try:
-                alert = assert_valid_path(arg, path_type='dir')
+                alert = assert_valid_path(arg, path_type='file')
                 if alert:
                     print("\n%s\n" % alert)
                     return False
