@@ -697,7 +697,7 @@ class VimboxClient():
         else:
             raise VimboxClientError("api-error")
 
-    def is_removable(self, remote_file, recursive):
+    def is_removable(self, remote_file, recursive=False):
         """Check if file/folder is removable"""
         # Disallow deleting of encrypted files that have unknown name. Also
         # consider the unfrequent file is registered but user uses hash name
@@ -743,7 +743,7 @@ class VimboxClient():
             )
 
         # Extra check for deletable files/folders
-        is_rem, reason = self.is_removable(remote_file, recursive)
+        is_rem, reason = self.is_removable(remote_file, recursive=recursive)
 
         if not is_rem:
             raise VimboxClientError("\nCan not remove. %s\n" % reason)
