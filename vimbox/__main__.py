@@ -209,7 +209,7 @@ def main(args=None, config_path=None, password=None, verbose=1):
         if len(args) == 2:
             alert = assert_valid_path(args[1])
             if alert:
-                print("\n%s\n" % alert)
+                print("%s" % alert)
                 return False
             print(local.get_local_file(args[1]))
         else:
@@ -247,7 +247,7 @@ def main(args=None, config_path=None, password=None, verbose=1):
             argument = args[1]
             alert = assert_valid_path(argument)
             if alert:
-                print("\n%s\n" % alert)
+                print("%s" % alert)
                 return False
         else:
             vimbox_help()
@@ -259,7 +259,7 @@ def main(args=None, config_path=None, password=None, verbose=1):
             client.list_folders(argument)
             return True
         except VimboxClientError as exception:
-            print("\n%s\n" % str(exception))
+            print("%s" % str(exception))
             return False
 
     elif args[0] == 'mkdir':
@@ -272,7 +272,7 @@ def main(args=None, config_path=None, password=None, verbose=1):
         try:
             alert = assert_valid_path(args[1], path_type='dir')
             if alert:
-                print("\n%s\n" % alert)
+                print("%s" % alert)
                 return False
             client.make_directory(args[1])
             return True
@@ -295,11 +295,11 @@ def main(args=None, config_path=None, password=None, verbose=1):
         try:
             alert = assert_valid_path(args[1])
             if alert:
-                print("\n%s\n" % alert)
+                print("%s" % alert)
                 return False
             alert = assert_valid_path(args[2])
             if alert:
-                print("\n%s\n" % alert)
+                print("%s" % alert)
                 return False
             client.copy(args[1], args[2])
             return True
@@ -318,7 +318,7 @@ def main(args=None, config_path=None, password=None, verbose=1):
             try:
                 alert = assert_valid_path(arg, path_type='file')
                 if alert:
-                    print("\n%s\n" % alert)
+                    print("%s" % alert)
                     return False
                 client.cat(arg)
                 return True
@@ -346,7 +346,7 @@ def main(args=None, config_path=None, password=None, verbose=1):
         try:
             alert = assert_valid_path(arguments)
             if alert:
-                print("\n%s\n" % alert)
+                print("%s" % alert)
                 return False
             client.remove(arguments, recursive=recursive_flag)
             return True
@@ -354,7 +354,7 @@ def main(args=None, config_path=None, password=None, verbose=1):
             print("\nCan not remove files offline")
             return False
         except VimboxClientError as exception:
-            print("\n%s\n" % str(exception))
+            print("%s" % str(exception))
             return False
 
     elif args[0] == 'mv':
@@ -371,11 +371,11 @@ def main(args=None, config_path=None, password=None, verbose=1):
         try:
             alert = assert_valid_path(args[1])
             if alert:
-                print("\n%s\n" % alert)
+                print("%s" % alert)
                 return False
             alert = assert_valid_path(args[2])
             if alert:
-                print("\n%s\n" % alert)
+                print("%s" % alert)
                 return False
             client.move(args[1], args[2])
             return True
@@ -383,7 +383,7 @@ def main(args=None, config_path=None, password=None, verbose=1):
             print("\nCan not move files offline")
             return False
         except VimboxClientError as exception:
-            print("\n%s\n" % str(exception))
+            print("%s" % str(exception))
             return False
 
     else:
@@ -396,7 +396,7 @@ def main(args=None, config_path=None, password=None, verbose=1):
         remote_file, force_creation, encrypt, initial_text = arguments
         alert = assert_valid_path(remote_file)
         if alert:
-            print("\n%s\n" % alert)
+            print("%s" % alert)
             return False
 
         if remote_file[-1] == '/':
@@ -419,7 +419,7 @@ def main(args=None, config_path=None, password=None, verbose=1):
                 try:
                     password = password_prompt(remote_file, client.config)
                 except VimboxClientError as exception:
-                    print("\n%s\n" % str(exception))
+                    print("%s" % str(exception))
                     return False
 
             # Call function
@@ -445,7 +445,7 @@ def main(args=None, config_path=None, password=None, verbose=1):
                     return True
 
             except VimboxClientError as exception:
-                print("\n%s\n" % str(exception))
+                print("%s" % str(exception))
                 return False
 
 

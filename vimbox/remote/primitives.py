@@ -152,30 +152,6 @@ def automerge(reference_content, modified_content, automerge_rules):
     return merged_content, merge_strategy
 
 
-def copy_hash(path_hashes, source_folder, target_folder, verbose):
-
-    # Do not allow to copy encrypted files or folder containing them
-    updated_hashes = False
-    for key in list(path_hashes.keys()):
-        if path_hashes[key][:len(source_folder)] == source_folder:
-            if target_folder[-1] == '/':
-                new_key = target_folder + \
-                    key[len(source_folder):]
-                new_path = target_folder + \
-                    path_hashes[key][len(source_folder):]
-            else:
-                new_key = target_folder + '/' + \
-                    key[len(source_folder):]
-                new_path = target_folder + '/' + \
-                    path_hashes[key][len(source_folder):]
-            path_hashes.update({new_key: new_path})
-            if verbose > 0:
-                print("Copied hash %s -> %s" % (path_hashes[key], new_path))
-            updated_hashes = True
-
-    return updated_hashes
-
-
 class VimboxClient():
 
     def __init__(self, config_path=None, verbose=1):
@@ -585,7 +561,7 @@ class VimboxClient():
     def make_directory(self, remote_target):
         if remote_target[-1] != '/':
             raise VimboxClientError("Folder paths must end in / ")
-        file_type, is_encripted, status = self.file_type(remote_target[:-1])
+        file_type, is_encripted, status = self.file_type(remote_target)
         if status != 'online':
             raise VimboxOfflineError("Connection error")
 
@@ -617,42 +593,33 @@ class VimboxClient():
         """
         This should support:
 
-        cp /path/to/file /path/to/another/file
+        cp /path/to/file /path/to/another/file   (file does not exist)
         cp /path/to/file /path/to/folder/
-        cp /path/to/folder/ /path/to/another_folder/
+        cp /path/to/folder/ /path/to/folder2/
+        cp /path/to/folder/ /path/to/folder2/    (folder2 does not exist)
         """
 
-        # Map `cp /path/to/file /path2/` to `cp /path/to/file /path/file`
-        if remote_target[-1] == '/':
-            file_type, is_encripted, status = self.file_type(
-                remote_target[:-1]
-            )
-            if file_type == 'dir':
-                if remote_source[-1] == '/':
-                    addendum = os.path.basename(remote_source[:-1])
-                    remote_target = remote_target + addendum + '/'
-                else:
-                    addendum = os.path.basename(remote_source)
-                    remote_target = remote_target + addendum
-        else:
-            file_type, is_encripted, status = self.file_type(remote_target)
-            if file_type:
-                raise VimboxClientError(
-                    'Target file %s exists' % remote_target
-                )
+        # Note file_type enforces using / for folders
+        target_type, _, status = self.file_type(remote_target)
+        if target_type == 'file':
+            raise VimboxClientError('Target file %s exists' % remote_target)
+        elif target_type == 'dir':
+            if remote_source[-1] != '/':
+                # cp /path/to/file /path/to/folder/
+                # map to cp /path/to/file /path/to/folder/file
+                source_basename = os.path.basename(remote_source)
+                remote_target = remote_target + '/' + source_basename
+            else:
+                # cp /path/to/folder/ /path/to/folder2/
+                # map to cp /path/to/folder/ /path/to/folder2/folder/
+                source_basename = os.path.basename(remote_source[:-1])
+                remote_target = remote_target + source_basename + "/"
+        elif remote_source[-1] == '/':
+            # cp /path/to/folder/ /path/to/folder2/ (folder2 does not exist)
+            pass
 
         if status == 'connection-error':
             raise VimboxOfflineError("Connection error")
-
-        # Move paths in hash
-        updated_hashes = copy_hash(
-            self.config['path_hashes'],
-            remote_source,
-            remote_target,
-            self.verbose
-        )
-        if updated_hashes:
-            local.write_config(self.config_path, self.config)
 
         # For folder we need to remove the ending back-slash
         if remote_source[-1] == '/':
@@ -664,6 +631,7 @@ class VimboxClient():
         else:
             remote_target2 = remote_target
         response = self.client.files_copy(remote_source2, remote_target2)
+
         # If there is an error, try encrypted names
         is_encrypted = False
         if response['status'] == 'api-error':
@@ -675,37 +643,71 @@ class VimboxClient():
             is_encrypted = True
 
         if response['status'] == 'online':
-            # Local move
+
+            # Local move if we had a copy
             local_source = self.get_local_file(remote_source)
             local_target = self.get_local_file(remote_target)
             if os.path.isfile(local_source):
+                # Make missing local folder
+                local_target_folder = os.path.dirname(local_target)
+                if not os.path.isdir(local_target_folder):
+                    os.makedirs(local_target_folder)
                 shutil.move(local_source, local_target)
-            else:
+            elif os.path.isdir(local_source):
                 shutil.copytree(local_source, local_target)
-            # cache
-            self.register_file(remote_target, is_encrypted)
+            # update cache and hash list
+            if remote_source[-1] != '/':
+                self.register_file(remote_target, is_encrypted)
+            else:
+                # If we are copying a folder we need to look for hashes inside
+                # that folder and change their names
+                self.register_file(remote_target, is_encrypted)
+                self.copy_hash(remote_source, remote_target)
             if self.verbose > 0:
-                print(
-                    "%-12s %s %s" % (
-                        yellow("copied"),
-                        remote_source,
-                        remote_target
-                    )
-                )
+                items = (yellow("copied"), remote_source, remote_target)
+                print("%-12s %s %s" % items)
         elif response['status'] == 'connection-error':
             raise VimboxOfflineError("Connection error")
         else:
-            raise VimboxClientError("api-error")
+            raise VimboxClientError("api-error: %s" % response['alerts'])
+
+    def copy_hash(self, source_folder, target_folder):
+        """
+        When copying folders, we need to fined encrypted files inside and
+        update the hash path pairs
+        """
+
+        assert source_folder[-1] == '/', "Expected folders not files"
+        assert target_folder[-1] == '/', "Expected folders not files"
+
+        # Find encrypted and resgitered files in the original folder
+        encrypted_sources = []
+        for file_hash, file_name in list(self.config['path_hashes'].items()):
+            if file_name[:len(source_folder)] == source_folder:
+                encrypted_sources.append(file_hash)
+
+        # Create the new paths and add them to the hash list
+        updated_hashes = False
+        for file_hash in encrypted_sources:
+
+            # We were given a target file and not a file name
+            new_folder_hash = target_folder + file_hash[len(source_folder):]
+            new_path = target_folder + \
+                self.config['path_hashes'][file_hash][len(source_folder):]
+            self.config['path_hashes'].update({new_folder_hash: new_path})
+            if self.verbose > 0:
+                items = (self.config['path_hashes'][file_hash], new_path)
+                print("Copied hash %s -> %s" % items)
+            updated_hashes = True
+
+        return updated_hashes
 
     def is_removable(self, remote_file, recursive=False):
         """Check if file/folder is removable"""
         # Disallow deleting of encrypted files that have unknown name. Also
         # consider the unfrequent file is registered but user uses hash name
         # Disallow deleting of folders.
-        if remote_file[-1] == '/':
-            file_type, is_encrypted, status = self.file_type(remote_file[:-1])
-        else:
-            file_type, is_encrypted, status = self.file_type(remote_file)
+        file_type, is_encrypted, status = self.file_type(remote_file)
         if status != 'online':
             raise VimboxOfflineError("Connection error")
         elif file_type == 'dir':
@@ -732,7 +734,7 @@ class VimboxClient():
                 "%s does not exist in remote" % remote_file
             )
 
-        return is_rem, reason
+        return is_rem, reason, is_encrypted
 
     def remove(self, remote_file, recursive=False, password=None):
 
@@ -743,13 +745,14 @@ class VimboxClient():
             )
 
         # Extra check for deletable files/folders
-        is_rem, reason = self.is_removable(remote_file, recursive=recursive)
+        is_rem, reason, is_encrypted = \
+            self.is_removable(remote_file, recursive=recursive)
 
         if not is_rem:
-            raise VimboxClientError("\nCan not remove. %s\n" % reason)
+            raise VimboxClientError("\nCan not remove due to: %s\n" % reason)
 
         # Hash name if necessary
-        if remote_file in self.config['path_hashes'].values():
+        if is_encrypted:
             original_name = remote_file
             remote_file = crypto.get_path_hash(remote_file)
         else:
@@ -789,7 +792,7 @@ class VimboxClient():
                 os.remove(local_file)
             elif os.path.isdir(local_file):
                 shutil.rmtree(local_file)
-            self.unregister_file(remote_file)
+            self.unregister_file(original_name)
         elif self.verbose > 0:
             print(
                 "%-12s did not remove!  %s" % (red("offline"), original_name)
@@ -797,13 +800,18 @@ class VimboxClient():
 
     def move(self, remote_source, remote_target):
         """Copy and remove"""
-        is_rem, reason = self.is_removable(remote_source)
+        is_rem, reason, is_encrypted = self.is_removable(remote_source)
+        recursive = False
+        # FIXME: Capturing a string is brittle
+        if reason == 'Need to use recursive flag -R to remove folders':
+            is_rem = True
+            recursive = True
         if not is_rem:
             raise VimboxClientError(
-                "Can not move (remove) due to %s" % reason
+                "Can not move (remove) due to: %s" % reason
             )
         self.copy(remote_source, remote_target)
-        self.remove(remote_source)
+        self.remove(remote_source, recursive=recursive)
 
     def edit(self, remote_file, remove_local=None, force_creation=False,
              register_folder=True, password=None, initial_text=None,
@@ -1036,11 +1044,17 @@ class VimboxClient():
             "file_type receives unencrypted paths"
 
         # Try finding plain file first
-        response = self.client.file_type(remote_file)
+        if remote_file[-1] == '/':
+            response = self.client.file_type(remote_file[:-1])
+        else:
+            response = self.client.file_type(remote_file)
         is_encrypted = False
         if response['content'] is None and response['status'] == 'online':
             # Then encrypted file
-            remote_file_hash = crypto.get_path_hash(remote_file)
+            if remote_file[-1] == '/':
+                remote_file_hash = crypto.get_path_hash(remote_file[:-1])
+            else:
+                remote_file_hash = crypto.get_path_hash(remote_file)
             response = self.client.file_type(remote_file_hash)
             is_encrypted = True
 
@@ -1049,6 +1063,13 @@ class VimboxClient():
 
         if response['status'] != 'online':
             raise VimboxOfflineError("Connection error")
+
+        if response['content'] == 'dir':
+            assert remote_file[-1] == '/', \
+                VimboxClientError("Folder paths must end in /")
+        elif response['content'] == 'file':
+            assert remote_file[-1] != '/', \
+                VimboxClientError("File paths can not end in /")
 
         return response['content'], is_encrypted, response['status']
 

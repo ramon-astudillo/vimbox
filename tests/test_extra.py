@@ -36,11 +36,21 @@ def test_main():
     print("Collision create encrypted, create plain %s" % green("OK"))
 
     # Collision create plain, create folder
-    assert not main(['mkdir', plain_file + '/']), "mkdir collision"
+    failed = False
+    try:
+        main(['mkdir', plain_file + '/']), "mkdir collision"
+    except AssertionError:
+        failed = True
+    assert failed, "Collision create plain, create folder did not happen"
     print("Collision create plain, create folder %s" % green("OK"))
 
     # Collision create encrypted, create folder
-    assert not main(['mkdir', encrypted_file + '/']), "mkdir collision"
+    failed = False
+    try:
+        main(['mkdir', encrypted_file + '/']), "mkdir collision"
+    except AssertionError:
+        failed = True
+    assert failed, "Collision create encrypted, create folder"
     print("Collision create encrypted, create folder %s" % green("OK"))
 
     # MOVES

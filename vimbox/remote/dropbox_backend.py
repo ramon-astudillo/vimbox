@@ -165,7 +165,7 @@ class StorageBackEnd():
         except ApiError as exception:
             out_message = exception
             if type(exception.error._value).__name__ == 'LookupError':
-                status = 'online'
+                status = 'api-error'
             else:
                 status = 'api-error'
         return {'status': status, 'content': None, 'alert': out_message}

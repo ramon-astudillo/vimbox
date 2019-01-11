@@ -133,26 +133,22 @@ def get_complete_arguments():
 
 def register_file(remote_file, config, is_encripted):
     """
+    Add folder of file to cache and file to hash list if encrypted
+
     A file can be registered by its folder or it name directly
     """
 
+    assert remote_file, "file to register cannot be empty path"
+
+    rewrite_config = False
+
+    # Register folder in cache
     if remote_file[-1] == '/':
         remote_folder = remote_file
-    elif os.path.dirname(remote_file) != '/':
-        # For files we register only the folder in the cache
-        remote_folder = '%s/' % os.path.dirname(remote_file)
     else:
-        remote_folder = '/'
-
-    is_registered = False
-    if remote_folder and remote_folder in config['cache']:
-        is_registered = True
-    elif remote_folder in config['cache']:
-        is_registered = True
-
-    # Register folder from cache
-    rewrite_config = False
-    if not is_registered and list(set(remote_folder))[0] != '/':
+        remote_folder = "%s/" % os.path.dirname(remote_file)
+    # if not is_registered and list(set(remote_folder))[0] != '/':
+    if remote_folder not in config['cache']:
         config['cache'].append(remote_folder)
         rewrite_config = True
         # update cache in system
@@ -172,30 +168,27 @@ def register_file(remote_file, config, is_encripted):
 
 def unregister_file(remote_file, config):
 
+    rewrite_config = False
+
+    # Unregister folder from cache
     if remote_file[-1] == '/':
         remote_folder = remote_file
+        rewrite_config = False
+        if remote_folder in config['cache']:
+            config['cache'].remove(remote_folder)
+            rewrite_config = True
+            print("Removed from cache %s" % remote_folder)
     else:
-        # For files we unregister only the folder in the cache
-        # TODO: We could check if folder is empty and unregister containing
-        # folder but this hurts speed
-        # remote_folder = '%s/' % os.path.dirname(remote_file)
-        return None
-
-    rewrite_config = False
-    if remote_folder in config['cache']:
-        config['cache'].remove(remote_folder)
-        rewrite_config = True
-        print("Removed from cache %s" % remote_folder)
+        # We could check if it is empty in remote and unregister it but it will
+        # be too expensive
+        pass
 
     # Unregister file hash
-    for path in list(config['path_hashes'].keys()):
+    for fhash, fname in list(config['path_hashes'].items()):
         # Remove any matching folder or folder contained in it
-        if remote_file == path[:len(remote_file)]:
-            print(
-                "Removed from hash list %s" %
-                config['path_hashes'][path]
-            )
-            del config['path_hashes'][path]
+        if remote_file == fname[:len(remote_file)]:
+            print("Removed from hash list %s" % fname)
+            del config['path_hashes'][fhash]
             rewrite_config = True
 
     if rewrite_config:
