@@ -6,7 +6,7 @@ from vimbox.local import load_config, get_local_file
 from tools import run_in_environment, REMOTE_UNIT_TEST_FOLDER
 
 
-def test_main():
+def test_main(backend_name):
 
     # Creation
     tmp_file = '%sfolder1/plain' % REMOTE_UNIT_TEST_FOLDER

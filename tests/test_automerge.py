@@ -4,7 +4,7 @@ from tools import green, run_in_environment
 from vimbox.remote.primitives import automerge
 
 
-def test_main():
+def test_main(backend_name):
 
     # AUTOMERGE: Append
     local_content = 'This is some text'

@@ -22,7 +22,7 @@ from tools import (
 )
 
 
-def test_main():
+def test_main(backend_name):
 
     # NOTE: start_environment() has overloaded local.CONFIG_FILE
 

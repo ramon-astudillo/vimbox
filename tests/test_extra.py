@@ -12,7 +12,7 @@ def hash_is_registered(encrypted_file):
     return key in load_config()['path_hashes'].items()
 
 
-def test_main():
+def test_main(backend_name):
 
     # SIMPLE COLLISIONS
 
@@ -89,4 +89,8 @@ def test_main():
 
 
 if __name__ == '__main__':
-    run_in_environment(test_main, debug=True, backend_name='dropbox')
+    if len(sys.argv) == 2 and sys.argv[1] in ['fake', 'dropbox']:
+        backend_name = sys.argv[1]
+    else:
+        raise ValueError("Expected backend_name (fake, dropbox)")
+    run_in_environment(test_main, debug=True, backend_name=backend_name)

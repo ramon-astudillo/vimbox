@@ -7,10 +7,12 @@ from tools import REMOTE_UNIT_TEST_FOLDER, green, run_in_environment
 from vimbox.remote.dropbox_backend import StorageBackEnd
 
 
-def test_main():
+def test_main(backend_name):
     '''
     Test StorageBackEnd primitives
     '''
+
+    assert backend_name == 'dropbox', "Must use dropbox back-end"
 
     assert REMOTE_UNIT_TEST_FOLDER == '/.vimbox_unit_test/', \
         "CHANGING INTEGRATION TEST FOLDER CAN LEAD TO DATA LOSS"
@@ -88,4 +90,4 @@ def test_main():
 
 
 if __name__ == '__main__':
-    run_in_environment(test_main, debug=True)
+    run_in_environment(test_main, backend_name='dropbox')

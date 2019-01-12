@@ -168,13 +168,13 @@ def run_in_environment(test_function, backend_name='fake', debug=False):
 
     if debug:
         start_environment(backend_name=backend_name)
-        test_function()
+        test_function(backend_name)
         reset_environment(sucess=True)
 
     else:
         try:
             start_environment(backend_name=backend_name)
-            test_function()
+            test_function(backend_name)
             reset_environment(sucess=True)
 
         except Exception as exception:

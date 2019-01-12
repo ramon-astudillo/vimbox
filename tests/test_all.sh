@@ -10,9 +10,11 @@ if [ ! -d tests/ ];then
     exit
 fi
 
-for test in $(ls tests/test_*.py);do 
-    echo ""
-    echo $test
-    python $test
-    echo ""
-done
+# Current tests
+python tests/test_automerge.py
+python tests/test_client.py
+python tests/test_dropbox_backend.py
+python tests/test_encryption.py fake
+python tests/test_encryption.py dropbox
+python tests/test_extra.py fake
+python tests/test_offline.py
