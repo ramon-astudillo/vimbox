@@ -228,6 +228,7 @@ def main(args=None, config_path=None, password=None, verbose=1):
         try:
             install()
             return True
+
         except VimboxOfflineError:
             print("\nCan not install vimbox offline! (keep the token)")
             return False
@@ -258,6 +259,12 @@ def main(args=None, config_path=None, password=None, verbose=1):
         try:
             client.list_folders(argument)
             return True
+
+        except KeyboardInterrupt:
+
+            print("\nOperation canceled by user")
+            return False
+
         except VimboxClientError as exception:
             print("%s" % str(exception))
             return False
@@ -276,6 +283,9 @@ def main(args=None, config_path=None, password=None, verbose=1):
                 return False
             client.make_directory(args[1])
             return True
+        except KeyboardInterrupt:
+            print("\nOperation canceled by user")
+            return False
         except VimboxOfflineError:
             print("\nCan not create folders offline")
             return False
@@ -303,6 +313,9 @@ def main(args=None, config_path=None, password=None, verbose=1):
                 return False
             client.copy(args[1], args[2])
             return True
+        except KeyboardInterrupt:
+            print("\nOperation canceled by user")
+            return False
         except VimboxOfflineError:
             print("\nCan not copy files offline")
             return False
@@ -322,6 +335,9 @@ def main(args=None, config_path=None, password=None, verbose=1):
                     return False
                 client.cat(arg)
                 return True
+            except KeyboardInterrupt:
+                print("\nOperation canceled by user")
+                return False
             except VimboxClientError as exception:
                 print("\n%s" % str(exception))
                 return False
@@ -350,6 +366,9 @@ def main(args=None, config_path=None, password=None, verbose=1):
                 return False
             client.remove(arguments, recursive=recursive_flag)
             return True
+        except KeyboardInterrupt:
+            print("\nOperation canceled by user")
+            return False
         except VimboxOfflineError:
             print("\nCan not remove files offline")
             return False
@@ -379,6 +398,9 @@ def main(args=None, config_path=None, password=None, verbose=1):
                 return False
             client.move(args[1], args[2])
             return True
+        except KeyboardInterrupt:
+            print("\nOperation canceled by user")
+            return False
         except VimboxOfflineError:
             print("\nCan not move files offline")
             return False
@@ -418,6 +440,9 @@ def main(args=None, config_path=None, password=None, verbose=1):
             if encrypt and password is None:
                 try:
                     password = password_prompt(remote_file, client.config)
+                except KeyboardInterrupt:
+                    print("\nOperation canceled by user")
+                    return False
                 except VimboxClientError as exception:
                     print("%s" % str(exception))
                     return False
@@ -431,6 +456,11 @@ def main(args=None, config_path=None, password=None, verbose=1):
                     initial_text=initial_text
                 )
                 return True
+
+            except KeyboardInterrupt:
+
+                print("\nOperation canceled by user")
+                return False
 
             except VimboxOfflineError:
 
