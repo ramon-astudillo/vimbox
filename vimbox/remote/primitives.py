@@ -163,7 +163,9 @@ def edit_paper_url(url):
         os.mkdir(local_folder)
     local_file = "%s/%s--%s-%s.md" % (local_folder, title, did, doc_id)
     content = local.local_edit(local_file, response['content'])
-    client.files_upload(content, url, response['revision'])
+    response = client.files_upload(content, url, response['revision'])
+    if response['status'] == 'api-error':
+        print(response['alert'])
     os.remove(local_file)
 
 
