@@ -152,6 +152,20 @@ def automerge(reference_content, modified_content, automerge_rules):
     return merged_content, merge_strategy
 
 
+def edit_paper_url(url):
+
+    from vimbox.remote.paper_backend import StorageBackEnd, DOC_REGEX
+    title, did, doc_id = DOC_REGEX.match(url).groups()
+    client = StorageBackEnd(local.load_config()['paper_token'])
+    response = client.file_download(url)
+    local_folder = local.get_local_file('.paper/')
+    if not os.path.isdir(local_folder):
+        os.mkdir(local_folder)
+    local_file = "%s/%s--%s-%s.md" % (local_folder, title, did, doc_id)
+    content = local.local_edit(local_file, response['content'])
+    client.files_upload(content, url)
+
+
 class VimboxClient():
 
     def __init__(self, config_path=None, verbose=1):

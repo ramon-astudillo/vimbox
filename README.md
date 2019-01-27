@@ -27,6 +27,8 @@ than with their client, namely
 
 * Works in OSX and Linux, uses dropbox v2 API (`python 2` and `3` supported).
 
+* Experimental support for a dropbox paper backend allowing to edit directly from URL
+
 # Examples
 
 Create a new file on dropbox or register locally a file created on other
@@ -64,6 +66,14 @@ you will be prompted for a password. It wont be stored anyway so remember it.
 The rest of `vimbox` functionalities are retained after creation but you will
 need to input the password for each `_pull` from the remote. Encryption uses
 the `pycripto` module.
+
+There is also an experimental `edit from URL` functionality. The aim of this is
+not to have an entire file system cached localy but just edit a remote file in
+vim given the URL. To try this do
+
+    vimbox https://paper.dropbox.com/doc/Title--ID1-ID2
+
+with an existing dropbox paper URL.
 
 # Install
 

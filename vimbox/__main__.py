@@ -4,6 +4,7 @@ import getpass
 # vimbox
 from vimbox.remote.primitives import VimboxClient
 from vimbox import local, __version__, VimboxClientError, VimboxOfflineError
+from vimbox.remote.paper_backend import DOC_REGEX
 
 # Commands and help
 COMMAND_HELP = {
@@ -28,7 +29,9 @@ COMMAND_ORDER = [
 
 
 def assert_valid_path(file_path, path_type=None):
-    if file_path.find('//') != -1:
+    if DOC_REGEX.match(file_path):
+        pass
+    elif file_path.find('//') != -1:
         return "Paths can not have double slashes"
     if path_type == 'file' and file_path[-1] == '/':
         return "File paths can not finish in slash"
@@ -98,7 +101,7 @@ def argument_handling(args):
             # Create new encrypted file
             force_creation = True
             encrypt = True
-        elif option[0] == '/':
+        elif option[0] == '/' or DOC_REGEX.match(option):
             assert not remote_file, \
                 "Only one file path can be edited at a time"
             # Dropbox path
@@ -421,7 +424,14 @@ def main(args=None, config_path=None, password=None, verbose=1):
             print("%s" % alert)
             return False
 
-        if remote_file[-1] == '/':
+        # Edit
+        if DOC_REGEX.match(remote_file):
+
+            # Edit URL
+            from vimbox.remote.primitives import edit_paper_url
+            edit_paper_url(remote_file)
+
+        elif remote_file[-1] == '/':
 
             # Alias for ls
             client = VimboxClient(config_path=config_path, verbose=verbose)
@@ -430,9 +440,7 @@ def main(args=None, config_path=None, password=None, verbose=1):
 
         else:
 
-            # Edit
-
-            # Get config
+            # Edit file
             client = VimboxClient(config_path=config_path, verbose=verbose)
 
             # Create new encrypted file or register existing one
