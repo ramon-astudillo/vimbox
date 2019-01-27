@@ -7,7 +7,7 @@ import hashlib
 from Crypto.Cipher import AES
 from Crypto.Hash import MD5
 
-# ACHTUNG: Changing this may yield incorrect dencryption errors!
+# ACHTUNG: Changing this will yield incorrect dencryption errors!
 HEADER = '# this was encrypted'
 
 

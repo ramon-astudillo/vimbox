@@ -26,7 +26,9 @@ DEFAULT_CONFIG = {
     # By default remove all synced files
     'remove_local': False,
     # Backend (right now dropbox or fake)
-    'backend_name': 'dropbox'
+    'backend_name': 'dropbox',
+    # Experimental paper token
+    'paper_token': None
 }
 EDITTOOL = 'vim'
 MERGETOOL = 'vimdiff'
