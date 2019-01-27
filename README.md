@@ -27,7 +27,7 @@ than with their client, namely
 
 * Works in OSX and Linux, uses dropbox v2 API (`python 2` and `3` supported).
 
-* Experimental support for a dropbox paper backend allowing to edit directly from URL
+* Experimental support for a `dropbox paper` backend allowing to edit directly from URL
 
 # Examples
 
