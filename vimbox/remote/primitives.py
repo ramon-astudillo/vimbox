@@ -163,7 +163,8 @@ def edit_paper_url(url):
         os.mkdir(local_folder)
     local_file = "%s/%s--%s-%s.md" % (local_folder, title, did, doc_id)
     content = local.local_edit(local_file, response['content'])
-    client.files_upload(content, url)
+    client.files_upload(content, url, response['revision'])
+    os.remove(local_file)
 
 
 class VimboxClient():

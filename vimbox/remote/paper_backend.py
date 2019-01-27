@@ -23,7 +23,46 @@ class StorageBackEnd():
         """Provide info on users current account"""
         raise NotImplementedError("Not yet implemented")
 
-    def files_upload(self, new_local_content, url):
+    def file_download(self, url):
+
+        doc_metadata = self._get_doc_info_from_url(url)
+
+        url = 'https://api.dropboxapi.com/2/paper/docs/download'
+        headers = {
+            'Authorization': 'Bearer %s' % self.paper_token,
+            'Dropbox-API-Arg': json.dumps({
+                'doc_id': '%s' % doc_metadata['doc_id'],
+                'export_format': 'markdown'
+            })
+        }
+
+        out_message = ''
+        try:
+
+            # Call
+            response = requests.post(url, headers=headers)
+            # Parse response
+            if response.status_code != 200:
+                raise FakeApiError(response.text)
+
+            # FIXME: This is not clear
+            remote_content = response.text.encode('latin-1')
+            status = 'online'
+
+        except ConnectionError:
+
+            # Dropbox unrechable
+            remote_content = None
+            status = 'connection-error'
+
+        return {
+            'status': status,
+            'content': remote_content,
+            'alerts': out_message,
+            'revision': doc_metadata['revision']
+        }
+
+    def files_upload(self, new_local_content, url, revision):
 
         # Get meta-data
         doc_metadata = self._get_doc_info_from_url(url)
@@ -38,7 +77,7 @@ class StorageBackEnd():
             'Dropbox-API-Arg': json.dumps({
                 'doc_id': '%s' % doc_metadata['doc_id'],
                 'doc_update_policy': 'overwrite_all',
-                'revision': doc_metadata['revision'],
+                'revision': revision,
                 'import_format': 'markdown',
             })
         }
@@ -100,44 +139,6 @@ class StorageBackEnd():
             file_exists = False
 
         return {'status': status, 'content': file_type, 'alert': alert}
-
-    def file_download(self, url):
-
-        doc_metadata = self._get_doc_info_from_url(url)
-
-        url = 'https://api.dropboxapi.com/2/paper/docs/download'
-        headers = {
-            'Authorization': 'Bearer %s' % self.paper_token,
-            'Dropbox-API-Arg': json.dumps({
-                'doc_id': '%s' % doc_metadata['doc_id'],
-                'export_format': 'markdown'
-            })
-        }
-
-        out_message = ''
-        try:
-
-            # Call
-            response = requests.post(url, headers=headers)
-            # Parse response
-            if response.status_code != 200:
-                raise FakeApiError(response.text)
-
-            # FIXME: This is not clear
-            remote_content = response.text.encode('latin-1')
-            status = 'online'
-
-        except ConnectionError:
-
-            # Dropbox unrechable
-            remote_content = None
-            status = 'connection-error'
-
-        return {
-            'status': status,
-            'content': remote_content,
-            'alerts': out_message
-        }
 
     def list_folders(self, remote_folder):
 
