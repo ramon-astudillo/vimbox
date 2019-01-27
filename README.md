@@ -73,7 +73,8 @@ vim given the URL. To try this do
 
     vimbox https://paper.dropbox.com/doc/Title--ID1-ID2
 
-with an existing dropbox paper URL.
+with an existing dropbox paper URL. Note that this will not work with "App
+Folder" type of permissions
 
 # Install
 
@@ -96,7 +97,7 @@ and use following configuration
 * `Dropbox API`
 
 * Both `App folder` and `Full Dropbox` are possible. The former is better for a
-  try-out
+  try-out. You will need Full Dropbox for paper URL editing.
 
 * Put a name. This is irrelevant, but `vimbox-<your name>` may help you remember
 

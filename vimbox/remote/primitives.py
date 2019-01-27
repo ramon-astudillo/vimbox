@@ -156,7 +156,8 @@ def edit_paper_url(url):
 
     from vimbox.remote.paper_backend import StorageBackEnd, DOC_REGEX
     title, did, doc_id = DOC_REGEX.match(url).groups()
-    client = StorageBackEnd(local.load_config()['paper_token'])
+    paper_token = local.load_config()['DROPBOX_TOKEN']
+    client = StorageBackEnd(paper_token)
     response = client.file_download(url)
     local_folder = local.get_local_file('.paper/')
     if not os.path.isdir(local_folder):
